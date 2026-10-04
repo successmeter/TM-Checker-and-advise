@@ -1,0 +1,15 @@
+{
+ "_note": "Invented marks for development and tests. Not real register data.",
+ "marks": [
+  {"number": "2198432", "words": "ECO KNITWEAR", "status": "Registered: Registered/protected", "owner": "Green Threads Pty Ltd",
+   "classes": [{"class_number": 25, "terms": ["Knitted sweaters", "Cardigans", "Woollen socks"]}]},
+  {"number": "2311007", "words": "ECOKNIT", "status": "Lapsed: Lapsed/not protected", "owner": "Old Mill Co",
+   "classes": [{"class_number": 25, "terms": ["Clothing"]}]},
+  {"number": "2250990", "words": "KWIKFIX", "status": "Registered: Registered/protected", "owner": "Fixit Holdings Pty Ltd",
+   "classes": [{"class_number": 9, "terms": ["Computer software"]}, {"class_number": 42, "terms": ["Software as a service (SaaS)"]}]},
+  {"number": "2400123", "words": "BONDI BAKERY", "status": "Pending: Under examination", "owner": "Bondi Bakery Pty Ltd",
+   "classes": [{"class_number": 30, "terms": ["Bread", "Pastries"]}, {"class_number": 43, "terms": ["Cafe services"]}]},
+  {"number": "2100555", "words": "THUNDERBOLT", "status": "Registered: Registered/protected", "owner": "Storm Pty Ltd",
+   "classes": [{"class_number": 12, "terms": ["Bicycles"]}]}
+ ]
+}

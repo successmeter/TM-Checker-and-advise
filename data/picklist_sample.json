@@ -1,0 +1,250 @@
+{
+ "_note": "Hand-written SAMPLE for development only. Replace with the full picklist from IP Australia's TMGnS API (see README).",
+ "items": [
+  {
+   "id": "sample-9-1",
+   "class_number": 9,
+   "description": "Computer software"
+  },
+  {
+   "id": "sample-9-2",
+   "class_number": 9,
+   "description": "Downloadable mobile applications"
+  },
+  {
+   "id": "sample-9-3",
+   "class_number": 9,
+   "description": "Computer application software for mobile phones"
+  },
+  {
+   "id": "sample-9-4",
+   "class_number": 9,
+   "description": "Downloadable computer software for monitoring fitness"
+  },
+  {
+   "id": "sample-9-5",
+   "class_number": 9,
+   "description": "Smartwatches"
+  },
+  {
+   "id": "sample-9-6",
+   "class_number": 9,
+   "description": "Headphones"
+  },
+  {
+   "id": "sample-9-7",
+   "class_number": 9,
+   "description": "Computer hardware"
+  },
+  {
+   "id": "sample-25-1",
+   "class_number": 25,
+   "description": "Clothing"
+  },
+  {
+   "id": "sample-25-2",
+   "class_number": 25,
+   "description": "Footwear"
+  },
+  {
+   "id": "sample-25-3",
+   "class_number": 25,
+   "description": "Headwear"
+  },
+  {
+   "id": "sample-25-4",
+   "class_number": 25,
+   "description": "Hats"
+  },
+  {
+   "id": "sample-25-5",
+   "class_number": 25,
+   "description": "Caps (headwear)"
+  },
+  {
+   "id": "sample-25-6",
+   "class_number": 25,
+   "description": "Jumpers"
+  },
+  {
+   "id": "sample-25-7",
+   "class_number": 25,
+   "description": "Sweaters"
+  },
+  {
+   "id": "sample-25-8",
+   "class_number": 25,
+   "description": "Knitted garments"
+  },
+  {
+   "id": "sample-25-9",
+   "class_number": 25,
+   "description": "Cardigans"
+  },
+  {
+   "id": "sample-25-10",
+   "class_number": 25,
+   "description": "Socks"
+  },
+  {
+   "id": "sample-25-11",
+   "class_number": 25,
+   "description": "T-shirts"
+  },
+  {
+   "id": "sample-25-12",
+   "class_number": 25,
+   "description": "Shirts"
+  },
+  {
+   "id": "sample-25-13",
+   "class_number": 25,
+   "description": "Jackets (clothing)"
+  },
+  {
+   "id": "sample-25-14",
+   "class_number": 25,
+   "description": "Denim jackets"
+  },
+  {
+   "id": "sample-25-15",
+   "class_number": 25,
+   "description": "Athletic clothing"
+  },
+  {
+   "id": "sample-25-16",
+   "class_number": 25,
+   "description": "Sports shirts"
+  },
+  {
+   "id": "sample-25-17",
+   "class_number": 25,
+   "description": "Scarves"
+  },
+  {
+   "id": "sample-30-1",
+   "class_number": 30,
+   "description": "Coffee"
+  },
+  {
+   "id": "sample-30-2",
+   "class_number": 30,
+   "description": "Coffee beverages"
+  },
+  {
+   "id": "sample-30-3",
+   "class_number": 30,
+   "description": "Tea"
+  },
+  {
+   "id": "sample-30-4",
+   "class_number": 30,
+   "description": "Bread"
+  },
+  {
+   "id": "sample-30-5",
+   "class_number": 30,
+   "description": "Pastries"
+  },
+  {
+   "id": "sample-30-6",
+   "class_number": 30,
+   "description": "Chocolate"
+  },
+  {
+   "id": "sample-35-1",
+   "class_number": 35,
+   "description": "Retail services in relation to clothing"
+  },
+  {
+   "id": "sample-35-2",
+   "class_number": 35,
+   "description": "Online retail services in relation to clothing"
+  },
+  {
+   "id": "sample-35-3",
+   "class_number": 35,
+   "description": "Retail services in relation to footwear"
+  },
+  {
+   "id": "sample-35-4",
+   "class_number": 35,
+   "description": "Advertising"
+  },
+  {
+   "id": "sample-35-5",
+   "class_number": 35,
+   "description": "Business management consultancy"
+  },
+  {
+   "id": "sample-35-6",
+   "class_number": 35,
+   "description": "Online retail store services featuring clothing"
+  },
+  {
+   "id": "sample-41-1",
+   "class_number": 41,
+   "description": "Education services"
+  },
+  {
+   "id": "sample-41-2",
+   "class_number": 41,
+   "description": "Fitness training services"
+  },
+  {
+   "id": "sample-41-3",
+   "class_number": 41,
+   "description": "Conducting workshops"
+  },
+  {
+   "id": "sample-41-4",
+   "class_number": 41,
+   "description": "Yoga instruction"
+  },
+  {
+   "id": "sample-42-1",
+   "class_number": 42,
+   "description": "Software as a service (SaaS)"
+  },
+  {
+   "id": "sample-42-2",
+   "class_number": 42,
+   "description": "Design of computer software"
+  },
+  {
+   "id": "sample-42-3",
+   "class_number": 42,
+   "description": "Platform as a service (PaaS)"
+  },
+  {
+   "id": "sample-42-4",
+   "class_number": 42,
+   "description": "Hosting of software as a service"
+  },
+  {
+   "id": "sample-42-5",
+   "class_number": 42,
+   "description": "Development of computer software"
+  },
+  {
+   "id": "sample-43-1",
+   "class_number": 43,
+   "description": "Cafe services"
+  },
+  {
+   "id": "sample-43-2",
+   "class_number": 43,
+   "description": "Restaurant services"
+  },
+  {
+   "id": "sample-43-3",
+   "class_number": 43,
+   "description": "Catering services"
+  },
+  {
+   "id": "sample-43-4",
+   "class_number": 43,
+   "description": "Coffee shop services"
+  }
+ ]
+}
