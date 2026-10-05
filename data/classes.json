@@ -1,0 +1,230 @@
+{
+ "source": "Short class titles based on the Nice Classification headings",
+ "classes": [
+  {
+   "class_number": 1,
+   "title": "Chemicals",
+   "kind": "goods"
+  },
+  {
+   "class_number": 2,
+   "title": "Paints, varnishes and lacquers",
+   "kind": "goods"
+  },
+  {
+   "class_number": 3,
+   "title": "Cosmetics, toiletries and cleaning preparations",
+   "kind": "goods"
+  },
+  {
+   "class_number": 4,
+   "title": "Industrial oils, fuels and candles",
+   "kind": "goods"
+  },
+  {
+   "class_number": 5,
+   "title": "Pharmaceuticals, medical and veterinary preparations",
+   "kind": "goods"
+  },
+  {
+   "class_number": 6,
+   "title": "Common metals and metal goods",
+   "kind": "goods"
+  },
+  {
+   "class_number": 7,
+   "title": "Machines and machine tools",
+   "kind": "goods"
+  },
+  {
+   "class_number": 8,
+   "title": "Hand tools and cutlery",
+   "kind": "goods"
+  },
+  {
+   "class_number": 9,
+   "title": "Computers, software, electronic and scientific apparatus",
+   "kind": "goods"
+  },
+  {
+   "class_number": 10,
+   "title": "Medical and veterinary apparatus",
+   "kind": "goods"
+  },
+  {
+   "class_number": 11,
+   "title": "Lighting, heating, cooking, refrigeration and sanitary installations",
+   "kind": "goods"
+  },
+  {
+   "class_number": 12,
+   "title": "Vehicles",
+   "kind": "goods"
+  },
+  {
+   "class_number": 13,
+   "title": "Firearms and fireworks",
+   "kind": "goods"
+  },
+  {
+   "class_number": 14,
+   "title": "Jewellery, precious metals and watches",
+   "kind": "goods"
+  },
+  {
+   "class_number": 15,
+   "title": "Musical instruments",
+   "kind": "goods"
+  },
+  {
+   "class_number": 16,
+   "title": "Paper, printed matter and stationery",
+   "kind": "goods"
+  },
+  {
+   "class_number": 17,
+   "title": "Rubber, plastics and insulating materials",
+   "kind": "goods"
+  },
+  {
+   "class_number": 18,
+   "title": "Leather goods, bags and umbrellas",
+   "kind": "goods"
+  },
+  {
+   "class_number": 19,
+   "title": "Non-metallic building materials",
+   "kind": "goods"
+  },
+  {
+   "class_number": 20,
+   "title": "Furniture and household articles",
+   "kind": "goods"
+  },
+  {
+   "class_number": 21,
+   "title": "Household and kitchen utensils, glassware and crockery",
+   "kind": "goods"
+  },
+  {
+   "class_number": 22,
+   "title": "Ropes, tents, sacks and raw textile fibres",
+   "kind": "goods"
+  },
+  {
+   "class_number": 23,
+   "title": "Yarns and threads",
+   "kind": "goods"
+  },
+  {
+   "class_number": 24,
+   "title": "Textiles and household linen",
+   "kind": "goods"
+  },
+  {
+   "class_number": 25,
+   "title": "Clothing, footwear and headwear",
+   "kind": "goods"
+  },
+  {
+   "class_number": 26,
+   "title": "Lace, buttons, haberdashery and artificial flowers",
+   "kind": "goods"
+  },
+  {
+   "class_number": 27,
+   "title": "Carpets, mats and wall hangings",
+   "kind": "goods"
+  },
+  {
+   "class_number": 28,
+   "title": "Games, toys and sporting goods",
+   "kind": "goods"
+  },
+  {
+   "class_number": 29,
+   "title": "Meat, dairy, preserved fruits and vegetables",
+   "kind": "goods"
+  },
+  {
+   "class_number": 30,
+   "title": "Coffee, tea, bakery goods, confectionery and condiments",
+   "kind": "goods"
+  },
+  {
+   "class_number": 31,
+   "title": "Fresh produce, plants and animal food",
+   "kind": "goods"
+  },
+  {
+   "class_number": 32,
+   "title": "Beers and non-alcoholic beverages",
+   "kind": "goods"
+  },
+  {
+   "class_number": 33,
+   "title": "Alcoholic beverages (except beers)",
+   "kind": "goods"
+  },
+  {
+   "class_number": 34,
+   "title": "Tobacco and smokers' articles",
+   "kind": "goods"
+  },
+  {
+   "class_number": 35,
+   "title": "Advertising, business management and retail services",
+   "kind": "services"
+  },
+  {
+   "class_number": 36,
+   "title": "Financial, insurance and real estate services",
+   "kind": "services"
+  },
+  {
+   "class_number": 37,
+   "title": "Construction, repair and installation services",
+   "kind": "services"
+  },
+  {
+   "class_number": 38,
+   "title": "Telecommunications services",
+   "kind": "services"
+  },
+  {
+   "class_number": 39,
+   "title": "Transport, travel and storage services",
+   "kind": "services"
+  },
+  {
+   "class_number": 40,
+   "title": "Treatment of materials and manufacturing services",
+   "kind": "services"
+  },
+  {
+   "class_number": 41,
+   "title": "Education, entertainment, sporting and cultural services",
+   "kind": "services"
+  },
+  {
+   "class_number": 42,
+   "title": "Scientific, technology and software services",
+   "kind": "services"
+  },
+  {
+   "class_number": 43,
+   "title": "Food and drink services and temporary accommodation",
+   "kind": "services"
+  },
+  {
+   "class_number": 44,
+   "title": "Medical, beauty, agricultural and veterinary services",
+   "kind": "services"
+  },
+  {
+   "class_number": 45,
+   "title": "Legal, security and personal services",
+   "kind": "services"
+  }
+ ]
+}

@@ -1,6 +1,7 @@
 """Request and report shapes shared by the engine and the API."""
 
 from enum import Enum
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -23,8 +24,9 @@ class ClassSpec(BaseModel):
 
 
 class Application(BaseModel):
-    mark: str = Field(min_length=1, max_length=200)
+    mark: str = Field(min_length=1, max_length=200)  # for a logo: the words in the logo
     classes: list[ClassSpec] = Field(min_length=1)
+    mark_kind: Literal["word", "logo"] = "word"
 
     @field_validator("mark")
     @classmethod
@@ -110,6 +112,7 @@ class DistinctivenessFlag(BaseModel):
 
 class Report(BaseModel):
     mark: str
+    mark_kind: Literal["word", "logo"] = "word"
     overall_risk: Risk
     conflicts: list[Conflict]
     picklist: list[PicklistResult]
@@ -117,4 +120,5 @@ class Report(BaseModel):
     distinctiveness: list[DistinctivenessFlag]
     escalate: bool
     escalation_reasons: list[str]
+    notes: list[str] = []
     disclaimers: list[str]

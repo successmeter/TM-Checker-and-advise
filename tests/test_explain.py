@@ -118,3 +118,16 @@ def test_missing_credentials_gives_friendly_message(report, monkeypatch):
 def test_api_key_with_stray_spaces_or_quotes_is_cleaned(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", '  "sk-ant-test-key" ')
     assert Explainer().client.api_key == "sk-ant-test-key"
+
+
+def test_keywords_asks_claude_for_picklist_search_words():
+    sent = {}
+
+    def handler(request):
+        sent["body"] = json.loads(request.content)
+        return httpx2.Response(200, json=message({"keywords": ["cafe", "coffee", "cafe", " takeaway food "]}))
+
+    words = Explainer(client=sdk_client(handler)).keywords("We run a cafe")
+    assert words == ["cafe", "coffee", "takeaway food"]
+    assert sent["body"]["output_config"]["effort"] == "low"
+    assert sent["body"]["messages"][0]["content"] == "We run a cafe"

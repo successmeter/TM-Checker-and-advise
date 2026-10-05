@@ -71,6 +71,22 @@ _SCHEMA: dict[str, Any] = {
 }
 
 
+KEYWORDS_PROMPT = """You turn a founder's plain-language description of their business into short search words \
+for IP Australia's goods and services picklist (the pre-approved list of terms used in trade mark applications).
+
+Return the goods they make or sell and the services they provide, as the nouns a picklist entry would use: \
+"coffee", "cafe", "catering", "t-shirts", "online retail", "software", "mobile app", "yoga instruction". \
+Include closely connected things they are likely to sell or offer (a cafe usually also sells coffee beans and \
+takeaway food). One to three words each, singular or plural as natural, no class numbers, at most 12."""
+
+_KEYWORDS_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {"keywords": {"type": "array", "items": {"type": "string"}}},
+    "required": ["keywords"],
+    "additionalProperties": False,
+}
+
+
 class Citation(BaseModel):
     id: str
     title: str
@@ -139,16 +155,32 @@ class Explainer:
         return self._client
 
     def explain(self, report: Report, excerpts: list[Chunk]) -> Explanation:
+        response = self._call(SYSTEM_PROMPT, _user_message(report, excerpts), _SCHEMA, self.effort, 16000)
+        if response.stop_reason == "refusal":
+            raise ExplanationUnavailable("An explanation could not be generated for this check.")
+        if response.stop_reason == "max_tokens":
+            raise ExplanationUnavailable("The explanation was too long to complete. Please try again.")
+        return _to_explanation(_json_text(response), report, excerpts, getattr(response, "model", self.model))
+
+    def keywords(self, description: str) -> list[str]:
+        """Picklist search words for a plain-language description of a business."""
+        response = self._call(KEYWORDS_PROMPT, description, _KEYWORDS_SCHEMA, "low", 4000)
+        if response.stop_reason in ("refusal", "max_tokens"):
+            raise ExplanationUnavailable("Couldn't work out search words for that description.")
+        words = _json_text(response).get("keywords", [])
+        return [w.strip() for w in dict.fromkeys(words) if w.strip()][:15]
+
+    def _call(self, system: str, user: str, schema: dict, effort: str, max_tokens: int) -> Any:
         try:
-            response = self.client.beta.messages.create(
+            return self.client.beta.messages.create(
                 model=self.model,
-                max_tokens=16000,
+                max_tokens=max_tokens,
                 betas=["server-side-fallback-2026-07-01"],
                 fallbacks="default",
                 cache_control={"type": "ephemeral"},
-                output_config={"effort": self.effort, "format": {"type": "json_schema", "schema": _SCHEMA}},
-                system=SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": _user_message(report, excerpts)}],
+                output_config={"effort": effort, "format": {"type": "json_schema", "schema": schema}},
+                system=system,
+                messages=[{"role": "user", "content": user}],
             )
         except anthropic.AuthenticationError as e:
             raise ExplanationUnavailable("Explanations are not set up: the Anthropic API key is missing or invalid.") from e
@@ -163,14 +195,12 @@ class Explainer:
                 raise
             raise ExplanationUnavailable("Explanations are not set up: no Anthropic API key found.") from e
 
-        if response.stop_reason == "refusal":
-            raise ExplanationUnavailable("An explanation could not be generated for this check.")
-        if response.stop_reason == "max_tokens":
-            raise ExplanationUnavailable("The explanation was too long to complete. Please try again.")
-        text = next((b.text for b in response.content if b.type == "text"), None)
-        if text is None:
-            raise ExplanationUnavailable("The explanation service returned no text.")
-        return _to_explanation(json.loads(text), report, excerpts, getattr(response, "model", self.model))
+
+def _json_text(response: Any) -> dict:
+    text = next((b.text for b in response.content if b.type == "text"), None)
+    if text is None:
+        raise ExplanationUnavailable("The explanation service returned no text.")
+    return json.loads(text)
 
 
 def _user_message(report: Report, excerpts: list[Chunk]) -> str:

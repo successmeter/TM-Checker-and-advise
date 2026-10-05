@@ -13,9 +13,15 @@ DATA = Path(__file__).resolve().parents[1] / "data"
 
 
 class FakeExplainer:
-    def __init__(self, fail=False):
+    def __init__(self, fail=False, keywords=None):
         self.fail = fail
         self.calls = []
+        self._keywords = keywords or ["coffee", "cafe"]
+
+    def keywords(self, text):
+        if self.fail:
+            raise ExplanationUnavailable("Explanations are not set up: no Anthropic API key found.")
+        return self._keywords
 
     def explain(self, report, excerpts):
         self.calls.append((report, excerpts))
@@ -97,3 +103,47 @@ def test_explain_degrades_gracefully_without_llm(caplog):
     assert data["explanation"] is None
     assert "not set up" in data["unavailable_reason"]
     assert data["report"]["conflicts"]  # the check itself still works
+
+
+def test_classes_endpoint(client):
+    classes = client.get("/api/classes").json()
+    assert len(classes) == 45
+    assert classes[24] == {"class_number": 25, "title": "Clothing, footwear and headwear", "kind": "goods"}
+
+
+def test_find_groups_results_by_class(client):
+    data = client.get("/api/picklist/find", params={"q": "sweaters"}).json()
+    assert data["groups"][0]["class_number"] == 25
+    assert data["groups"][0]["title"] == "Clothing, footwear and headwear"
+    assert {"description": "Sweaters"} .items() <= data["groups"][0]["items"][0].items()
+    assert data["sample_picklist"] is True
+
+
+def test_find_can_limit_to_services(client):
+    data = client.get("/api/picklist/find", params={"q": "coffee", "kinds": "services"}).json()
+    assert data["groups"] and all(g["kind"] == "services" for g in data["groups"])
+
+
+def test_describe_uses_smart_keywords():
+    data = make_client().post("/api/picklist/describe", json={"text": "I run a little cafe in Fitzroy"}).json()
+    assert data["keywords"] == ["coffee", "cafe"]
+    assert {g["class_number"] for g in data["groups"]} >= {30, 43}
+    assert data["note"] is None
+
+
+def test_describe_falls_back_to_plain_words():
+    data = make_client(FakeExplainer(fail=True)).post(
+        "/api/picklist/describe", json={"text": "We sell handmade candles and soaps"}).json()
+    assert data["keywords"] == ["handmade", "candles", "soaps"]
+    assert {g["class_number"] for g in data["groups"]} >= {3, 4}
+    assert "main words" in data["note"]
+
+
+def test_logo_kind_softens_descriptive_mark(client):
+    body = {"mark": "Best Coffee", "consent": True, "classes": [{"class_number": 30, "terms": ["Coffee"]}]}
+    word = client.post("/api/check", json=body).json()
+    logo = client.post("/api/check", json={**body, "mark_kind": "logo"}).json()
+    assert word["overall_risk"] == "High" and word["escalate"]
+    assert logo["overall_risk"] == "Medium" and not logo["escalate"]
+    assert logo["mark_kind"] == "logo"
+    assert any("protects the logo as a whole" in n for n in logo["notes"])

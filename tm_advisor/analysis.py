@@ -18,6 +18,13 @@ DISCLAIMERS = [
     "registered trade marks attorney.",
 ]
 
+LOGO_DISTINCTIVENESS_NOTE = (
+    "Filing as a logo: a distinctive design can help a descriptive word get accepted, but the registration then "
+    "protects the logo as a whole. Other traders may still be able to use the words on their own.")
+LOGO_SIMILARITY_NOTE = (
+    "Filing as a logo rarely avoids a similarity objection: examiners compare the main feature of each mark, "
+    "which is usually the words.")
+
 _RISK_ORDER = {Risk.LOW: 0, Risk.MEDIUM: 1, Risk.HIGH: 2}
 
 
@@ -40,13 +47,21 @@ def check(application: Application, register: RegisterClient, picklist: Picklist
     all_terms = [t for spec in application.classes for t in spec.terms]
     flags, wholly_descriptive = distinctiveness.screen(application.mark, all_terms)
 
+    logo = application.mark_kind == "logo"
+    notes: list[str] = []
     overall = max((c.risk for c in conflicts if c.live), key=_RISK_ORDER.get, default=Risk.LOW)
     if wholly_descriptive:
-        overall = Risk.HIGH
+        overall = max(overall, Risk.MEDIUM if logo else Risk.HIGH, key=_RISK_ORDER.get)
+    if logo and flags:
+        notes.append(LOGO_DISTINCTIVENESS_NOTE)
+    if logo and conflicts:
+        notes.append(LOGO_SIMILARITY_NOTE)
 
-    reasons = _escalation_reasons(conflicts, wholly_descriptive)
+    reasons = _escalation_reasons(conflicts, wholly_descriptive and not logo)
     return Report(
         mark=application.mark,
+        mark_kind=application.mark_kind,
+        notes=notes,
         overall_risk=overall,
         conflicts=conflicts,
         picklist=picklist_results,
