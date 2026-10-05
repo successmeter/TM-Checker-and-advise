@@ -56,12 +56,16 @@ class RegisterMark(BaseModel):
     status: str
     owner: str | None = None
     classes: list[RegisterClass]
+    status_group: str | None = None  # IP Australia's statusGroup, e.g. REGISTERED, PENDING, NEVER_REGISTERED
 
     @property
     def is_live(self) -> bool:
         """Registered, accepted or still pending: only these can be cited under s44."""
-        status = self.status.lower()
-        return not any(word in status for word in ("lapsed", "removed", "refused", "withdrawn", "expired", "never registered", "cancelled", "revoked"))
+        if self.status_group:
+            return self.status_group.upper() in ("REGISTERED", "PENDING")
+        status = self.status.lower().replace("_", " ")
+        return not any(word in status for word in ("lapsed", "removed", "refused", "withdrawn", "expired",
+                                                   "never registered", "cancelled", "revoked", "discontinued"))
 
 
 class Risk(str, Enum):

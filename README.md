@@ -79,7 +79,11 @@ passages that weren't retrieved are dropped.
 ## Getting real data
 
 1. **Register access**: register on the IP Australia API portal and request access to the *Australian Trade Mark
-   Search API* (manual approval). Access uses OAuth2 client credentials.
+   Search API* (manual approval). Access uses OAuth2 client credentials. Then set `IPA_CLIENT_ID`,
+   `IPA_CLIENT_SECRET` and `TM_REGISTER=ipaustralia` (add `IPA_BASE_URL` with the test address while you only have
+   test access). The client follows the published specification in `docs/api/api.json`: it uses the advanced
+   search (exact, fuzzy, sound-alike and part-word matches, pending and registered marks only) and falls back to
+   quick search if the advanced search isn't enabled for your account.
 2. **Picklist**: the full list (60,000+ terms) comes from IP Australia's TMGnS search API, the same API its own
    classification search website uses. It needs your own API access: once you have a client ID and secret from the
    API portal, set `IPA_CLIENT_ID` and `IPA_CLIENT_SECRET` and the server downloads and refreshes it by itself

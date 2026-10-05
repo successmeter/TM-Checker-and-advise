@@ -1,11 +1,11 @@
 """Client for IP Australia's Australian Trade Mark Search API.
 
 Access is granted manually through the IP Australia API portal; the API uses OAuth2 client credentials.
-Two endpoints are used: POST /search/quick (returns trade mark numbers) and GET /trade-mark/{number}.
+Request and response shapes follow the API's published specification (docs/api/api.json, v1.0.5).
 
-The request filters and the response field names below follow the public description of the API but have
-NOT yet been checked against a live response. When access is granted, record a real response, adjust
-`_quick_search_body` and `_to_register_mark`, and update the tests.
+Main path: POST /page/advanced returns full trade mark records for a word search that IP Australia runs as
+EXACT, FUZZY, PHONETIC and PART matches, limited to pending and registered marks. If that endpoint isn't
+available to the account, the client falls back to POST /search/quick plus GET /trade-mark/{number} per hit.
 """
 
 import os
@@ -22,9 +22,11 @@ TEST_BASE = "https://test.api.ipaustralia.gov.au/public/australian-trade-mark-se
 
 class IpAustraliaRegisterClient:
     def __init__(self, client_id: str, client_secret: str, token_url: str, base_url: str = PRODUCTION_BASE,
-                 transport: httpx.BaseTransport | None = None, max_results: int = 40):
+                 transport: httpx.BaseTransport | None = None, max_results: int = 40, page_size: int = 50):
         self.base_url = base_url.rstrip("/")
         self.max_results = max_results
+        self.page_size = page_size
+        self._advanced_available = True
         self._http = httpx.Client(transport=transport, timeout=20)
         self._token = IpaToken(client_id, client_secret, token_url, self._http)
 
@@ -38,6 +40,35 @@ class IpAustraliaRegisterClient:
         )
 
     def search(self, mark: str, classes: list[int]) -> list[RegisterMark]:
+        if self._advanced_available:
+            try:
+                return self._advanced_search(mark)
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code not in (403, 404, 405, 501):
+                    raise
+                self._advanced_available = False  # not enabled for this account: use quick search from now on
+        return self._quick_then_get(mark)
+
+    def _advanced_search(self, mark: str) -> list[RegisterMark]:
+        found: dict[str, RegisterMark] = {}
+        for text, kind in _advanced_queries(mark):
+            body = {
+                "rows": [{"op": "AND", "query": {"word": {"text": text, "type": kind},
+                                                  "statuses": ["PENDING_REGISTERED"]}}],
+                "pageNumber": 0,
+                "pageSize": self.page_size,
+            }
+            response = self._http.post(f"{self.base_url}/page/advanced", json=body, headers=self._headers())
+            response.raise_for_status()
+            for record in response.json().get("trademarks") or []:
+                mark_ = _to_register_mark(record, str(record.get("number", "")))
+                if mark_.number and mark_.number not in found:
+                    found[mark_.number] = mark_
+            if len(found) >= self.max_results * 3:
+                break
+        return list(found.values())
+
+    def _quick_then_get(self, mark: str) -> list[RegisterMark]:
         numbers: list[str] = []
         for query in _queries(mark):
             for number in self._quick_search(query):
@@ -74,6 +105,18 @@ def _queries(mark: str) -> list[str]:
     return seen
 
 
+def _advanced_queries(mark: str) -> list[tuple[str, str]]:
+    """Whole mark exact, fuzzy and sound-alike; then each distinctive word as a part of other marks."""
+    whole = " ".join(words(mark)) or mark
+    queries = [(whole, "EXACT"), (squash(mark), "FUZZY"), (whole, "PHONETIC")]
+    queries += [(w, "PART") for w in words(mark) if len(w) >= 4]
+    seen: list[tuple[str, str]] = []
+    for q in queries:
+        if q[0] and q not in seen:
+            seen.append(q)
+    return seen
+
+
 def _quick_search_body(query: str) -> dict:
     return {
         "query": query,
@@ -88,7 +131,9 @@ def _to_register_mark(data: dict, number: str) -> RegisterMark:
     words_ = data.get("words") or data.get("markText") or ""
     if isinstance(words_, list):
         words_ = " ".join(words_)
-    status = data.get("statusGroup") or data.get("status") or ""
+    group = data.get("statusGroup")
+    code, detail = data.get("statusCode"), data.get("statusDetail")
+    status = ": ".join(str(v) for v in (code, detail) if v) or group or data.get("status") or ""
     if isinstance(status, dict):
         status = ": ".join(str(v) for v in status.values() if v)
     owners = data.get("owner") or data.get("owners") or []
@@ -106,4 +151,4 @@ def _to_register_mark(data: dict, number: str) -> RegisterMark:
             classes.append(RegisterClass(class_number=int(number_), terms=terms))
 
     return RegisterMark(number=str(data.get("number") or number), words=words_, status=str(status), owner=owner,
-                        classes=classes)
+                        classes=classes, status_group=str(group) if group else None)
