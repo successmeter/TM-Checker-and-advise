@@ -5,12 +5,15 @@
 """
 
 import argparse
+from pathlib import Path
 
 from . import build_index
 from .crawl import START_URL, crawl
 
-PAGES = "data/manual/pages.jsonl"
-INDEX = "data/manual/manual.sqlite"
+# Always the project's data folder, whichever folder the command is run from.
+DATA = Path(__file__).resolve().parents[2] / "data" / "manual"
+PAGES = DATA / "pages.jsonl"
+INDEX = DATA / "manual.sqlite"
 
 
 def main() -> None:
