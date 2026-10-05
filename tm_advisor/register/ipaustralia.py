@@ -9,10 +9,10 @@ NOT yet been checked against a live response. When access is granted, record a r
 """
 
 import os
-import time
 
 import httpx
 
+from ..ipa_auth import IpaToken
 from ..models import RegisterClass, RegisterMark
 from ..text import squash, words
 
@@ -23,14 +23,10 @@ TEST_BASE = "https://test.api.ipaustralia.gov.au/public/australian-trade-mark-se
 class IpAustraliaRegisterClient:
     def __init__(self, client_id: str, client_secret: str, token_url: str, base_url: str = PRODUCTION_BASE,
                  transport: httpx.BaseTransport | None = None, max_results: int = 40):
-        self.client_id = client_id
-        self.client_secret = client_secret
-        self.token_url = token_url
         self.base_url = base_url.rstrip("/")
         self.max_results = max_results
         self._http = httpx.Client(transport=transport, timeout=20)
-        self._token: str | None = None
-        self._token_expires = 0.0
+        self._token = IpaToken(client_id, client_secret, token_url, self._http)
 
     @classmethod
     def from_env(cls) -> "IpAustraliaRegisterClient":
@@ -51,22 +47,8 @@ class IpAustraliaRegisterClient:
                 break
         return [self._get(n) for n in numbers[: self.max_results]]
 
-    def _access_token(self) -> str:
-        if self._token and time.time() < self._token_expires - 30:
-            return self._token
-        response = self._http.post(self.token_url, data={
-            "grant_type": "client_credentials",
-            "client_id": self.client_id,
-            "client_secret": self.client_secret,
-        })
-        response.raise_for_status()
-        body = response.json()
-        self._token = body["access_token"]
-        self._token_expires = time.time() + float(body.get("expires_in", 300))
-        return self._token
-
     def _headers(self) -> dict[str, str]:
-        return {"Authorization": f"Bearer {self._access_token()}", "Accept": "application/json"}
+        return self._token.headers()
 
     def _quick_search(self, query: str) -> list[str]:
         response = self._http.post(f"{self.base_url}/search/quick", json=_quick_search_body(query), headers=self._headers())

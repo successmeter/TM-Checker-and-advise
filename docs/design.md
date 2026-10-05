@@ -45,8 +45,8 @@ MVP (Phase 1, built here):
    narrowing cannot fix, a wholly descriptive mark).
 6. Web page with active consent and in-line disclaimers; JSON API.
 
-Phase 2: Manual RAG + LLM explanations with Manual citations; live IP Australia client switched on with
-real credentials; full picklist sync from TMGnS.
+Phase 2: Manual search + LLM explanations with Manual citations (built, §4.3); live IP Australia client switched
+on with real credentials; full picklist sync from TMGnS (built, awaiting API access).
 Phase 3: **Examination report helper**: paste an adverse report, get the cited sections explained, the
 options the Manual allows (amend spec, arguments, evidence of use, s44(3) honest concurrent use, etc.) and a
 "do this yourself / see an attorney" call.
@@ -64,7 +64,7 @@ Browser (static page)  ──>  FastAPI  ──>  analysis.check(application)
                                          ──> Report (risk band, findings, suggestions, escalation, disclaimers)
 ```
 
-Python 3.11 + FastAPI + Pydantic. No database in Phase 1. Postgres + pgvector arrives with the Manual RAG.
+Python 3.11 + FastAPI + Pydantic. No database server: the Manual index is a local SQLite file (§4.3).
 
 ### 4.1 Register access
 `RegisterClient.search(mark_text, classes) -> list[RegisterMark]`.
@@ -85,6 +85,21 @@ curated closely-related class pair such as 25/35 retail of clothing, 9/42 softwa
 Band: High = mark ≥ 0.85 and goods `same`; Medium = mark ≥ 0.85 and `related`, or mark ≥ 0.7 and `same`; Low
 otherwise. Only live marks (registered, accepted, pending) count; lapsed and removed marks are listed as
 information.
+
+### 4.3 Manual search and explanations (Phase 2)
+The Manual is downloaded politely (robots.txt, one request per second), split by heading into ~350-word chunks
+that keep their Part title, heading and URL, and indexed with SQLite's built-in full-text search (BM25).
+Keyword search replaces the pgvector plan: the Manual's vocabulary ("deceptively similar", "goods of the same
+description", "inherently adapted to distinguish") is exactly what the findings contain, it needs no embedding
+service or database server, and it runs on a founder's Windows PC. Revisit embeddings if evaluation shows
+missed passages.
+
+`POST /api/explain` runs the check, builds search queries from the findings (one per Medium/High conflict, one
+for distinctiveness flags), and sends the findings plus up to eight excerpts to Claude (default
+`claude-opus-5-5`, medium effort, server-side refusal fallback) with a JSON schema. The system prompt forbids
+changing risk levels or promising outcomes. Afterwards, citations not in the retrieved set and conflicts not in
+the report are discarded. Failures (no key, refusal, API error) return the report with a plain message instead
+of an explanation.
 
 ## 5. Output contract
 
@@ -110,5 +125,5 @@ injectable `httpx` transport.
 
 ## 8. Open questions
 1. IP Australia API access: apply on the developer portal (manual approval). Who is the applicant entity?
-2. LLM provider for Phase 2 (default: Claude via the Anthropic API).
-3. Separate repository for this tool (recommended; it currently lives in `tm-advisor/` of this repo).
+2. ~~LLM provider for Phase 2~~: Claude via the Anthropic API.
+3. ~~Separate repository~~: successmeter/tm-checker-and-advise.

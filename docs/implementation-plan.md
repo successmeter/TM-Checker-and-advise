@@ -56,13 +56,21 @@ suite, commit. IP Australia is never called in tests.
   results, disclaimers. Register chosen by env (`TM_REGISTER=fixture|ipaustralia`).
 - Tests: 422 without consent; happy path; picklist search.
 
-## Phase 2 (next)
-- Task 11: apply for IP Australia API access; verify field mapping against real responses; record fixtures.
-- Task 12: TMGnS picklist sync script (full picklist to `data/picklist.json`).
-- Task 13: Manual ingestion (crawl manuals.ipaustralia.gov.au politely, chunk by Part/section, keep URL) into
-  pgvector.
-- Task 14: LLM explanation layer: input = deterministic findings + retrieved Manual chunks; output must cite chunks;
-  refuses to change the risk band.
+## Phase 2
+- Task 11 (**founder**): apply for IP Australia API access (Trade Mark Search API and TMGnS API); then verify the
+  field mapping against real responses and record fixtures from them. *Open.*
+- Task 12: TMGnS picklist sync (`python -m tm_advisor.picklist_sync`): CSV/JSON/zip, loose column matching,
+  inactive and duplicate rows dropped. *Done; check against the first real download.*
+- Task 13: Manual ingestion (`python -m tm_advisor.manual crawl`): robots.txt, 1 request/second, pages kept as
+  JSON lines, split by heading into ~350-word chunks with overlap, URL kept. Indexed with SQLite FTS5 (BM25)
+  instead of pgvector, see design §4.3. *Done; run on the founder's PC (the cloud dev environment can't reach
+  manuals.ipaustralia.gov.au).*
+- Task 14: explanation layer (`POST /api/explain`, page button): findings + retrieved chunks to Claude with a
+  JSON schema; citations not in the retrieved set and conflicts not in the report are dropped; refusals, missing
+  keys and API errors become a friendly message while the check still works. *Done.*
+- Also: mark similarity now spots a distinctive word inside the other mark when extra words are added
+  ("Best EcoKnit" vs ECO KNITWEAR).
+- Next: an evaluation set of real examination outcomes to measure the screen and the explanations before launch.
 
 ## Phase 3
 - Task 15: Examination report helper.

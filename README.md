@@ -11,9 +11,12 @@ TM Advisor is software, not a law firm or a trade marks attorney, and does not g
 
 ## Status
 
-Phase 1 (MVP) works end to end against a **fixture register** of invented marks and a **sample picklist**.
-The IP Australia client is written and unit-tested, but its request filters and response mapping still have to be
-checked against a real response once API access is approved (see `tm_advisor/register/ipaustralia.py`).
+- **Phase 1 (checks)** works end to end against a **fixture register** of invented marks and a **sample picklist**.
+- **Phase 2 (explanations)**: "Explain in plain English" sends the findings plus matching Trade Marks Manual
+  passages to Claude and shows the answer with links to the Manual. It needs an Anthropic API key and a local
+  Manual index (below); without them the checks still work and the page says explanations aren't set up.
+- The IP Australia register and picklist clients are written and unit-tested against simulated responses. Their
+  field mapping has to be checked against real responses once API access is approved.
 
 ## Run it
 
@@ -38,6 +41,25 @@ uvicorn tm_advisor.api:app --reload
 
 Open http://127.0.0.1:8000 for the page, or http://127.0.0.1:8000/docs for the API.
 
+### Turn on plain-English explanations
+
+1. Get an API key at https://console.anthropic.com and set it before starting the server:
+   - PowerShell: `$env:ANTHROPIC_API_KEY = "sk-ant-..."`
+   - macOS / Linux: `export ANTHROPIC_API_KEY=sk-ant-...`
+2. Download and index the Trade Marks Manual (once; re-run when the Manual changes). It fetches about one page
+   per second and obeys IP Australia's robots.txt, so the first run takes a while:
+
+   ```
+   python -m tm_advisor.manual crawl
+   ```
+
+   Pages go to `data/manual/pages.jsonl` and the search index to `data/manual/manual.sqlite`. To re-index without
+   downloading again: `python -m tm_advisor.manual index`.
+
+Each explanation is one Claude call (Claude Opus 5.5 by default, with Anthropic's automatic fallback model if a
+request is declined). Claude only explains the findings: it can't change a risk level, and citations to Manual
+passages that weren't retrieved are dropped.
+
 ## Configuration
 
 | Variable | Default | Meaning |
@@ -48,13 +70,20 @@ Open http://127.0.0.1:8000 for the page, or http://127.0.0.1:8000/docs for the A
 | `IPA_CLIENT_ID`, `IPA_CLIENT_SECRET` | | From the IP Australia API portal |
 | `IPA_TOKEN_URL` | | OAuth2 token endpoint shown on the portal |
 | `IPA_BASE_URL` | production Trade Mark Search API | Use the test base URL while developing |
+| `TMGNS_BASE_URL` | production TMGnS API | Picklist API base URL |
+| `ANTHROPIC_API_KEY` | | Turns on explanations |
+| `TM_LLM_MODEL` | `claude-opus-5-5` | Model used for explanations |
+| `TM_MANUAL_INDEX` | `data/manual/manual.sqlite` | Manual search index |
 
 ## Getting real data
 
 1. **Register access**: register on the IP Australia API portal and request access to the *Australian Trade Mark
    Search API* (manual approval). Access uses OAuth2 client credentials.
-2. **Picklist**: request access to the *Trade Mark Goods and Services (TMGnS) API* and save the full picklist as
-   `data/picklist.json` in the same shape as `data/picklist_sample.json`.
+2. **Picklist**: request access to the *Trade Mark Goods and Services (TMGnS) API*, then run
+   `python -m tm_advisor.picklist_sync` (same `IPA_*` credentials). It downloads every description into
+   `data/picklist.json`, which the app uses instead of the sample. If you download the file another way:
+   `python -m tm_advisor.picklist_sync --from-file <file>`.
+3. **Manual**: `python -m tm_advisor.manual crawl` (above).
 
 ## Layout
 
@@ -66,7 +95,11 @@ tm_advisor/
   goods_similarity.py  overlap between goods/services (same class, broad headings, related classes)
   distinctiveness.py   section 41 screen
   picklist.py          picklist match, suggestions, search
+  picklist_sync.py     full picklist download from the TMGnS API
   register/            fixture and IP Australia register clients
+  ipa_auth.py          IP Australia OAuth tokens
   analysis.py          runs every check and builds the report
+  manual/              Trade Marks Manual download, parsing, chunking, keyword search
+  explain.py           plain-English explanations with Claude, grounded in Manual passages
   api.py, static/      FastAPI app and the page
 ```

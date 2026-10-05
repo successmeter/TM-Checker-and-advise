@@ -41,12 +41,21 @@ def compare(user_mark: str, cited_mark: str) -> MarkSimilarity:
         reasons.append("Likely to sound alike when spoken.")
 
     shorter, longer = sorted((a, b), key=len)
-    if len(shorter) >= 4 and shorter in longer:
+    whole_contained = len(shorter) >= 4 and shorter in longer
+    if whole_contained:
         contained = 0.85 if longer.startswith(shorter) else 0.75
         score = max(score, contained)
         reasons.append(f"'{shorter.upper()}' appears inside '{longer.upper()}'.")
 
-    shared = (set(words(user_mark)) & set(words(cited_mark))) - _WEAK_WORDS
+    common_words = set(words(user_mark)) & set(words(cited_mark))
+    elements = [(w, b, cited_mark) for w in words(user_mark)] + [(w, a, user_mark) for w in words(cited_mark)]
+    for word, other, other_text in [] if whole_contained else elements:
+        if len(word) >= 4 and word not in _WEAK_WORDS and word not in common_words and word in other:
+            score = max(score, 0.75)
+            reasons.append(f"The word '{word.upper()}' appears inside '{other_text.upper()}'.")
+            break
+
+    shared = common_words - _WEAK_WORDS
     shared = {w for w in shared if len(w) >= 3}
     if shared:
         score = max(score, 0.7)

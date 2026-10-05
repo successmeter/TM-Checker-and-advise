@@ -44,6 +44,9 @@
   ul { margin: 6px 0; padding-left: 20px; }
   footer { color: var(--muted); font-size: .85rem; margin-top: 32px; }
   .error { color: var(--high); }
+  #explain-box { margin-top: 24px; }
+  .cites { font-size: .85rem; color: var(--muted); }
+  .cites a { color: var(--accent); }
 </style>
 </head>
 <body>
@@ -70,6 +73,11 @@
   </form>
 
   <section id="result" aria-live="polite"></section>
+  <section id="explain-box" hidden>
+    <button type="button" id="explain">Explain this in plain English</button>
+    <span class="hint">Uses AI, grounded in IP Australia's Trade Marks Manual. Takes up to a minute.</span>
+    <div id="explanation" aria-live="polite"></div>
+  </section>
 
   <footer id="disclaimers"></footer>
 </main>
@@ -106,6 +114,8 @@ fetch("/api/disclaimers").then(r => r.json()).then(list => {
   $("#disclaimers").innerHTML = list.map(d => `<p>${esc(d)}</p>`).join("");
 });
 
+let lastBody = null;
+
 $("#form").onsubmit = async (e) => {
   e.preventDefault();
   $("#error").textContent = "";
@@ -114,18 +124,62 @@ $("#form").onsubmit = async (e) => {
     terms: $(".terms", row).value.split("\n").map(t => t.trim()).filter(Boolean),
   }));
   const body = { mark: $("#mark").value, classes, consent: $("#consent").checked };
+  lastBody = body;
+  $("#explanation").innerHTML = "";
+  $("#explain-box").hidden = true;
   $("#run").disabled = true;
   try {
     const response = await fetch("/api/check", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body) });
     const data = await response.json();
     if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Please check the mark, classes and terms.");
     render(data);
+    $("#explain-box").hidden = false;
   } catch (err) {
     $("#error").textContent = err.message;
   } finally {
     $("#run").disabled = !$("#consent").checked;
   }
 };
+
+$("#explain").onclick = async () => {
+  const button = $("#explain");
+  button.disabled = true;
+  $("#explanation").innerHTML = "<p class=\"hint\">Working on it…</p>";
+  try {
+    const response = await fetch("/api/explain", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(lastBody) });
+    const data = await response.json();
+    if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Something went wrong.");
+    renderExplanation(data);
+  } catch (err) {
+    $("#explanation").innerHTML = `<p class="error">${esc(err.message)}</p>`;
+  } finally {
+    button.disabled = false;
+  }
+};
+
+function cites(list) {
+  if (!list || !list.length) return "";
+  return `<p class="cites">Manual: ${list.map(c => `<a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.title)}${
+    c.heading && c.heading !== c.title ? " › " + esc(c.heading) : ""}</a>`).join("; ")}</p>`;
+}
+
+function renderExplanation(data) {
+  if (!data.explanation) {
+    $("#explanation").innerHTML = `<p class="error">${esc(data.unavailable_reason)}</p>`;
+    return;
+  }
+  const x = data.explanation;
+  const parts = [`<h2>In plain English</h2><div class="card"><p>${esc(x.overview)}</p></div>`];
+  for (const c of x.conflicts) {
+    const conflict = data.report.conflicts.find(k => k.cited_number === c.cited_number);
+    parts.push(`<div class="card"><strong>${esc(conflict ? conflict.cited_words : c.cited_number)}</strong>
+      <p>${esc(c.explanation)}</p>${cites(c.citations)}</div>`);
+  }
+  if (x.distinctiveness) parts.push(`<div class="card"><strong>Distinctiveness</strong><p>${esc(x.distinctiveness.explanation)}</p>${cites(x.distinctiveness.citations)}</div>`);
+  if (x.next_steps.length) parts.push(`<div class="card"><strong>Next steps to consider</strong><ul>${x.next_steps.map(s => `<li>${esc(s)}</li>`).join("")}</ul></div>`);
+  parts.push(`<p class="note">Written by AI from the findings above${data.manual_excerpts_used ? " and passages of IP Australia's Trade Marks Manual" : " (the Manual index isn't set up, so no passages were used)"}. It can make mistakes and is not legal advice; follow the Manual links to read the source.</p>`);
+  $("#explanation").innerHTML = parts.join("");
+}
 
 function render(r) {
   const parts = [];

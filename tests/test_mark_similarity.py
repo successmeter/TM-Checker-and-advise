@@ -39,3 +39,9 @@ def test_weak_shared_word_does_not_count():
 
 def test_unrelated_marks_score_low():
     assert compare("EcoKnit", "Thunderbolt").score < 0.5
+
+
+def test_distinctive_word_inside_other_mark_despite_extra_words():
+    result = compare("Best EcoKnit", "ECO KNITWEAR")
+    assert result.score >= 0.75
+    assert any("ECOKNIT" in r for r in result.reasons)
