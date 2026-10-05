@@ -53,8 +53,9 @@ Open http://127.0.0.1:8000 for the page, or http://127.0.0.1:8000/docs for the A
    python -m tm_advisor.manual crawl
    ```
 
-   Pages go to `data/manual/pages.jsonl` and the search index to `data/manual/manual.sqlite`. To re-index without
-   downloading again: `python -m tm_advisor.manual index`.
+   Pages go to `data/manual/pages.jsonl` and the search index to `data/manual/manual.sqlite`. Running `crawl` again
+   does nothing once the Manual is downloaded; to pick up Manual updates use `crawl --refresh` (the old copy is kept
+   until the new download finishes). To re-index without downloading: `python -m tm_advisor.manual index`.
 
 Each explanation is one Claude call (Claude Opus 5.5 by default, with Anthropic's automatic fallback model if a
 request is declined). Claude only explains the findings: it can't change a risk level, and citations to Manual

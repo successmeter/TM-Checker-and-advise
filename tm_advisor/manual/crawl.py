@@ -26,9 +26,10 @@ def crawl(start_url: str = START_URL, out_file: str | Path = "data/manual/pages.
     robots = _robots(client, start_url)
     out = Path(out_file)
     out.parent.mkdir(parents=True, exist_ok=True)
+    partial = out.with_name(out.name + ".partial")  # the previous download stays usable until this one finishes
 
     queue, seen, saved = deque([start_url]), {start_url}, 0
-    with out.open("w", encoding="utf-8") as f:
+    with partial.open("w", encoding="utf-8") as f:
         while queue and (max_pages is None or saved < max_pages):
             url = queue.popleft()
             if not robots.can_fetch(USER_AGENT, url):
@@ -47,6 +48,8 @@ def crawl(start_url: str = START_URL, out_file: str | Path = "data/manual/pages.
                 if link not in seen:
                     seen.add(link)
                     queue.append(link)
+    if saved:
+        partial.replace(out)
     return saved
 
 

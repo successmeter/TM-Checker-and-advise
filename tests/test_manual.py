@@ -95,3 +95,30 @@ def test_crawl_obeys_robots_and_builds_index(tmp_path):
     count = build_index(out, tmp_path / "manual.sqlite")
     assert count > 0
     assert ManualIndex(tmp_path / "manual.sqlite").search("closely related services retail")
+
+
+def test_failed_crawl_keeps_previous_download(tmp_path):
+    out = tmp_path / "pages.jsonl"
+    out.write_text('{"url": "old", "html": ""}\n')
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(503)
+
+    saved = crawl(f"{BASE}/trademark", out, client=httpx.Client(transport=httpx.MockTransport(handler)),
+                  sleep=lambda _: None, log=lambda _: None)
+    assert saved == 0
+    assert out.read_text() == '{"url": "old", "html": ""}\n'
+
+
+def test_crawl_command_skips_when_already_downloaded(tmp_path, monkeypatch, capsys):
+    import sys
+    from tm_advisor.manual import __main__ as cli
+
+    (tmp_path / "pages.jsonl").write_text("")
+    (tmp_path / "manual.sqlite").write_text("")
+    monkeypatch.setattr(cli, "PAGES", tmp_path / "pages.jsonl")
+    monkeypatch.setattr(cli, "INDEX", tmp_path / "manual.sqlite")
+    monkeypatch.setattr(cli, "crawl", lambda *a, **k: (_ for _ in ()).throw(AssertionError("should not crawl")))
+    monkeypatch.setattr(sys, "argv", ["tm_advisor.manual", "crawl"])
+    cli.main()
+    assert "already downloaded" in capsys.readouterr().out
