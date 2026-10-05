@@ -172,6 +172,36 @@ def probe(client: httpx.Client | None = None, log: Callable[[str], None] = print
     urls = sorted(set(re.findall(r"https?://[^\s\"'<>]*api[^\s\"'<>]*", response.text)))[:10]
     log(f"API-looking URLs in the page: {urls}")
     log(f"Saved the page to {PROBE}")
+    for src in scripts[:5]:
+        script_url = urljoin(str(response.url), src)
+        script = client.get(script_url)
+        if script.status_code != 200:
+            log(f"Couldn't read {script_url} ({script.status_code})")
+            continue
+        saved = PROBE.with_name("picklist_probe_" + Path(urlparse(script_url).path).name)
+        saved.write_text(script.text, encoding="utf-8")
+        found = data_addresses(script.text)
+        log(f"Data addresses in {src} ({len(script.text)} characters):")
+        for address in found[:40]:
+            log(f"  {address}")
+        if not found:
+            log("  (none found)")
+
+
+_ADDRESS = re.compile(r"""["'`]((?:https?://[^"'`\s]{4,200})|(?:/[A-Za-z0-9_\-./{}$?=&]{2,200}))["'`]""")
+_INTERESTING = ("api", "description", "class", "gns", "picklist", "search", "term", "goods")
+
+
+def data_addresses(script: str) -> list[str]:
+    """URLs and paths in a JavaScript bundle that look like data endpoints."""
+    found = []
+    for match in _ADDRESS.finditer(script):
+        address = match.group(1)
+        lower = address.lower()
+        if any(word in lower for word in _INTERESTING) and not lower.endswith((".js", ".css", ".svg", ".png", ".woff2")):
+            if address not in found:
+                found.append(address)
+    return found
 
 
 def main() -> None:

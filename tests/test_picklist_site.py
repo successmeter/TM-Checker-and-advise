@@ -101,3 +101,11 @@ def test_much_smaller_list_is_refused_and_current_list_kept(tmp_path):
     change = sync(out, client=site(lambda c: [f"Term {c} 0", f"Term {c} 1"]), force=True,
                   sleep=lambda _: None, log=lambda _: None)
     assert change.after == 90
+
+
+def test_data_addresses_found_in_a_script_bundle():
+    from tm_advisor.picklist_site import data_addresses
+    bundle = ('const a="https://api.example.gov.au/tmgns/v1/descriptions",b=`/api/classes/${n}/terms`;'
+              'import("/assets/vendor.js");const c="/logo.svg",d="hello";fetch("/search/goods?q="+q)')
+    assert data_addresses(bundle) == ["https://api.example.gov.au/tmgns/v1/descriptions", "/api/classes/${n}/terms",
+                                      "/search/goods?q="]
