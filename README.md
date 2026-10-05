@@ -69,9 +69,9 @@ passages that weren't retrieved are dropped.
 | `TM_REGISTER_FIXTURE` | `data/register_fixture.json` | Fixture register file |
 | `TM_PICKLIST` | `data/picklist.json` if present, else `data/picklist_sample.json` | Picklist file |
 | `IPA_CLIENT_ID`, `IPA_CLIENT_SECRET` | | From the IP Australia API portal |
-| `IPA_TOKEN_URL` | | OAuth2 token endpoint shown on the portal |
+| `IPA_TOKEN_URL` | IP Australia External Token API | OAuth2 token endpoint, if the portal gives a different one |
 | `IPA_BASE_URL` | production Trade Mark Search API | Use the test base URL while developing |
-| `TMGNS_BASE_URL` | production TMGnS API | Picklist API base URL |
+| `TMGNS_SEARCH_BASE` | production TMGnS search API | Picklist API base URL |
 | `ANTHROPIC_API_KEY` | | Turns on explanations |
 | `TM_LLM_MODEL` | `claude-opus-5-5` | Model used for explanations |
 | `TM_MANUAL_INDEX` | `data/manual/manual.sqlite` | Manual search index |
@@ -80,14 +80,12 @@ passages that weren't retrieved are dropped.
 
 1. **Register access**: register on the IP Australia API portal and request access to the *Australian Trade Mark
    Search API* (manual approval). Access uses OAuth2 client credentials.
-2. **Picklist (no API access needed)**: `python -m tm_advisor.picklist_site sync` reads IP Australia's public
-   classification search, one page per class (https://tmgns.search.ipaustralia.gov.au/descriptions?class=1 to 45),
-   about one page per second, into `data/picklist.json`. If it reports no terms, run
-   `python -m tm_advisor.picklist_site probe` and send the output: the page is probably built by JavaScript.
-   **Or, with API access**: request access to the *Trade Mark Goods and Services (TMGnS) API*, then run
-   `python -m tm_advisor.picklist_sync` (same `IPA_*` credentials). It downloads every description into
-   `data/picklist.json`, which the app uses instead of the sample. If you download the file another way:
-   `python -m tm_advisor.picklist_sync --from-file <file>`.
+2. **Picklist**: the full list (60,000+ terms) comes from IP Australia's TMGnS search API, the same API its own
+   classification search website uses. It needs your own API access: once you have a client ID and secret from the
+   API portal, set `IPA_CLIENT_ID` and `IPA_CLIENT_SECRET` and the server downloads and refreshes it by itself
+   (or run `python -m tm_advisor.picklist_api` now). Until then the page uses the sample list.
+   (The public classification search website is a JavaScript app with no terms in its pages, so
+   `picklist_site` can't read it; `python -m tm_advisor.picklist_site probe` shows why.)
 3. **Manual**: `python -m tm_advisor.manual crawl` (above).
 
 ## Keeping the data up to date (automatic)
@@ -126,7 +124,8 @@ tm_advisor/
   distinctiveness.py   section 41 screen
   picklist.py          picklist match, suggestions, search
   picklist_sync.py     full picklist download from the TMGnS API
-  picklist_site.py     full picklist from IP Australia's public classification search pages
+  picklist_api.py      full picklist from the TMGnS search API (own API access)
+  picklist_site.py     probe of IP Australia's public classification search website
   register/            fixture and IP Australia register clients
   ipa_auth.py          IP Australia OAuth tokens
   analysis.py          runs every check and builds the report
