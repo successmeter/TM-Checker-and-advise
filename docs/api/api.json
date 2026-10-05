@@ -1,0 +1,3080 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Australian Trade Mark Search API",
+    "description": "Australian Trade Mark Search API.",
+    "version": "v1"
+  },
+  "paths": {
+    "/trade-mark": {},
+    "/trade-mark/{ipRightIdentifier}": {
+      "get": {
+        "operationId": "Get Trade Mark",
+        "description": "Get a Trade Mark by its Trade Mark Number",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "ipRightIdentifier",
+            "required": true,
+            "in": "path",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "x-amf-mediaType": "application/json",
+            "schema": {
+              "$ref": "#/definitions/ApiTrademark"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "x-amf-mediaType": "application/json",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          }
+        },
+        "security": [
+          {
+            "security.oauth2_client_credentials": []
+          }
+        ]
+      }
+    },
+    "/search": {},
+    "/search/quick": {
+      "post": {
+        "operationId": "Trade Mark Quick Search",
+        "description": "Search for Trade Marks relating to given fields.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "x-amf-mediaType": "application/json",
+            "in": "body",
+            "name": "generated",
+            "schema": {
+              "description": "quickSearchRequest",
+              "example": {
+                "query": "TEST",
+                "sort": {
+                  "field": "NUMBER",
+                  "direction": "ASCENDING"
+                },
+                "filters": {
+                  "quickSearchType": [
+                    "WORD"
+                  ],
+                  "status": [
+                    "REGISTERED"
+                  ]
+                },
+                "changedSinceDate": "2019-01-15"
+              },
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "query"
+              ],
+              "properties": {
+                "sort": {
+                  "$ref": "#/definitions/ApiQuickSearchSort"
+                },
+                "changedSinceDate": {
+                  "description": "Search for Trade Marks that have been updated since the given date.",
+                  "type": "string"
+                },
+                "filters": {
+                  "$ref": "#/definitions/ApiQuickSearchFilters"
+                },
+                "query": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "x-amf-mediaType": "application/json",
+            "schema": {
+              "$ref": "#/definitions/ApiQuickSearchResult"
+            }
+          }
+        },
+        "security": [
+          {
+            "security.oauth2_client_credentials": []
+          }
+        ]
+      }
+    },
+    "/search/advanced": {
+      "post": {
+        "operationId": "Trade Mark Advanced Search",
+        "description": "Search for Trade Marks using the advanced search fields.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "x-amf-mediaType": "application/json",
+            "in": "body",
+            "name": "generated",
+            "schema": {
+              "description": "Trade Mark Advanced Search payload",
+              "type": "object",
+              "additionalProperties": true,
+              "required": [
+                "rows"
+              ],
+              "properties": {
+                "sort": {
+                  "$ref": "#/definitions/ApiQuickSearchSort"
+                },
+                "changedSinceDate": {
+                  "type": "string"
+                },
+                "rows": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/TrademarksApiAdvancedSearchRow"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "x-amf-mediaType": "application/json",
+            "schema": {
+              "$ref": "#/definitions/ApiAdvancedSearchResult"
+            }
+          }
+        },
+        "security": [
+          {
+            "security.oauth2_client_credentials": []
+          }
+        ]
+      }
+    },
+    "/page": {},
+    "/page/advanced": {
+      "post": {
+        "operationId": "Paged Advanced Search",
+        "description": "Returns a pageable list of Trade Marks with their details.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "x-amf-mediaType": "application/json",
+            "in": "body",
+            "name": "generated",
+            "schema": {
+              "description": "Trade Mark Advanced Search payload",
+              "type": "object",
+              "additionalProperties": true,
+              "required": [
+                "pageSize",
+                "pageNumber",
+                "rows"
+              ],
+              "properties": {
+                "sort": {
+                  "$ref": "#/definitions/ApiQuickSearchSort"
+                },
+                "changedSinceDate": {
+                  "type": "string"
+                },
+                "pageSize": {
+                  "type": "integer",
+                  "format": "int32",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "pageNumber": {
+                  "type": "integer",
+                  "format": "int32",
+                  "minimum": 0
+                },
+                "rows": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/TrademarksApiAdvancedSearchRow"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "x-amf-mediaType": "application/json",
+            "schema": {
+              "$ref": "#/definitions/ApiAdvancedSearchPageResult"
+            }
+          }
+        },
+        "security": [
+          {
+            "security.oauth2_client_credentials": []
+          }
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "ApiTrademark": {
+      "x-oas-schema-title": "ApiTrademark",
+      "example": {
+        "number": "1129102",
+        "irNumber": null,
+        "words": [
+          "P PODICURE"
+        ],
+        "images": {
+          "description": [
+            "LTR P IN ORNATE FRAME"
+          ],
+          "images": [
+            "https://test.cdn.search.ipaustralia.gov.au/1129102/TRADE_MARK/T20031236/1.0/T20031236.MEDIUM.JPG"
+          ]
+        },
+        "multimedia": null,
+        "kind": [
+          "Figurative"
+        ],
+        "statusGroup": "REGISTERED",
+        "statusCode": "Registered",
+        "statusDetail": "Registered/protected",
+        "priorityDate": "2006-08-11",
+        "lodgementDate": "2006-08-11",
+        "divisionalDate": null,
+        "irNotificationDate": null,
+        "irRenewalDueDate": null,
+        "firstReportDate": "2006-11-23",
+        "acceptanceDueDate": null,
+        "acceptanceDate": "2006-11-23",
+        "acceptanceAdvertisedDate": "2006-12-14",
+        "registrationDueDate": null,
+        "enteredOnRegisterDate": "2007-03-26",
+        "registeredFromDate": null,
+        "registrationAdvertisedDate": "2007-04-19",
+        "renewalDueDate": "2026-08-11",
+        "withdrawalAdvertisedDate": null,
+        "lapsingAdvertisedDate": null,
+        "lapsedDate": null,
+        "filingDate": "2006-08-11",
+        "withdrawalDate": null,
+        "owner": [
+          {
+            "abn": null,
+            "acnOrArbn": null,
+            "name": "Diana Palin",
+            "jurisdiction": null,
+            "structuredAddress": {
+              "addressLineText": [
+                "Shop 5",
+                "61-63 Alexander Street"
+              ],
+              "suburb": "CROWS NEST",
+              "state": "NSW",
+              "countryName": "AUSTRALIA",
+              "postalCode": "2065"
+            }
+          }
+        ],
+        "addressForService": [
+          {
+            "abn": null,
+            "acnOrArbn": null,
+            "name": "Diana Palin",
+            "jurisdiction": null,
+            "structuredAddress": {
+              "addressLineText": [
+                "Shop 5",
+                "61-63 Alexander Street"
+              ],
+              "suburb": "CROWS NEST",
+              "state": "NSW",
+              "countryName": "AUSTRALIA",
+              "postalCode": "2065"
+            }
+          }
+        ],
+        "irContact": null,
+        "indexingConstituents": {
+          "word": [
+            "P",
+            "PODICURE",
+            "LTR"
+          ],
+          "image": [
+            "FRAME",
+            "ORNATE",
+            "SQUARE",
+            "ARABESQUE+",
+            "DIAMOND",
+            "VINE+",
+            "FOUR-SIDED"
+          ]
+        },
+        "indexingComment": "",
+        "courtOrdersPendingIndicator": false,
+        "revivalPendingIndicator": false,
+        "nonUseActionPendingIndicator": false,
+        "seriesIndicator": false,
+        "goodsAndServices": [
+          {
+            "class": "44",
+            "descriptionText": [
+              "Treatment of feet",
+              "removing all corns and callous",
+              "cutting of nails and dealing with any patient concerns or medical problems",
+              "followed up by foot massage, cream and pedicure"
+            ]
+          }
+        ],
+        "endorsements": {
+          "customerDescription": null,
+          "endorsementDescriptions": null,
+          "translations": null,
+          "transliterations": null,
+          "oldEndorsement": null
+        },
+        "divisionalDetails": null,
+        "linkedApplications": null,
+        "defensiveDetails": null,
+        "conventionDetails": null,
+        "oppositionDetails": null,
+        "historyAndPublicationDetails": [
+          {
+            "date": "2016-06-27",
+            "displayName": "Renew Trade Mark",
+            "description": null,
+            "previousDetails": null,
+            "newDetails": null
+          },
+          {
+            "date": "2016-06-24",
+            "displayName": "Renewal of Registration (Electronic) - 1 Class",
+            "description": null,
+            "previousDetails": null,
+            "newDetails": null
+          },
+          {
+            "date": "2016-06-14",
+            "displayName": "Renewal Reminder correspondence sent",
+            "description": null,
+            "previousDetails": null,
+            "newDetails": null
+          },
+          {
+            "date": "2015-08-11",
+            "displayName": "Registration Status Change",
+            "description": null,
+            "previousDetails": null,
+            "newDetails": null
+          },
+          {
+            "date": "2007-03-26",
+            "displayName": "Application Status",
+            "description": null,
+            "previousDetails": null,
+            "newDetails": null
+          },
+          {
+            "date": "2007-03-26",
+            "displayName": "Register Trade Mark",
+            "description": null,
+            "previousDetails": null,
+            "newDetails": null
+          },
+          {
+            "date": "2006-12-18",
+            "displayName": "Registration fee (1 class)",
+            "description": null,
+            "previousDetails": null,
+            "newDetails": null
+          },
+          {
+            "date": "2006-11-27",
+            "displayName": "Amend Status from Awaiting Advertisement",
+            "description": null,
+            "previousDetails": null,
+            "newDetails": null
+          },
+          {
+            "date": "2006-11-23",
+            "displayName": "Application Accepted correspondence sent",
+            "description": null,
+            "previousDetails": null,
+            "newDetails": null
+          },
+          {
+            "date": "2006-11-23",
+            "displayName": "Clear Examination report approved",
+            "description": null,
+            "previousDetails": null,
+            "newDetails": null
+          },
+          {
+            "date": "2006-08-14",
+            "displayName": "Application Status",
+            "description": null,
+            "previousDetails": null,
+            "newDetails": null
+          },
+          {
+            "date": "2006-08-14",
+            "displayName": "Application Status",
+            "description": null,
+            "previousDetails": null,
+            "newDetails": null
+          },
+          {
+            "date": "2006-08-14",
+            "displayName": "IP Right Filed",
+            "description": null,
+            "previousDetails": null,
+            "newDetails": null
+          },
+          {
+            "date": "2006-08-11",
+            "displayName": "New Trade Mark Application",
+            "description": null,
+            "previousDetails": null,
+            "newDetails": null
+          }
+        ],
+        "partialAssignments": [],
+        "claimedInterests": null,
+        "markCategories": [
+          "Trademark"
+        ]
+      },
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "number"
+      ],
+      "properties": {
+        "acceptanceAdvertisedDate": {
+          "$ref": "#/definitions/default"
+        },
+        "acceptanceDate": {
+          "$ref": "#/definitions/default_1"
+        },
+        "acceptanceDueDate": {
+          "$ref": "#/definitions/default_2"
+        },
+        "addressForService": {
+          "$ref": "#/definitions/default_3"
+        },
+        "claimedInterests": {
+          "$ref": "#/definitions/default_4"
+        },
+        "conventionDetails": {
+          "$ref": "#/definitions/default_5"
+        },
+        "courtOrdersPendingIndicator": {
+          "$ref": "#/definitions/default_6"
+        },
+        "defensiveDetails": {
+          "$ref": "#/definitions/default_7"
+        },
+        "divisionalDate": {
+          "$ref": "#/definitions/default_8"
+        },
+        "divisionalDetails": {
+          "$ref": "#/definitions/default_9"
+        },
+        "endorsements": {
+          "$ref": "#/definitions/default_10"
+        },
+        "enteredOnRegisterDate": {
+          "$ref": "#/definitions/default_11"
+        },
+        "filingDate": {
+          "$ref": "#/definitions/default_12"
+        },
+        "firstReportDate": {
+          "$ref": "#/definitions/default_13"
+        },
+        "goodsAndServices": {
+          "$ref": "#/definitions/default_14"
+        },
+        "historyAndPublicationDetails": {
+          "$ref": "#/definitions/default_15"
+        },
+        "images": {
+          "$ref": "#/definitions/default_16"
+        },
+        "indexingComment": {
+          "$ref": "#/definitions/default_17"
+        },
+        "indexingConstituents": {
+          "$ref": "#/definitions/default_18"
+        },
+        "irContact": {
+          "$ref": "#/definitions/default_19"
+        },
+        "irNotificationDate": {
+          "$ref": "#/definitions/default_20"
+        },
+        "irNumber": {
+          "$ref": "#/definitions/default_21"
+        },
+        "irRenewalDueDate": {
+          "$ref": "#/definitions/default_22"
+        },
+        "kind": {
+          "$ref": "#/definitions/default_23"
+        },
+        "lapsedDate": {
+          "$ref": "#/definitions/default_24"
+        },
+        "lapsingAdvertisedDate": {
+          "$ref": "#/definitions/default_25"
+        },
+        "linkedApplications": {
+          "$ref": "#/definitions/default_26"
+        },
+        "lodgementDate": {
+          "$ref": "#/definitions/default_27"
+        },
+        "markCategories": {
+          "$ref": "#/definitions/default_28"
+        },
+        "multimedia": {
+          "$ref": "#/definitions/default_29"
+        },
+        "nonUseActionPendingIndicator": {
+          "$ref": "#/definitions/default_30"
+        },
+        "number": {
+          "$ref": "#/definitions/default_31"
+        },
+        "oppositionDetails": {
+          "$ref": "#/definitions/default_32"
+        },
+        "owner": {
+          "$ref": "#/definitions/default_33"
+        },
+        "partialAssignments": {
+          "$ref": "#/definitions/default_34"
+        },
+        "priorityDate": {
+          "$ref": "#/definitions/default_35"
+        },
+        "registeredFromDate": {
+          "$ref": "#/definitions/default_36"
+        },
+        "registrationAdvertisedDate": {
+          "$ref": "#/definitions/default_37"
+        },
+        "registrationDueDate": {
+          "$ref": "#/definitions/default_38"
+        },
+        "renewalDueDate": {
+          "$ref": "#/definitions/default_39"
+        },
+        "revivalPendingIndicator": {
+          "$ref": "#/definitions/default_40"
+        },
+        "seriesIndicator": {
+          "$ref": "#/definitions/default_41"
+        },
+        "statusCode": {
+          "$ref": "#/definitions/default_42"
+        },
+        "statusDetail": {
+          "$ref": "#/definitions/default_43"
+        },
+        "statusGroup": {
+          "$ref": "#/definitions/default_44"
+        },
+        "withdrawalAdvertisedDate": {
+          "$ref": "#/definitions/default_45"
+        },
+        "withdrawalDate": {
+          "$ref": "#/definitions/default_46"
+        },
+        "words": {
+          "$ref": "#/definitions/default_47"
+        }
+      }
+    },
+    "NotFound": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "error"
+      ],
+      "properties": {
+        "error": {
+          "example": "Trade Mark [123456789123456789] not found",
+          "type": "string"
+        }
+      }
+    },
+    "ApiQuickSearchSort": {
+      "x-oas-schema-title": "ApiQuickSearchSort",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "enum": [
+            "NUMBER",
+            "IR_NUMBER",
+            "STATUS",
+            "WORDS",
+            "PRIORITY_DATE",
+            "RENEWAL_DUE_DATE"
+          ],
+          "type": "string"
+        },
+        "direction": {
+          "enum": [
+            "ASCENDING",
+            "DESCENDING"
+          ],
+          "type": "string"
+        }
+      }
+    },
+    "ApiQuickSearchFilters": {
+      "x-oas-schema-title": "ApiQuickSearchFilters",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "quickSearchType": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "WORD",
+              "NAME",
+              "NUMBER",
+              "IR_NUMBER"
+            ],
+            "type": "string"
+          }
+        },
+        "status": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "PENDING",
+              "REGISTERED",
+              "REFUSED",
+              "REMOVED",
+              "NEVER_REGISTERED",
+              "DISCONTINUED"
+            ],
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ApiQuickSearchResult": {
+      "x-oas-schema-title": "ApiQuickSearchResult",
+      "example": {
+        "request": {
+          "query": "TEST",
+          "sort": {
+            "field": "NUMBER",
+            "direction": "ASCENDING"
+          },
+          "filters": {
+            "quickSearchType": [
+              "WORD"
+            ],
+            "status": [
+              "REGISTERED"
+            ]
+          },
+          "changedSinceDate": "2019-01-15"
+        },
+        "count": 2,
+        "trademarkIds": [
+          "973064",
+          "1034617"
+        ],
+        "aggregations": {
+          "quickSearchType": {
+            "NUMBER": 0,
+            "IR_NUMBER": 0,
+            "NAME": 0,
+            "WORD": 2
+          },
+          "status": {
+            "REGISTERED": 2,
+            "NEVER_REGISTERED": 0,
+            "PENDING": 0,
+            "REFUSED": 0,
+            "REMOVED": 0
+          }
+        }
+      },
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "aggregations",
+        "count",
+        "request",
+        "trademarkIds"
+      ],
+      "properties": {
+        "aggregations": {
+          "$ref": "#/definitions/ApiQuickSearchAggregations"
+        },
+        "count": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "request": {
+          "$ref": "#/definitions/ApiQuickSearchRequest"
+        },
+        "trademarkIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "TrademarksApiAdvancedSearchRow": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "query"
+      ],
+      "properties": {
+        "op": {
+          "enum": [
+            "AND",
+            "OR",
+            "AND_NOT"
+          ],
+          "type": "string"
+        },
+        "query": {
+          "$ref": "#/definitions/TrademarkApiAdvancedSearch"
+        }
+      }
+    },
+    "ApiAdvancedSearchResult": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "aggregations",
+        "count",
+        "request",
+        "trademarkIds"
+      ],
+      "properties": {
+        "aggregations": {
+          "$ref": "#/definitions/ApiAdvancedSearchAggregations"
+        },
+        "count": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "request": {
+          "$ref": "#/definitions/TrademarkApiAdvancedSearchRequest"
+        },
+        "trademarkIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ApiAdvancedSearchPageResult": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "aggregations",
+        "count",
+        "request",
+        "trademarks"
+      ],
+      "properties": {
+        "aggregations": {
+          "$ref": "#/definitions/ApiAdvancedSearchAggregations"
+        },
+        "count": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "request": {
+          "$ref": "#/definitions/TrademarkApiAdvancedSearchPageRequest"
+        },
+        "trademarks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ApiTrademark"
+          }
+        }
+      }
+    },
+    "default": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_1": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_2": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_3": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ApiPartyType"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_4": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ApiClaimedInterest"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_5": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ApiConventionDetails"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_6": {
+      "x-amf-union": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_7": {
+      "x-amf-union": [
+        {
+          "$ref": "#/definitions/ApiRelatedRightDetails"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_8": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_9": {
+      "x-amf-union": [
+        {
+          "$ref": "#/definitions/ApiRelatedRightDetails"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_10": {
+      "x-amf-union": [
+        {
+          "$ref": "#/definitions/ApiEndorsements"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_11": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_12": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_13": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_14": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ApiGoodsServices"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_15": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ApiHistoryAndPublicationDetails"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_16": {
+      "x-amf-union": [
+        {
+          "$ref": "#/definitions/ApiImages"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_17": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_18": {
+      "x-amf-union": [
+        {
+          "$ref": "#/definitions/ApiIndexingConstituents"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_19": {
+      "x-amf-union": [
+        {
+          "$ref": "#/definitions/ApiPartyType"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_20": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_21": {
+      "x-amf-union": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_22": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_23": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_24": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_25": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_26": {
+      "x-amf-union": [
+        {
+          "$ref": "#/definitions/ApiRelatedRightDetails"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_27": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_28": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_29": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_30": {
+      "x-amf-union": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_31": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_32": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ApiOppositionDetails"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_33": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ApiPartyType"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_34": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ApiPartialAssignment"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_35": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_36": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_37": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_38": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_39": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_40": {
+      "x-amf-union": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_41": {
+      "x-amf-union": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_42": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_43": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_44": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_45": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_46": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_47": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "ApiQuickSearchAggregations": {
+      "x-oas-schema-title": "ApiQuickSearchAggregations",
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "quickSearchType",
+        "status"
+      ],
+      "properties": {
+        "quickSearchType": {
+          "type": "object",
+          "additionalProperties": true,
+          "patternProperties": {
+            "^.*$": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": true,
+          "patternProperties": {
+            "^.*$": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        }
+      }
+    },
+    "ApiQuickSearchRequest": {
+      "x-oas-schema-title": "ApiQuickSearchRequest",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "query"
+      ],
+      "properties": {
+        "changedSinceDate": {
+          "description": "Search for Trade Marks that have been updated since the given date.",
+          "type": "string"
+        },
+        "sort": {
+          "$ref": "#/definitions/ApiQuickSearchSort"
+        },
+        "filters": {
+          "$ref": "#/definitions/ApiQuickSearchFilters"
+        },
+        "query": {
+          "type": "string"
+        }
+      }
+    },
+    "TrademarkApiAdvancedSearch": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "addressForService": {
+          "type": "string"
+        },
+        "claimant": {
+          "type": "string"
+        },
+        "classNumber": {
+          "$ref": "#/definitions/TrademarkApiClass"
+        },
+        "date": {
+          "$ref": "#/definitions/TrademarkApiDateRange"
+        },
+        "flags": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "NON_USE",
+              "INTERNATIONAL_REGISTRATION",
+              "REGULATED",
+              "SERIES"
+            ],
+            "type": "string"
+          }
+        },
+        "goodsAndServices": {
+          "type": "string"
+        },
+        "image": {
+          "$ref": "#/definitions/TrademarkApiImage"
+        },
+        "irNumber": {
+          "type": "string"
+        },
+        "acnArbnAbn": {
+          "type": "string"
+        },
+        "kinds": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "WORD",
+              "FIGURATIVE",
+              "FANCY",
+              "COLOUR",
+              "SCENT",
+              "SHAPE",
+              "SOUND",
+              "MOVEMENT",
+              "FEEL",
+              "HOLOGRAM",
+              "POSITION",
+              "TASTE",
+              "TRACER",
+              "OTHER"
+            ],
+            "type": "string"
+          }
+        },
+        "opponent": {
+          "type": "string"
+        },
+        "otherInformation": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "removalApplicant": {
+          "type": "string"
+        },
+        "statuses": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "PENDING_REGISTERED_REFUSED",
+              "PENDING_REGISTERED",
+              "PENDING",
+              "REGISTERED",
+              "REFUSED",
+              "REMOVED",
+              "NEVER_REGISTERED",
+              "DISCONTINUED"
+            ],
+            "type": "string"
+          }
+        },
+        "trademarkNumber": {
+          "type": "string"
+        },
+        "word": {
+          "$ref": "#/definitions/TrademarkApiWord"
+        },
+        "wordPhrase": {
+          "type": "string"
+        }
+      }
+    },
+    "ApiAdvancedSearchAggregations": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "type": "object",
+          "additionalProperties": true,
+          "patternProperties": {
+            "^.*$": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        }
+      }
+    },
+    "TrademarkApiAdvancedSearchRequest": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "rows"
+      ],
+      "properties": {
+        "changedSinceDate": {
+          "type": "string"
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TrademarksApiAdvancedSearchRow"
+          }
+        },
+        "sort": {
+          "$ref": "#/definitions/ApiQuickSearchSort"
+        }
+      }
+    },
+    "TrademarkApiAdvancedSearchPageRequest": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "pageNumber",
+        "pageSize",
+        "rows"
+      ],
+      "properties": {
+        "changedSinceDate": {
+          "type": "string"
+        },
+        "pageNumber": {
+          "type": "integer",
+          "format": "int32",
+          "minimum": 0
+        },
+        "pageSize": {
+          "type": "integer",
+          "format": "int32",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TrademarksApiAdvancedSearchRow"
+          }
+        },
+        "sort": {
+          "$ref": "#/definitions/ApiQuickSearchSort"
+        }
+      }
+    },
+    "ApiPartyType": {
+      "x-oas-schema-title": "ApiPartyType",
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "abn",
+        "acnOrArbn",
+        "jurisdiction",
+        "name",
+        "structuredAddress"
+      ],
+      "properties": {
+        "abn": {
+          "$ref": "#/definitions/default_48"
+        },
+        "acnOrArbn": {
+          "$ref": "#/definitions/default_49"
+        },
+        "jurisdiction": {
+          "$ref": "#/definitions/default_50"
+        },
+        "name": {
+          "$ref": "#/definitions/default_51"
+        },
+        "structuredAddress": {
+          "$ref": "#/definitions/ApiStructuredAddress"
+        }
+      }
+    },
+    "ApiClaimedInterest": {
+      "x-oas-schema-title": "ApiClaimedInterest",
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "addressForService",
+        "captured",
+        "claimants",
+        "particularsOfClaim"
+      ],
+      "properties": {
+        "addressForService": {
+          "$ref": "#/definitions/default_52"
+        },
+        "captured": {
+          "$ref": "#/definitions/default_53"
+        },
+        "claimants": {
+          "$ref": "#/definitions/default_54"
+        },
+        "particularsOfClaim": {
+          "$ref": "#/definitions/default_55"
+        }
+      }
+    },
+    "ApiConventionDetails": {
+      "x-oas-schema-title": "ApiConventionDetails",
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "country",
+        "date",
+        "number"
+      ],
+      "properties": {
+        "country": {
+          "$ref": "#/definitions/default_56"
+        },
+        "date": {
+          "$ref": "#/definitions/default_57"
+        },
+        "number": {
+          "$ref": "#/definitions/default_58"
+        }
+      }
+    },
+    "ApiRelatedRightDetails": {
+      "x-oas-schema-title": "ApiRelatedRightDetails",
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "children",
+        "date",
+        "parent"
+      ],
+      "properties": {
+        "children": {
+          "$ref": "#/definitions/default_59"
+        },
+        "date": {
+          "$ref": "#/definitions/default_60"
+        },
+        "parent": {
+          "$ref": "#/definitions/default_61"
+        }
+      }
+    },
+    "ApiEndorsements": {
+      "x-oas-schema-title": "ApiEndorsements",
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "customerDescription",
+        "endorsementDescriptions",
+        "oldEndorsement",
+        "translations",
+        "transliterations"
+      ],
+      "properties": {
+        "customerDescription": {
+          "$ref": "#/definitions/default_62"
+        },
+        "endorsementDescriptions": {
+          "$ref": "#/definitions/default_63"
+        },
+        "oldEndorsement": {
+          "$ref": "#/definitions/default_64"
+        },
+        "translations": {
+          "$ref": "#/definitions/default_65"
+        },
+        "transliterations": {
+          "$ref": "#/definitions/default_66"
+        }
+      }
+    },
+    "ApiGoodsServices": {
+      "x-oas-schema-title": "ApiGoodsServices",
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "class",
+        "descriptionText"
+      ],
+      "properties": {
+        "class": {
+          "$ref": "#/definitions/default_67"
+        },
+        "descriptionText": {
+          "$ref": "#/definitions/default_68"
+        }
+      }
+    },
+    "ApiHistoryAndPublicationDetails": {
+      "x-oas-schema-title": "ApiHistoryAndPublicationDetails",
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "date",
+        "description",
+        "displayName",
+        "newDetails",
+        "previousDetails"
+      ],
+      "properties": {
+        "date": {
+          "$ref": "#/definitions/default_69"
+        },
+        "description": {
+          "$ref": "#/definitions/default_70"
+        },
+        "displayName": {
+          "$ref": "#/definitions/default_71"
+        },
+        "newDetails": {
+          "$ref": "#/definitions/default_72"
+        },
+        "previousDetails": {
+          "$ref": "#/definitions/default_73"
+        }
+      }
+    },
+    "ApiImages": {
+      "x-oas-schema-title": "ApiImages",
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "description",
+        "images"
+      ],
+      "properties": {
+        "description": {
+          "$ref": "#/definitions/default_74"
+        },
+        "images": {
+          "$ref": "#/definitions/default_75"
+        }
+      }
+    },
+    "ApiIndexingConstituents": {
+      "x-oas-schema-title": "ApiIndexingConstituents",
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "image",
+        "word"
+      ],
+      "properties": {
+        "image": {
+          "$ref": "#/definitions/default_76"
+        },
+        "word": {
+          "$ref": "#/definitions/default_77"
+        }
+      }
+    },
+    "ApiOppositionDetails": {
+      "x-oas-schema-title": "ApiOppositionDetails",
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "oppositionTimeline"
+      ],
+      "properties": {
+        "applicantPartyDetails": {
+          "$ref": "#/definitions/default_78"
+        },
+        "commencedOn": {
+          "$ref": "#/definitions/default_79"
+        },
+        "finalOutcome": {
+          "$ref": "#/definitions/default_80"
+        },
+        "nonUseOpponent": {
+          "$ref": "#/definitions/default_81"
+        },
+        "nonUseOpponentAgent": {
+          "$ref": "#/definitions/default_82"
+        },
+        "opponent": {
+          "$ref": "#/definitions/default_83"
+        },
+        "opponentAgent": {
+          "$ref": "#/definitions/default_84"
+        },
+        "oppositionTimeline": {
+          "$ref": "#/definitions/default_85"
+        },
+        "removalApplicant": {
+          "$ref": "#/definitions/default_86"
+        },
+        "type": {
+          "$ref": "#/definitions/default_87"
+        }
+      }
+    },
+    "ApiPartialAssignment": {
+      "x-oas-schema-title": "ApiPartialAssignment",
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "number",
+        "relation"
+      ],
+      "properties": {
+        "number": {
+          "$ref": "#/definitions/default_88"
+        },
+        "relation": {
+          "$ref": "#/definitions/default_89"
+        }
+      }
+    },
+    "TrademarkApiClass": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "text",
+        "type"
+      ],
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "SINGLE",
+            "ASSOCIATED",
+            "ASSOCIATED_PRE_2012"
+          ],
+          "type": "string"
+        }
+      }
+    },
+    "TrademarkApiDateRange": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "LODGEMENT_DATE",
+            "FILING",
+            "CONVENTION_DATE",
+            "DIVISIONAL_DATE",
+            "NOTIFICATION_DATE",
+            "FIRST_REPORT",
+            "ACCEPTANCE_DUE",
+            "ACCEPTANCE",
+            "ACCEPTANCE_ADVERTISED",
+            "REGISTRATION_DUE",
+            "ENTERED_ON_REGISTER",
+            "REGISTERED_FROM",
+            "REGISTRATION_ADVERTISED",
+            "RENEWAL_DUE",
+            "WITHDRAWAL",
+            "WITHDRAWAL_ADVERTISED",
+            "LAPSING",
+            "PRIORITY_DATE",
+            "LAPSING_ADVERTISED"
+          ],
+          "type": "string"
+        }
+      }
+    },
+    "TrademarkApiImage": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "text",
+        "type"
+      ],
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "EXACT",
+            "PART"
+          ],
+          "type": "string"
+        }
+      }
+    },
+    "TrademarkApiWord": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "text",
+        "type"
+      ],
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "EXACT",
+            "PREFIX",
+            "PART",
+            "SUFFIX",
+            "PHONETIC",
+            "FUZZY",
+            "STEM",
+            "NON_WILDCARD_EXACT",
+            "WORD_ONLY_EXACT",
+            "TRANSLITERATION_EXACT"
+          ],
+          "type": "string"
+        }
+      }
+    },
+    "default_48": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_49": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_50": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_51": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "ApiStructuredAddress": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "addressLineText",
+        "countryName",
+        "postalCode",
+        "state",
+        "suburb"
+      ],
+      "properties": {
+        "addressLineText": {
+          "$ref": "#/definitions/default_90"
+        },
+        "countryName": {
+          "$ref": "#/definitions/default_91"
+        },
+        "postalCode": {
+          "$ref": "#/definitions/default_92"
+        },
+        "state": {
+          "$ref": "#/definitions/default_93"
+        },
+        "suburb": {
+          "$ref": "#/definitions/default_94"
+        }
+      }
+    },
+    "default_52": {
+      "x-amf-union": [
+        {
+          "$ref": "#/definitions/ApiPartyType"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_53": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_54": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ApiClaimant"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_55": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_56": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_57": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_58": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_59": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_60": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_61": {
+      "x-amf-union": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_62": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_63": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_64": {
+      "x-amf-union": [
+        {
+          "$ref": "#/definitions/ApiOldEndorsement"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_65": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_66": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_67": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_68": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_69": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_70": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_71": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_72": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_73": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_74": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_75": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_76": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_77": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_78": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ApiOwnerApplicantDetails"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_79": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_80": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_81": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ApiApplicantOrOpponentPartyDetails"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_82": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ApiApplicantOrOpponentPartyDetails"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_83": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ApiApplicantOrOpponentPartyDetails"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_84": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ApiApplicantOrOpponentPartyDetails"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_85": {
+      "x-amf-union": [
+        {
+          "$ref": "#/definitions/ApiOppositionTimeline"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_86": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ApiApplicantOrOpponentPartyDetails"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_87": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_88": {
+      "x-amf-union": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_89": {
+      "x-amf-union": [
+        {
+          "$ref": "#/definitions/RelationEnum"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_90": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_91": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_92": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_93": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_94": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "ApiClaimant": {
+      "x-oas-schema-title": "ApiClaimant",
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/definitions/default_95"
+        },
+        "structuredAddress": {
+          "$ref": "#/definitions/default_96"
+        }
+      }
+    },
+    "ApiOldEndorsement": {
+      "x-oas-schema-title": "ApiOldEndorsement",
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "notice"
+      ],
+      "properties": {
+        "notice": {
+          "$ref": "#/definitions/default_97"
+        },
+        "values": {
+          "$ref": "#/definitions/default_98"
+        }
+      }
+    },
+    "ApiOwnerApplicantDetails": {
+      "x-oas-schema-title": "ApiOwnerApplicantDetails",
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "name",
+        "title"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/definitions/default_99"
+        },
+        "title": {
+          "$ref": "#/definitions/default_100"
+        }
+      }
+    },
+    "ApiApplicantOrOpponentPartyDetails": {
+      "x-oas-schema-title": "ApiApplicantOrOpponentPartyDetails",
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "partyType",
+        "title"
+      ],
+      "properties": {
+        "partyType": {
+          "$ref": "#/definitions/default_101"
+        },
+        "title": {
+          "$ref": "#/definitions/default_102"
+        }
+      }
+    },
+    "ApiOppositionTimeline": {
+      "x-oas-schema-title": "ApiOppositionTimeline",
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "decision",
+        "evidenceInAnswer",
+        "evidenceInReply",
+        "evidenceInSupport",
+        "hearing",
+        "noticeOfIntentionToDefend",
+        "noticeOfIntentionToOppose",
+        "outcome",
+        "statementOfGroundsAndParticulars"
+      ],
+      "properties": {
+        "decision": {
+          "$ref": "#/definitions/default_103"
+        },
+        "evidenceInAnswer": {
+          "$ref": "#/definitions/default_104"
+        },
+        "evidenceInReply": {
+          "$ref": "#/definitions/default_105"
+        },
+        "evidenceInSupport": {
+          "$ref": "#/definitions/default_106"
+        },
+        "hearing": {
+          "$ref": "#/definitions/default_107"
+        },
+        "noticeOfIntentionToDefend": {
+          "$ref": "#/definitions/default_108"
+        },
+        "noticeOfIntentionToOppose": {
+          "$ref": "#/definitions/default_109"
+        },
+        "outcome": {
+          "$ref": "#/definitions/default_110"
+        },
+        "statementOfGroundsAndParticulars": {
+          "$ref": "#/definitions/default_111"
+        }
+      }
+    },
+    "RelationEnum": {
+      "enum": [
+        "From",
+        "To"
+      ],
+      "type": "string"
+    },
+    "default_95": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_96": {
+      "x-amf-union": [
+        {
+          "$ref": "#/definitions/ApiStructuredAddress"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_97": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_98": {
+      "x-amf-union": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_99": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_100": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_101": {
+      "x-amf-union": [
+        {
+          "$ref": "#/definitions/ApiPartyType"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_102": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_103": {
+      "x-amf-union": [
+        {
+          "$ref": "#/definitions/ApiOppositionDecision"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_104": {
+      "x-amf-union": [
+        {
+          "$ref": "#/definitions/ApiOppositionTimelineDetails"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_105": {
+      "x-amf-union": [
+        {
+          "$ref": "#/definitions/ApiOppositionTimelineDetails"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_106": {
+      "x-amf-union": [
+        {
+          "$ref": "#/definitions/ApiOppositionTimelineDetails"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_107": {
+      "x-amf-union": [
+        {
+          "$ref": "#/definitions/ApiOppositionTimelineDetails"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_108": {
+      "x-amf-union": [
+        {
+          "$ref": "#/definitions/ApiOppositionTimelineDetails"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_109": {
+      "x-amf-union": [
+        {
+          "$ref": "#/definitions/ApiOppositionTimelineDetails"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_110": {
+      "x-amf-union": [
+        {
+          "$ref": "#/definitions/ApiFinalOutcome"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_111": {
+      "x-amf-union": [
+        {
+          "$ref": "#/definitions/ApiOppositionTimelineDetails"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "ApiOppositionDecision": {
+      "x-oas-schema-title": "ApiOppositionDecision",
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "abstract",
+        "atmoNumber",
+        "date",
+        "decisionOutcome"
+      ],
+      "properties": {
+        "abstract": {
+          "$ref": "#/definitions/default_112"
+        },
+        "atmoNumber": {
+          "$ref": "#/definitions/default_113"
+        },
+        "date": {
+          "$ref": "#/definitions/default_114"
+        },
+        "decisionOutcome": {
+          "$ref": "#/definitions/default_115"
+        }
+      }
+    },
+    "ApiOppositionTimelineDetails": {
+      "x-oas-schema-title": "ApiOppositionTimelineDetails",
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "due",
+        "evidenceProvided",
+        "filed",
+        "latestDue",
+        "partyResponsible",
+        "status"
+      ],
+      "properties": {
+        "due": {
+          "$ref": "#/definitions/default_116"
+        },
+        "evidenceProvided": {
+          "$ref": "#/definitions/default_117"
+        },
+        "filed": {
+          "$ref": "#/definitions/default_118"
+        },
+        "latestDue": {
+          "$ref": "#/definitions/default_119"
+        },
+        "partyResponsible": {
+          "$ref": "#/definitions/default_120"
+        },
+        "status": {
+          "$ref": "#/definitions/default_121"
+        }
+      }
+    },
+    "ApiFinalOutcome": {
+      "x-oas-schema-title": "ApiFinalOutcome",
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "finalOutcome"
+      ],
+      "properties": {
+        "finalOutcome": {
+          "$ref": "#/definitions/default_122"
+        }
+      }
+    },
+    "default_112": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_113": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_114": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_115": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_116": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_117": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_118": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_119": {
+      "x-amf-union": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_120": {
+      "x-amf-union": [
+        {
+          "$ref": "#/definitions/ApiPartyResponsible"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_121": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_122": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "ApiPartyResponsible": {
+      "x-oas-schema-title": "ApiPartyResponsible",
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "jurisdiction",
+        "partyName"
+      ],
+      "properties": {
+        "jurisdiction": {
+          "$ref": "#/definitions/default_123"
+        },
+        "partyName": {
+          "$ref": "#/definitions/default_124"
+        }
+      }
+    },
+    "default_123": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "default_124": {
+      "x-amf-union": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "securityDefinitions": {
+    "security.oauth2_client_credentials": {
+      "type": "oauth2",
+      "description": "OAuth 2.0 for authenticating machine to machine API requests.\n",
+      "x-amf-describedBy": {
+        "headers": {
+          "Authorization": {
+            "description": "Used to send a valid OAuth 2 access token. Do not use\nwith the \"access_token\" query string parameter.\n",
+            "required": false,
+            "type": "string"
+          }
+        },
+        "queryParameters": {
+          "access_token": {
+            "description": "Used to send a valid OAuth 2 access token. Do not use together with\nthe \"Authorization\" header\n",
+            "required": false,
+            "type": "string"
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Bad or expired token. This can happen if the API consumer use a  revoked or expired an access token.\nTo fix, you should re-authenticate the user.\n"
+          },
+          "403": {
+            "description": "Bad OAuth request (wrong consumer key, bad nonce, expired\ntimestamp...). Unfortunately, re-authenticating the user won't help here.\n"
+          }
+        }
+      },
+      "tokenUrl": "https://test.api.ipaustralia.gov.au/public/external-token-api/v1/access_token",
+      "x-amf-settings": {
+        "authorizationGrants": [
+          "client_credentials"
+        ]
+      }
+    }
+  }
+}
