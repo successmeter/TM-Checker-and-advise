@@ -43,7 +43,8 @@ def crawl(start_url: str = START_URL, out_file: str | Path = "data/manual/pages.
                 continue
             f.write(json.dumps({"url": url, "html": response.text}) + "\n")
             saved += 1
-            log(f"saved {saved}: {url}")
+            if saved == 1 or saved % 50 == 0:
+                log(f"saved {saved} pages so far…")
             for link in manual_links(url, response.text):
                 if link not in seen:
                     seen.add(link)

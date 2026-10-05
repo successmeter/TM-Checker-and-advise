@@ -90,35 +90,30 @@ passages that weren't retrieved are dropped.
    `python -m tm_advisor.picklist_sync --from-file <file>`.
 3. **Manual**: `python -m tm_advisor.manual crawl` (above).
 
-## Keeping the data up to date
+## Keeping the data up to date (automatic)
 
-IP Australia updates the Manual and the picklist from time to time. The tool keeps a local copy of each and shows
-its date on the page ("Goods & services: … updated 5 Oct 2026"). To refresh both:
+IP Australia updates the Manual and the picklist from time to time. **The server keeps them current by itself:**
+while it runs, it checks every 6 hours and refreshes anything more than 7 days old in the background. You don't
+need to run or schedule anything. On a fresh install it also downloads anything missing (the Manual takes about
+10 minutes the first time).
 
-```
-py -m tm_advisor.refresh
-```
+- Each part keeps its current copy if the new download looks incomplete (for example far fewer picklist terms or
+  Manual pages than before), so a site outage or redesign can't wipe your data. A failed attempt is retried a day
+  later.
+- What changed (picklist terms added and removed; Manual pages new, removed, changed) is written to
+  `data/refresh.log`. The server uses new data straight away.
+- The page footer shows when each part was last updated and when the next check is due. Explanations show each
+  Manual page's "Date Published" next to its link.
+- Change how often with `TM_AUTO_REFRESH_DAYS` (e.g. `set TM_AUTO_REFRESH_DAYS=14`); `0` turns it off.
 
-- Each part keeps its current copy if the new download looks incomplete (for example far fewer picklist terms
-  or Manual pages than before), so a site outage or redesign can't wipe your data.
-- It prints, and appends to `data/refresh.log`, what changed: picklist terms added and removed, Manual pages new,
-  removed and changed.
-- A running server uses the new data straight away, no restart needed.
-- Explanations show each Manual page's "Date Published" next to its link.
+To refresh by hand at any time: `py -m tm_advisor.refresh` (it waits if the server is already updating).
 
-### Run it every week automatically (Windows)
-
-Open **PowerShell** (Start menu, type PowerShell) and paste this as one line:
+Optional: if the server isn't always running and you still want weekly updates, schedule the same command in
+Windows. Open **PowerShell** and paste as one line:
 
 ```powershell
 Register-ScheduledTask -TaskName "TM Advisor refresh" -Action (New-ScheduledTaskAction -Execute "py" -Argument "-m tm_advisor.refresh") -Trigger (New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At 3am) -Settings (New-ScheduledTaskSettingsSet -StartWhenAvailable)
 ```
-
-It runs every Sunday at 3am, or as soon as the PC is next on if it was off. To check or change it, open
-**Task Scheduler** and find "TM Advisor refresh"; to run it now, right-click it and choose **Run**. Results are in
-`data\refresh.log`. To remove it: `Unregister-ScheduledTask -TaskName "TM Advisor refresh"`.
-
-(It runs `py` directly rather than a .bat file, because the "&" in the folder name breaks batch files.)
 
 ## Layout
 
@@ -138,5 +133,6 @@ tm_advisor/
   manual/              Trade Marks Manual download, parsing, chunking, keyword search
   explain.py           plain-English explanations with Claude, grounded in Manual passages
   refresh.py           refresh the picklist and the Manual safely, with a change report
+  autorefresh.py       background updates while the server runs
   api.py, static/      FastAPI app and the page
 ```

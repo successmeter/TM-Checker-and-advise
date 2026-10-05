@@ -515,7 +515,10 @@ function loadDataStatus() {
       ? `Trade Marks Manual: ${s.manual.pages.toLocaleString()} pages${s.manual.updated ? `, updated ${niceDate(s.manual.updated)}` : ""}.`
       : "Trade Marks Manual: not downloaded yet.";
     $("#picklist-status").textContent = pick;
-    $("#data-status").textContent = `Data: ${pick} ${man}`;
+    const auto = s.auto_update_days
+      ? ` Updates automatically every ${s.auto_update_days} days${s.next_auto_update ? ` (next check due ${niceDate(s.next_auto_update)})` : ""}.`
+      : "";
+    $("#data-status").textContent = `Data: ${pick} ${man}${auto}`;
     $("#sample-note").hidden = !p.sample;
   }).catch(() => {});
 }

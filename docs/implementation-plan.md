@@ -75,7 +75,8 @@ suite, commit. IP Australia is never called in tests.
 - Data freshness: `python -m tm_advisor.refresh` refreshes the picklist and the Manual; keeps the current copy if a
   download looks incomplete (< 70% of the previous size); reports terms/pages added, removed, changed; the server
   reloads new data live; the page shows data dates; Manual "Date Published" is kept and shown with citations;
-  weekly Windows scheduled task. *Done.*
+  the server refreshes data older than 7 days by itself (background check every 6 hours, retry after a day,
+  lock shared with the manual command); optional Windows scheduled task. *Done.*
 - Next: an evaluation set of real examination outcomes to measure the screen and the explanations before launch.
 
 ## Phase 3

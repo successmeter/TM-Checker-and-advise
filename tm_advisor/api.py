@@ -2,13 +2,15 @@
 
 import logging
 import os
-from datetime import date
+from contextlib import asynccontextmanager
+from datetime import date, datetime
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
+from . import autorefresh
 from .analysis import DISCLAIMERS, check
 from .explain import Explainer, Explanation, ExplanationUnavailable, retrieve
 from .manual import ManualIndex
@@ -78,6 +80,8 @@ class ManualStatus(BaseModel):
 class DataStatus(BaseModel):
     picklist: PicklistStatus
     manual: ManualStatus | None
+    auto_update_days: int = 0
+    next_auto_update: str | None = None
 
 
 class DescribeRequest(BaseModel):
@@ -132,7 +136,8 @@ class _ManualFiles:
 
 
 def create_app(register: RegisterClient | None = None, picklist: Picklist | None = None,
-               manual: ManualIndex | None = None, explainer: Explainer | None = None) -> FastAPI:
+               manual: ManualIndex | None = None, explainer: Explainer | None = None,
+               auto_refresh: bool = False) -> FastAPI:
     register = register or _default_register()
     picklist_files = None if picklist is not None else _PicklistFiles()
     manual_files = None if manual is not None else _ManualFiles()
@@ -144,7 +149,14 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
         return manual if manual_files is None else manual_files.get()
     explainer = explainer or Explainer()
     classes = load_classes(ROOT / "data" / "classes.json")
-    app = FastAPI(title="TM Advisor", description="Brand filing check for Australian trade mark applicants. Not legal advice.")
+    @asynccontextmanager
+    async def lifespan(_: FastAPI):
+        if auto_refresh:
+            autorefresh.start()  # keeps the picklist and Manual current; see autorefresh.py
+        yield
+
+    app = FastAPI(title="TM Advisor", description="Brand filing check for Australian trade mark applicants. Not legal advice.",
+                  lifespan=lifespan)
 
     @app.get("/", include_in_schema=False)
     def index() -> FileResponse:
@@ -189,9 +201,12 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
         if index is not None:
             manual_status = ManualStatus(updated=manual_files.updated() if manual_files else "",
                                          pages=index.page_count(), passages=index.count())
+        days = autorefresh.interval_days() if auto_refresh else 0
+        upcoming = autorefresh.next_due(datetime.now(), days, autorefresh.data_dates()) if days else None
         return DataStatus(picklist=PicklistStatus(sample=current.is_sample, updated=current.updated,
                                                   terms=len(current.items)),
-                          manual=manual_status)
+                          manual=manual_status, auto_update_days=days,
+                          next_auto_update=upcoming.date().isoformat() if upcoming else None)
 
     @app.get("/api/classes")
     def list_classes() -> list[ClassOut]:
@@ -245,4 +260,4 @@ def _plain_keywords(text: str) -> list[str]:
     return list(dict.fromkeys(words))[:12]
 
 
-app = create_app()
+app = create_app(auto_refresh=True)

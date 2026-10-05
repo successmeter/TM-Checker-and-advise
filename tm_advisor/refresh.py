@@ -12,11 +12,28 @@ appended to data/refresh.log. A running server picks up the new data without a r
 import argparse
 import sys
 from collections.abc import Callable
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 LOG = ROOT / "data" / "refresh.log"
+LOCK = ROOT / "data" / "refresh.lock"
+STALE_LOCK = timedelta(hours=3)
+
+
+def take_lock(lock: Path = LOCK, now: datetime | None = None) -> bool:
+    """One update at a time: the server's automatic updates and this command never overlap."""
+    now = now or datetime.now()
+    lock.parent.mkdir(parents=True, exist_ok=True)
+    if lock.exists():
+        try:
+            started = datetime.fromisoformat(lock.read_text(encoding="utf-8").strip())
+        except (OSError, ValueError):
+            started = datetime.min
+        if now - started < STALE_LOCK:
+            return False
+    lock.write_text(now.isoformat(timespec="seconds"), encoding="utf-8")
+    return True
 
 
 def _picklist(force: bool):
@@ -65,7 +82,13 @@ def main() -> None:
     parser.add_argument("--only", choices=sorted(STEPS))
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args()
-    sys.exit(0 if run(args.only, args.force) else 1)
+    if not take_lock():
+        sys.exit("An update is already running (the server updates automatically). Try again later.")
+    try:
+        ok = run(args.only, args.force)
+    finally:
+        LOCK.unlink(missing_ok=True)
+    sys.exit(0 if ok else 1)
 
 
 if __name__ == "__main__":
