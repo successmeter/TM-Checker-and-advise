@@ -132,7 +132,10 @@ class Explainer:
     @property
     def client(self) -> Any:
         if self._client is None:
-            self._client = anthropic.Anthropic()
+            # A key pasted with a trailing space is refused before it is sent, and the SDK reports that as a
+            # connection error, so tidy it up here.
+            key = os.environ.get("ANTHROPIC_API_KEY", "").strip().strip('"').strip("'").strip() or None
+            self._client = anthropic.Anthropic(api_key=key) if key else anthropic.Anthropic()
         return self._client
 
     def explain(self, report: Report, excerpts: list[Chunk]) -> Explanation:

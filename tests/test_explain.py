@@ -113,3 +113,8 @@ def test_missing_credentials_gives_friendly_message(report, monkeypatch):
     client = anthropic.Anthropic(max_retries=0, http_client=httpx2.Client(transport=httpx2.MockTransport(lambda r: httpx2.Response(500))))
     with pytest.raises(ExplanationUnavailable, match="not set up"):
         Explainer(client=client).explain(report, [])
+
+
+def test_api_key_with_stray_spaces_or_quotes_is_cleaned(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", '  "sk-ant-test-key" ')
+    assert Explainer().client.api_key == "sk-ant-test-key"
