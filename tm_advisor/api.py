@@ -1,5 +1,6 @@
 """HTTP API and the single-page front end."""
 
+import logging
 import os
 from pathlib import Path
 
@@ -16,6 +17,7 @@ from .register import FixtureRegisterClient, IpAustraliaRegisterClient, Register
 
 ROOT = Path(__file__).resolve().parents[1]
 STATIC = Path(__file__).resolve().parent / "static"
+log = logging.getLogger("uvicorn.error")  # shows in the server window
 
 
 class CheckRequest(Application):
@@ -80,6 +82,7 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
             explanation, reason = explainer.explain(report, excerpts), None
         except ExplanationUnavailable as e:
             explanation, reason = None, str(e)
+            log.warning("Explanation failed: %s", e, exc_info=e.__cause__)
         return ExplainResponse(report=report, explanation=explanation, unavailable_reason=reason,
                                manual_excerpts_used=len(excerpts))
 

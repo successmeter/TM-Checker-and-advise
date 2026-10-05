@@ -89,8 +89,9 @@ def test_explain_returns_report_and_grounded_explanation():
     assert explainer.calls[0][1]  # Manual excerpts were passed to the explainer
 
 
-def test_explain_degrades_gracefully_without_llm():
+def test_explain_degrades_gracefully_without_llm(caplog):
     response = make_client(FakeExplainer(fail=True)).post("/api/explain", json={**BODY, "consent": True})
+    assert "Explanation failed" in caplog.text  # the real cause is shown in the server window
     assert response.status_code == 200
     data = response.json()
     assert data["explanation"] is None
