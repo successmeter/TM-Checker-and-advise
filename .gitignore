@@ -6,3 +6,6 @@ __pycache__/
 *.egg-info/
 data/manual/
 data/picklist.json
+data/refresh.log
+data/*.partial
+data/picklist_probe.html

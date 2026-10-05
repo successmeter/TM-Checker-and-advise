@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import httpx
+import pytest
 
 from tm_advisor.manual import ManualIndex, build_index, chunk_page, parse_page
 from tm_advisor.manual.crawl import crawl
@@ -104,9 +105,9 @@ def test_failed_crawl_keeps_previous_download(tmp_path):
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(503)
 
-    saved = crawl(f"{BASE}/trademark", out, client=httpx.Client(transport=httpx.MockTransport(handler)),
-                  sleep=lambda _: None, log=lambda _: None)
-    assert saved == 0
+    with pytest.raises(SystemExit, match="Keeping the current copy"):
+        crawl(f"{BASE}/trademark", out, client=httpx.Client(transport=httpx.MockTransport(handler)),
+              sleep=lambda _: None, log=lambda _: None)
     assert out.read_text() == '{"url": "old", "html": ""}\n'
 
 
@@ -122,3 +123,70 @@ def test_crawl_command_skips_when_already_downloaded(tmp_path, monkeypatch, caps
     monkeypatch.setattr(sys, "argv", ["tm_advisor.manual", "crawl"])
     cli.main()
     assert "already downloaded" in capsys.readouterr().out
+
+
+def test_published_date_is_read_and_kept_out_of_the_text():
+    html = ("<html><body><main><h1>Part 27.3. Amending</h1><p>Date Published 10 Oct 2023</p>"
+            "<p>Applications are often filed with broad specifications.</p></main></body></html>")
+    page = parse_page(f"{BASE}/trademark/3.-amending", html)
+    assert page.published == "10 Oct 2023"
+    assert all("Date Published" not in t for s in page.sections for t in s.text)
+    chunk = chunk_page(page)[0]
+    index = ManualIndex()
+    index.build([chunk])
+    assert index.search("broad specifications")[0].published == "10 Oct 2023"
+
+
+def test_index_built_before_dates_still_works(tmp_path):
+    import sqlite3
+    path = tmp_path / "old.sqlite"
+    db = sqlite3.connect(path)
+    db.execute("CREATE VIRTUAL TABLE chunks USING fts5(id UNINDEXED, url UNINDEXED, title, heading, text, "
+               "tokenize='porter unicode61')")
+    db.execute("INSERT INTO chunks VALUES ('a#1', 'u', 'T', 'H', 'goods of the same description')")
+    db.commit()
+    db.close()
+    hit = ManualIndex(path).search("same description")[0]
+    assert hit.id == "a#1" and hit.published == ""
+
+
+def test_refresh_reports_new_removed_and_changed_pages(tmp_path, monkeypatch):
+    from tm_advisor.manual import __main__ as cli
+
+    def page_html(title, body):
+        return f"<html><body><main><h1>{title}</h1><p>{body}</p></main></body></html>"
+
+    site_v1 = {"/trademark": page_html("Index", '<a href="/trademark/a">A</a> <a href="/trademark/b">B</a>'),
+               "/trademark/a": page_html("A", "Same text"), "/trademark/b": page_html("B", "Old text")}
+    site_v2 = {"/trademark": page_html("Index", '<a href="/trademark/a">A</a> <a href="/trademark/b">B</a> <a href="/trademark/c">C</a>'),
+               "/trademark/a": page_html("A", "Same text"), "/trademark/b": page_html("B", "New text"),
+               "/trademark/c": page_html("C", "Brand new page")}
+
+    def client(site):
+        def handler(request):
+            if request.url.path == "/robots.txt":
+                return httpx.Response(404)
+            body = site.get(request.url.path)
+            return httpx.Response(200, text=body, headers={"content-type": "text/html"}) if body else httpx.Response(404)
+        return httpx.Client(transport=httpx.MockTransport(handler))
+
+    monkeypatch.setattr(cli, "PAGES", tmp_path / "pages.jsonl")
+    monkeypatch.setattr(cli, "INDEX", tmp_path / "manual.sqlite")
+    real_crawl = cli.crawl
+    current = {}
+    monkeypatch.setattr(cli, "crawl", lambda *a, **k: real_crawl(*a, client=client(current["site"]), sleep=lambda _: None,
+                                                               log=lambda _: None, **k))
+    current["site"] = site_v1
+    first = cli.refresh(f"{BASE}/trademark")
+    assert first.after == 3 and first.before == 0
+    current["site"] = site_v2
+    change = cli.refresh(f"{BASE}/trademark")
+    assert change.added == [f"{BASE}/trademark/c"]
+    assert change.changed == [f"{BASE}/trademark", f"{BASE}/trademark/b"]  # the index page gained a link
+    assert change.removed == []
+    assert "1 new, 0 removed, 2 changed" in change.summary()
+
+    current["site"] = {}  # site down: keep the current copy
+    with pytest.raises(SystemExit):
+        cli.refresh(f"{BASE}/trademark")
+    assert len((tmp_path / "pages.jsonl").read_text().splitlines()) == 4

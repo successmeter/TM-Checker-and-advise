@@ -20,7 +20,7 @@ USER_AGENT = "TM-Advisor-Manual-Indexer/0.2 (+https://github.com/successmeter/tm
 
 
 def crawl(start_url: str = START_URL, out_file: str | Path = "data/manual/pages.jsonl", *, delay: float = 1.0,
-          max_pages: int | None = None, client: httpx.Client | None = None,
+          max_pages: int | None = None, min_pages: int = 0, client: httpx.Client | None = None,
           sleep: Callable[[float], None] = time.sleep, log: Callable[[str], None] = print) -> int:
     client = client or httpx.Client(headers={"User-Agent": USER_AGENT}, timeout=30, follow_redirects=True)
     robots = _robots(client, start_url)
@@ -48,8 +48,10 @@ def crawl(start_url: str = START_URL, out_file: str | Path = "data/manual/pages.
                 if link not in seen:
                     seen.add(link)
                     queue.append(link)
-    if saved:
-        partial.replace(out)
+    if saved < max(min_pages, 1):
+        raise SystemExit(f"Only {saved} Manual pages downloaded (expected at least {min_pages}). Keeping the current "
+                         "copy; the site may be down or may have changed.")
+    partial.replace(out)
     return saved
 
 

@@ -70,6 +70,12 @@ suite, commit. IP Australia is never called in tests.
   keys and API errors become a friendly message while the check still works. *Done.*
 - Also: mark similarity now spots a distinctive word inside the other mark when extra words are added
   ("Best EcoKnit" vs ECO KNITWEAR).
+- Headstart-style flow (kind of mark → goods & services → check → summary), "describe your business" search,
+  picklist from the public classification search (`picklist_site`). *Done.*
+- Data freshness: `python -m tm_advisor.refresh` refreshes the picklist and the Manual; keeps the current copy if a
+  download looks incomplete (< 70% of the previous size); reports terms/pages added, removed, changed; the server
+  reloads new data live; the page shows data dates; Manual "Date Published" is kept and shown with citations;
+  weekly Windows scheduled task. *Done.*
 - Next: an evaluation set of real examination outcomes to measure the screen and the explanations before launch.
 
 ## Phase 3

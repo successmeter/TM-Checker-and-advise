@@ -2,6 +2,7 @@
 
 import logging
 import os
+from datetime import date
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query
@@ -62,6 +63,23 @@ class FindResponse(BaseModel):
     note: str | None = None
 
 
+class PicklistStatus(BaseModel):
+    sample: bool
+    updated: str
+    terms: int
+
+
+class ManualStatus(BaseModel):
+    updated: str
+    pages: int
+    passages: int
+
+
+class DataStatus(BaseModel):
+    picklist: PicklistStatus
+    manual: ManualStatus | None
+
+
 class DescribeRequest(BaseModel):
     text: str
     mode: str = "similar"
@@ -74,21 +92,56 @@ def _default_register() -> RegisterClient:
     return FixtureRegisterClient.load(os.environ.get("TM_REGISTER_FIXTURE", ROOT / "data" / "register_fixture.json"))
 
 
-def _default_picklist() -> Picklist:
-    full = ROOT / "data" / "picklist.json"
-    return Picklist.load(os.environ.get("TM_PICKLIST", full if full.exists() else ROOT / "data" / "picklist_sample.json"))
+class _PicklistFiles:
+    """The full picklist if it has been downloaded, else the sample; reloaded when a refresh replaces the file."""
+
+    def __init__(self) -> None:
+        self._loaded: tuple[Path, float] | None = None
+        self._picklist: Picklist | None = None
+
+    def _path(self) -> Path:
+        if os.environ.get("TM_PICKLIST"):
+            return Path(os.environ["TM_PICKLIST"])
+        full = ROOT / "data" / "picklist.json"
+        return full if full.exists() else ROOT / "data" / "picklist_sample.json"
+
+    def get(self) -> Picklist:
+        path = self._path()
+        stamp = (path, path.stat().st_mtime)
+        if stamp != self._loaded:
+            self._picklist, self._loaded = Picklist.load(path), stamp
+        return self._picklist
 
 
-def _default_manual() -> ManualIndex | None:
-    path = Path(os.environ.get("TM_MANUAL_INDEX", ROOT / "data" / "manual" / "manual.sqlite"))
-    return ManualIndex(path) if path.exists() else None
+class _ManualFiles:
+    """The Manual index once it exists (it may be built while the server runs)."""
+
+    def __init__(self) -> None:
+        self.path = Path(os.environ.get("TM_MANUAL_INDEX", ROOT / "data" / "manual" / "manual.sqlite"))
+        self._index: ManualIndex | None = None
+
+    def get(self) -> ManualIndex | None:
+        if self._index is None and self.path.exists():
+            self._index = ManualIndex(self.path)
+        return self._index
+
+    def updated(self) -> str:
+        pages = self.path.parent / "pages.jsonl"
+        source = pages if pages.exists() else self.path
+        return date.fromtimestamp(source.stat().st_mtime).isoformat() if source.exists() else ""
 
 
 def create_app(register: RegisterClient | None = None, picklist: Picklist | None = None,
                manual: ManualIndex | None = None, explainer: Explainer | None = None) -> FastAPI:
     register = register or _default_register()
-    picklist = picklist or _default_picklist()
-    manual = manual if manual is not None else _default_manual()
+    picklist_files = None if picklist is not None else _PicklistFiles()
+    manual_files = None if manual is not None else _ManualFiles()
+
+    def pl() -> Picklist:
+        return picklist if picklist_files is None else picklist_files.get()
+
+    def mi() -> ManualIndex | None:
+        return manual if manual_files is None else manual_files.get()
     explainer = explainer or Explainer()
     classes = load_classes(ROOT / "data" / "classes.json")
     app = FastAPI(title="TM Advisor", description="Brand filing check for Australian trade mark applicants. Not legal advice.")
@@ -106,12 +159,13 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
         if not request.consent:
             raise HTTPException(422, "Please confirm you understand this is not legal advice before running a check.")
         return check(Application(mark=request.mark, classes=request.classes, mark_kind=request.mark_kind),
-                     register, picklist)
+                     register, pl())
 
     @app.post("/api/explain")
     def run_explain(request: CheckRequest) -> ExplainResponse:
         report = run_check(request)
-        excerpts = retrieve(report, manual) if manual is not None else []
+        index = mi()
+        excerpts = retrieve(report, index) if index is not None else []
         try:
             explanation, reason = explainer.explain(report, excerpts), None
         except ExplanationUnavailable as e:
@@ -122,10 +176,22 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
 
     def group(found: list, query: str, keywords: list[str], note: str | None = None) -> FindResponse:
         return FindResponse(
-            query=query, keywords=keywords, sample_picklist=picklist.is_sample, note=note,
+            query=query, keywords=keywords, sample_picklist=pl().is_sample, note=note,
             groups=[PicklistGroup(class_number=cls, title=classes[cls].title, kind=classes[cls].kind,
                                   items=[PicklistItemOut(id=i.id, description=i.description) for i in items])
                     for cls, items in found])
+
+    @app.get("/api/data-status")
+    def data_status() -> DataStatus:
+        current = pl()
+        index = mi()
+        manual_status = None
+        if index is not None:
+            manual_status = ManualStatus(updated=manual_files.updated() if manual_files else "",
+                                         pages=index.page_count(), passages=index.count())
+        return DataStatus(picklist=PicklistStatus(sample=current.is_sample, updated=current.updated,
+                                                  terms=len(current.items)),
+                          manual=manual_status)
 
     @app.get("/api/classes")
     def list_classes() -> list[ClassOut]:
@@ -134,7 +200,7 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
     @app.get("/api/picklist/find")
     def picklist_find(q: str = Query(min_length=2), mode: str = Query("similar", pattern="^(similar|exact)$"),
                       kinds: str = "goods,services") -> FindResponse:
-        return group(picklist.find(q, mode, set(kinds.split(",")), classes), q, [q])
+        return group(pl().find(q, mode, set(kinds.split(",")), classes), q, [q])
 
     @app.post("/api/picklist/describe")
     def picklist_describe(request: DescribeRequest) -> FindResponse:
@@ -152,7 +218,7 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
         merged: dict[int, dict[str, object]] = {}
         order: list[int] = []
         for keyword in keywords:
-            for cls, items in picklist.find(keyword, request.mode, set(request.kinds), classes, per_class=25):
+            for cls, items in pl().find(keyword, request.mode, set(request.kinds), classes, per_class=25):
                 if cls not in merged:
                     merged[cls] = {}
                     order.append(cls)
@@ -163,7 +229,7 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
 
     @app.get("/api/picklist/search")
     def picklist_search(q: str = Query(min_length=2), class_number: int | None = Query(None, ge=1, le=45)) -> list[PicklistHit]:
-        return [PicklistHit(class_number=i.class_number, description=i.description) for i in picklist.search(q, class_number)]
+        return [PicklistHit(class_number=i.class_number, description=i.description) for i in pl().search(q, class_number)]
 
     return app
 

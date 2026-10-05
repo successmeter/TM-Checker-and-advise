@@ -11,6 +11,7 @@ MANUAL_PATH = "/trademark"
 _JUNK = ["script", "style", "nav", "header", "footer", "aside", "form", "noscript"]
 _HEADINGS = {"h2", "h3", "h4"}
 _TEXT = {"p", "li", "td", "th", "dd", "dt", "blockquote", "pre"}
+_PUBLISHED = re.compile(r"Date\s+Published\s*:?\s*(\d{1,2}\s+[A-Za-z]{3,9}\s+\d{4})", re.I)
 
 
 @dataclass
@@ -24,6 +25,7 @@ class Page:
     url: str
     title: str
     sections: list[Section]
+    published: str = ""  # the page's "Date Published", e.g. "10 Oct 2023"
 
 
 @dataclass(frozen=True)
@@ -33,6 +35,7 @@ class Chunk:
     title: str
     heading: str
     text: str
+    published: str = ""
 
 
 def manual_links(base_url: str, html: str) -> list[str]:
@@ -53,6 +56,8 @@ def manual_links(base_url: str, html: str) -> list[str]:
 def parse_page(url: str, html: str) -> Page:
     soup = BeautifulSoup(html, "html.parser")
     title_tag = soup.find("title")
+    found = _PUBLISHED.search(soup.get_text(" "))
+    published = " ".join(found.group(1).split()) if found else ""
     for tag in soup(_JUNK):
         tag.decompose()
     body = soup.find("main") or soup.find("article") or soup.find(id="content") or soup.find(class_="content") or soup.body or soup
@@ -69,7 +74,10 @@ def parse_page(url: str, html: str) -> Page:
             text = _clean(el.get_text(" "))
             if text:
                 sections[-1].text.append(text)
-    return Page(url=url, title=title, sections=[s for s in sections if s.text])
+    sections = [s for s in sections if s.text]
+    for section in sections:  # the date line itself is page furniture, not Manual text
+        section.text = [t for t in section.text if not _PUBLISHED.fullmatch(t)]
+    return Page(url=url, title=title, sections=[s for s in sections if s.text], published=published)
 
 
 def chunk_page(page: Page, max_words: int = 350, overlap: int = 40) -> list[Chunk]:
@@ -82,7 +90,7 @@ def chunk_page(page: Page, max_words: int = 350, overlap: int = 40) -> list[Chun
         while start < len(words):
             piece = words[start:start + max_words]
             chunks.append(Chunk(id=f"{slug}#{len(chunks) + 1}", url=page.url, title=page.title,
-                                heading=section.heading, text=" ".join(piece)))
+                                heading=section.heading, text=" ".join(piece), published=page.published))
             if start + max_words >= len(words):
                 break
             start += max_words - overlap

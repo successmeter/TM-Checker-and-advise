@@ -92,6 +92,7 @@ class Citation(BaseModel):
     title: str
     heading: str
     url: str
+    published: str = ""
 
 
 class ExplainedPart(BaseModel):
@@ -207,7 +208,8 @@ def _user_message(report: Report, excerpts: list[Chunk]) -> str:
     findings = report.model_dump(mode="json", exclude={"disclaimers"})
     parts = ["<findings>", json.dumps(findings, indent=1), "</findings>", "", "<manual_excerpts>"]
     for chunk in excerpts:
-        parts.append(f'<excerpt id="{chunk.id}" title="{chunk.title}" heading="{chunk.heading}">\n{chunk.text}\n</excerpt>')
+        published = f' published="{chunk.published}"' if chunk.published else ""
+        parts.append(f'<excerpt id="{chunk.id}" title="{chunk.title}" heading="{chunk.heading}"{published}>\n{chunk.text}\n</excerpt>')
     parts.append("</manual_excerpts>")
     if not excerpts:
         parts.append("(No Manual excerpts are available. Explain the findings without citations.)")
@@ -221,7 +223,7 @@ def _to_explanation(data: dict, report: Report, excerpts: list[Chunk], model: st
     known_numbers = {c.cited_number for c in report.conflicts}
 
     def cite(ids: list[str]) -> list[Citation]:
-        return [Citation(id=c.id, title=c.title, heading=c.heading, url=c.url)
+        return [Citation(id=c.id, title=c.title, heading=c.heading, url=c.url, published=c.published)
                 for c in (by_id.get(i) for i in dict.fromkeys(ids)) if c]
 
     conflicts = [

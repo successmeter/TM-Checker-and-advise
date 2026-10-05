@@ -147,3 +147,30 @@ def test_logo_kind_softens_descriptive_mark(client):
     assert logo["overall_risk"] == "Medium" and not logo["escalate"]
     assert logo["mark_kind"] == "logo"
     assert any("protects the logo as a whole" in n for n in logo["notes"])
+
+
+def test_data_status_reports_sample_and_manual(client):
+    data = client.get("/api/data-status").json()
+    assert data["picklist"]["sample"] is True and data["picklist"]["terms"] > 400
+    assert data["manual"]["pages"] == 1 and data["manual"]["passages"] > 0
+
+
+def test_picklist_file_is_reloaded_after_a_refresh(tmp_path, monkeypatch):
+    import json
+    import os
+    import time
+    path = tmp_path / "picklist.json"
+    path.write_text(json.dumps({"updated": "2026-10-01", "items": [{"id": "1", "class_number": 25, "description": "Hats"}]}))
+    monkeypatch.setenv("TM_PICKLIST", str(path))
+    app = TestClient(create_app(FixtureRegisterClient.load(DATA / "register_fixture.json"), explainer=FakeExplainer()))
+
+    status = app.get("/api/data-status").json()["picklist"]
+    assert status == {"sample": False, "updated": "2026-10-01", "terms": 1}
+    assert app.get("/api/picklist/find", params={"q": "beanies"}).json()["groups"] == []
+
+    path.write_text(json.dumps({"updated": "2026-10-08", "items": [
+        {"id": "1", "class_number": 25, "description": "Hats"}, {"id": "2", "class_number": 25, "description": "Beanies"}]}))
+    later = time.time() + 5
+    os.utime(path, (later, later))
+    assert app.get("/api/data-status").json()["picklist"]["updated"] == "2026-10-08"
+    assert app.get("/api/picklist/find", params={"q": "beanies"}).json()["groups"][0]["items"][0]["description"] == "Beanies"

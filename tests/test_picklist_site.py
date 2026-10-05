@@ -51,9 +51,9 @@ def test_sync_reads_all_classes_with_pagination(tmp_path):
 
     sleeps = []
     out = tmp_path / "picklist.json"
-    count = sync(out, client=httpx.Client(transport=httpx.MockTransport(handler)), sleep=sleeps.append, log=lambda _: None)
+    change = sync(out, client=httpx.Client(transport=httpx.MockTransport(handler)), sleep=sleeps.append, log=lambda _: None)
 
-    assert count == 45 * 2 + 2
+    assert change.after == 45 * 2 + 2 and change.before == 0
     picklist = Picklist.load(out)
     assert picklist.match(25, "Term 25 d") is not None
     assert not picklist.is_sample
@@ -69,3 +69,35 @@ def test_sync_stops_with_advice_when_page_has_no_terms(tmp_path):
     with pytest.raises(SystemExit, match="probe"):
         sync(tmp_path / "p.json", client=httpx.Client(transport=httpx.MockTransport(handler)),
              sleep=lambda _: None, log=lambda _: None)
+
+
+def site(terms_for):
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/robots.txt":
+            return httpx.Response(404)
+        return httpx.Response(200, text=page(terms_for(int(request.url.params["class"]))))
+    return httpx.Client(transport=httpx.MockTransport(handler))
+
+
+def test_resync_reports_added_and_removed_terms(tmp_path):
+    out = tmp_path / "picklist.json"
+    sync(out, client=site(lambda c: [f"Term {c} a", f"Term {c} b", f"Term {c} c"]), sleep=lambda _: None, log=lambda _: None)
+    change = sync(out, client=site(lambda c: [f"Term {c} a", f"Term {c} b", f"Term {c} c"] + (["Brand new"] if c == 9 else [])
+                                   if c != 25 else ["Term 25 a", "Term 25 b"]),
+                  sleep=lambda _: None, log=lambda _: None)
+    assert change.added == ["Class 9: Brand new"]
+    assert change.removed == ["Class 25: Term 25 c"]
+    assert "1 added, 1 removed" in change.summary()
+    assert json.loads(out.read_text())["updated"]
+
+
+def test_much_smaller_list_is_refused_and_current_list_kept(tmp_path):
+    out = tmp_path / "picklist.json"
+    sync(out, client=site(lambda c: [f"Term {c} {i}" for i in range(10)]), sleep=lambda _: None, log=lambda _: None)
+    before = out.read_text()
+    with pytest.raises(SystemExit, match="far fewer"):
+        sync(out, client=site(lambda c: [f"Term {c} 0", f"Term {c} 1"]), sleep=lambda _: None, log=lambda _: None)
+    assert out.read_text() == before
+    change = sync(out, client=site(lambda c: [f"Term {c} 0", f"Term {c} 1"]), force=True,
+                  sleep=lambda _: None, log=lambda _: None)
+    assert change.after == 90

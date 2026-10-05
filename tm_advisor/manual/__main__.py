@@ -8,13 +8,23 @@
 import argparse
 from pathlib import Path
 
-from . import build_index
+from . import ManualChange, build_index, compare, fingerprints
 from .crawl import START_URL, crawl
 
 # Always the project's data folder, whichever folder the command is run from.
 DATA = Path(__file__).resolve().parents[2] / "data" / "manual"
 PAGES = DATA / "pages.jsonl"
 INDEX = DATA / "manual.sqlite"
+MIN_RATIO = 0.7  # a refresh with far fewer pages than before is treated as a failure
+
+
+def refresh(start: str = START_URL, delay: float = 1.0, max_pages: int | None = None) -> ManualChange:
+    """Download the Manual again, keep the current copy if the download looks incomplete, rebuild the index."""
+    old = fingerprints(PAGES)
+    crawl(start, PAGES, delay=delay, max_pages=max_pages, min_pages=int(len(old) * MIN_RATIO))
+    change = compare(old, fingerprints(PAGES))
+    build_index(PAGES, INDEX)
+    return change
 
 
 def main() -> None:
@@ -34,8 +44,10 @@ def main() -> None:
             print(f"The Manual is already downloaded ({PAGES}). Nothing to do.\n"
                   "To download it again for updates, add --refresh. To rebuild only the index, use: index")
             return
-        saved = crawl(args.start, PAGES, delay=args.delay, max_pages=args.max_pages)
-        print(f"Downloaded {saved} pages to {PAGES}")
+        change = refresh(args.start, args.delay, args.max_pages)
+        print(f"Downloaded the Manual to {PAGES}. {change.summary()}")
+        print(f"Indexed it into {INDEX}")
+        return
     if not PAGES.exists():
         raise SystemExit(f"No downloaded Manual at {PAGES}. Run the crawl command first.")
     print(f"Indexed {build_index(PAGES, INDEX)} chunks into {INDEX}")

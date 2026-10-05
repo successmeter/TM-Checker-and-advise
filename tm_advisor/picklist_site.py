@@ -1,7 +1,8 @@
 """Builds data/picklist.json from IP Australia's public classification search, one page per class.
 
   python -m tm_advisor.picklist_site probe    save class 1's page and show what was found (send this output if sync fails)
-  python -m tm_advisor.picklist_site sync     read classes 1-45 (about one request per second) into data/picklist.json
+  python -m tm_advisor.picklist_site sync     read classes 1-45 (about one request per second) into data/picklist.json;
+                                              keeps the current list if the new one is much smaller (--force overrides)
 
 https://tmgns.search.ipaustralia.gov.au/descriptions?class=N lists the picklist terms for class N. The page layout
 isn't documented, so the term list is found by shape: the largest list or table of short entries on the page.
@@ -21,7 +22,7 @@ from urllib.parse import parse_qs, urljoin, urlparse
 import httpx
 from bs4 import BeautifulSoup
 
-from .picklist_sync import save
+from .picklist_sync import PicklistChange, save
 
 SITE = "https://tmgns.search.ipaustralia.gov.au"
 USER_AGENT = "TM-Advisor-Picklist/0.3 (+https://github.com/successmeter/tm-checker-and-advise)"
@@ -125,7 +126,8 @@ class _Fetcher:
 
 
 def sync(out: Path = OUT, *, client: httpx.Client | None = None, delay: float = 1.0, max_pages_per_class: int = 200,
-         sleep: Callable[[float], None] = time.sleep, log: Callable[[str], None] = print) -> int:
+         force: bool = False, sleep: Callable[[float], None] = time.sleep,
+         log: Callable[[str], None] = print) -> PicklistChange:
     client = client or httpx.Client(headers={"User-Agent": USER_AGENT}, timeout=30, follow_redirects=True)
     fetcher = _Fetcher(client, delay, sleep)
     items: list[dict] = []
@@ -151,8 +153,7 @@ def sync(out: Path = OUT, *, client: httpx.Client | None = None, delay: float = 
         items.extend({"id": f"{class_number}-{n}", "class_number": class_number, "description": t}
                      for n, t in enumerate(terms, 1))
         log(f"class {class_number}: {len(terms)} terms ({pages} page{'s' if pages != 1 else ''})")
-    save(items, out)
-    return len(items)
+    return save(items, out, source=f"IP Australia classification search ({SITE})", force=force)
 
 
 def probe(client: httpx.Client | None = None, log: Callable[[str], None] = print) -> None:
@@ -178,8 +179,8 @@ def main() -> None:
     if command == "probe":
         probe()
     elif command == "sync":
-        count = sync()
-        print(f"Saved {count} terms to {OUT}. Restart the server to use them.")
+        change = sync(force="--force" in sys.argv)
+        print(f"Saved the picklist to {OUT}. {change.summary()}")
     else:
         print(__doc__)
 

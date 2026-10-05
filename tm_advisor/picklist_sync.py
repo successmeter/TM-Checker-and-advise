@@ -13,6 +13,8 @@ import io
 import json
 import os
 import zipfile
+from dataclasses import dataclass, field
+from datetime import date
 from pathlib import Path
 
 import httpx
@@ -71,10 +73,61 @@ def parse(content: bytes) -> list[dict]:
     return items
 
 
-def save(items: list[dict], path: str | Path) -> None:
-    Path(path).parent.mkdir(parents=True, exist_ok=True)
-    Path(path).write_text(json.dumps({"source": "IP Australia TMGnS API /gsDescriptionsFull", "items": items}, indent=1),
-                          encoding="utf-8")
+MIN_RATIO = 0.7  # refuse a new list that is less than 70% the size of the current one
+
+
+@dataclass
+class PicklistChange:
+    before: int
+    after: int
+    added: list[str] = field(default_factory=list)
+    removed: list[str] = field(default_factory=list)
+
+    def summary(self) -> str:
+        text = f"{self.after} terms (was {self.before}): {len(self.added)} added, {len(self.removed)} removed."
+        for label, terms in (("Added", self.added), ("Removed", self.removed)):
+            if terms:
+                text += f"\n  {label}: " + "; ".join(terms[:10]) + (f" … and {len(terms) - 10} more" if len(terms) > 10 else "")
+        return text
+
+
+def save(items: list[dict], path: str | Path, source: str = "IP Australia TMGnS API /gsDescriptionsFull",
+         force: bool = False) -> PicklistChange:
+    """Replace the picklist file, but only if the new list looks complete. Reports what changed."""
+    path = Path(path)
+    old = _load_items(path)
+    change = _diff(old, items)
+    if old and len(items) < len(old) * MIN_RATIO and not force:
+        raise SystemExit(f"The new picklist has {len(items)} terms, far fewer than the current {len(old)}. "
+                         "Keeping the current list; IP Australia's pages may have changed. "
+                         "Use --force to replace it anyway.")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    partial = path.with_name(path.name + ".partial")
+    partial.write_text(json.dumps({"source": source, "updated": date.today().isoformat(), "items": items}, indent=1),
+                       encoding="utf-8")
+    partial.replace(path)
+    return change
+
+
+def _load_items(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (ValueError, OSError):
+        return []
+    if isinstance(data, dict) and "SAMPLE" in data.get("_note", ""):
+        return []
+    return data.get("items", []) if isinstance(data, dict) else data
+
+
+def _diff(old: list[dict], new: list[dict]) -> PicklistChange:
+    def keys(rows):
+        return {(int(r["class_number"]), r["description"].lower()): f"Class {r['class_number']}: {r['description']}" for r in rows}
+    before, after = keys(old), keys(new)
+    return PicklistChange(before=len(old), after=len(new),
+                          added=sorted(after[k] for k in after.keys() - before.keys()),
+                          removed=sorted(before[k] for k in before.keys() - after.keys()))
 
 
 def _norm(key: str) -> str:
@@ -90,6 +143,7 @@ def main() -> None:
     parser.add_argument("--out", default="data/picklist.json")
     parser.add_argument("--base-url", default=os.environ.get("TMGNS_BASE_URL", TMGNS_BASE))
     parser.add_argument("--from-file", help="parse a file you downloaded yourself instead of calling the API")
+    parser.add_argument("--force", action="store_true", help="replace the list even if the new one is much smaller")
     args = parser.parse_args()
 
     if args.from_file:
@@ -100,8 +154,8 @@ def main() -> None:
     items = parse(content)
     if not items:
         raise SystemExit("No picklist rows recognised. Check the downloaded file's format and update picklist_sync.parse.")
-    save(items, args.out)
-    print(f"Saved {len(items)} picklist terms across {len({i['class_number'] for i in items})} classes to {args.out}")
+    change = save(items, args.out, force=args.force)
+    print(f"Saved the picklist to {args.out}. {change.summary()}")
 
 
 if __name__ == "__main__":

@@ -172,6 +172,7 @@
       <div id="sample-note" class="info sample" hidden>This is a <strong>sample</strong> list of common terms, not IP Australia's full picklist of 60,000+ terms. Load the full list with <code>py -m tm_advisor.picklist_site sync</code>.</div>
       <div class="info">Trade mark protection depends on the goods and services you choose. <strong>Select all</strong> items your trade mark should cover, and only those you really intend to offer.</div>
       <p id="search-note" class="hint"></p>
+      <p id="picklist-status" class="hint"></p>
       <div class="gs">
         <div class="box">
           <div class="head row"><span>Show classes for:</span>
@@ -221,7 +222,7 @@
     <p id="nav-error" class="error" role="alert"></p>
   </main>
 </div>
-<footer id="disclaimers"></footer>
+<footer><p id="data-status"></p><div id="disclaimers"></div></footer>
 
 <script>
 const $ = (s, el = document) => el.querySelector(s);
@@ -441,7 +442,7 @@ $("#explain").onclick = async () => {
 };
 function cites(list) {
   if (!list || !list.length) return "";
-  return `<p class="cites">Manual: ${list.map(c => `<a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.title)}${c.heading && c.heading !== c.title ? " › " + esc(c.heading) : ""}</a>`).join("; ")}</p>`;
+  return `<p class="cites">Manual: ${list.map(c => `<a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.title)}${c.heading && c.heading !== c.title ? " › " + esc(c.heading) : ""}</a>${c.published ? ` (published ${esc(c.published)})` : ""}`).join("; ")}</p>`;
 }
 function renderExplanation(data) {
   if (!data.explanation) { $("#explanation").innerHTML = `<p class="error">${esc(data.unavailable_reason)}</p>`; return; }
@@ -498,7 +499,29 @@ function renderSummary() {
   };
 }
 
+/* data freshness */
+function niceDate(iso) {
+  if (!iso) return "";
+  const d = new Date(iso + "T00:00:00");
+  return isNaN(d) ? iso : d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
+}
+function loadDataStatus() {
+  fetch("/api/data-status").then(r => r.json()).then(s => {
+    const p = s.picklist;
+    const pick = p.sample
+      ? `Goods & services: sample list of ${p.terms.toLocaleString()} terms (not IP Australia's full picklist).`
+      : `Goods & services: IP Australia picklist, ${p.terms.toLocaleString()} terms${p.updated ? `, updated ${niceDate(p.updated)}` : ""}.`;
+    const man = s.manual
+      ? `Trade Marks Manual: ${s.manual.pages.toLocaleString()} pages${s.manual.updated ? `, updated ${niceDate(s.manual.updated)}` : ""}.`
+      : "Trade Marks Manual: not downloaded yet.";
+    $("#picklist-status").textContent = pick;
+    $("#data-status").textContent = `Data: ${pick} ${man}`;
+    $("#sample-note").hidden = !p.sample;
+  }).catch(() => {});
+}
+
 /* start */
+loadDataStatus();
 function fillInputs() { $("#mark").value = state.mark; $("#logo-words").value = state.logoWords; $("#industry").value = state.industry; }
 fetch("/api/classes").then(r => r.json()).then(list => { list.forEach(c => TITLES[c.class_number] = c.title); renderSelected(); });
 fetch("/api/disclaimers").then(r => r.json()).then(list => { $("#disclaimers").innerHTML = list.map(d => `<p>${esc(d)}</p>`).join(""); });
