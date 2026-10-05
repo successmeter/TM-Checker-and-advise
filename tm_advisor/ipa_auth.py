@@ -5,6 +5,13 @@ import time
 
 import httpx
 
+# IP Australia's External Token API (seen in use by its own classification search).
+DEFAULT_TOKEN_URL = "https://production.api.ipaustralia.gov.au/public/external-token-api/v1/access_token"
+
+
+def has_credentials() -> bool:
+    return bool(os.environ.get("IPA_CLIENT_ID") and os.environ.get("IPA_CLIENT_SECRET"))
+
 
 class IpaToken:
     def __init__(self, client_id: str, client_secret: str, token_url: str, http: httpx.Client):
@@ -17,7 +24,8 @@ class IpaToken:
 
     @classmethod
     def from_env(cls, http: httpx.Client) -> "IpaToken":
-        return cls(os.environ["IPA_CLIENT_ID"], os.environ["IPA_CLIENT_SECRET"], os.environ["IPA_TOKEN_URL"], http)
+        return cls(os.environ["IPA_CLIENT_ID"].strip(), os.environ["IPA_CLIENT_SECRET"].strip(),
+                   os.environ.get("IPA_TOKEN_URL") or DEFAULT_TOKEN_URL, http)
 
     def headers(self, accept: str = "application/json") -> dict[str, str]:
         return {"Authorization": f"Bearer {self.access_token()}", "Accept": accept}

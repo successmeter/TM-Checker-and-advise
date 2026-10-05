@@ -12,7 +12,7 @@ import os
 
 import httpx
 
-from ..ipa_auth import IpaToken
+from ..ipa_auth import DEFAULT_TOKEN_URL, IpaToken
 from ..models import RegisterClass, RegisterMark
 from ..text import squash, words
 
@@ -33,7 +33,7 @@ class IpAustraliaRegisterClient:
         return cls(
             client_id=os.environ["IPA_CLIENT_ID"],
             client_secret=os.environ["IPA_CLIENT_SECRET"],
-            token_url=os.environ["IPA_TOKEN_URL"],
+            token_url=os.environ.get("IPA_TOKEN_URL") or DEFAULT_TOKEN_URL,
             base_url=os.environ.get("IPA_BASE_URL", PRODUCTION_BASE),
         )
 

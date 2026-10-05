@@ -37,7 +37,7 @@ def take_lock(lock: Path = LOCK, now: datetime | None = None) -> bool:
 
 
 def _picklist(force: bool):
-    from .picklist_site import sync
+    from .picklist_api import sync  # needs IPA_CLIENT_ID / IPA_CLIENT_SECRET; explains itself if they're missing
     return sync(force=force)
 
 
