@@ -97,8 +97,12 @@ client; the report never adds conflicts or changes risk; route reasoning matches
 PDF renders, has every section that applies, page count sane. A sample report for the preview (SUCCESS METER).
 
 ### 4.3 Free tier vs preview
-Trim the free check to the free column of design §2 (top 3 similar marks, headline route) and add the report
-preview with the sections that apply to this customer. Tests: free API response never contains paid-only fields.
+Trim the free check to the free column of design §2 (overall risk and which areas raised concerns; the
+recommended route moves to the paid report) and add the report preview with the sections that apply to this
+customer. Tests: free API response never contains paid-only fields.
+
+### 4.3a Logo upload
+Optional logo with the order (PNG/JPG/SVG, 5 MB max, type checked, re-encoded), shown in the report.
 
 ### 4.4 Store
 `store.py`: orders and reports (SQLite), random ids, hashed access tokens, state machine
@@ -118,15 +122,17 @@ Background generation after payment, retries, failure alert; optional manual rev
 approved). Tests: paid order becomes ready; failures retried; review hold works.
 
 ### 4.8 Email
-`mailer.py`: report-ready email with the private link; "lost your link" email. Provider via env vars. Tests with
+`mailer.py` with **Resend**: report-ready email with the private link; "lost your link" email. API key and
+sending domain via env vars. Tests with
 a fake provider.
 
 ### 4.9 Abuse and cost controls
 Rate limits on checks and orders, bot check before the free check, Anthropic spend limit documented.
 
 ### 4.10 Hosting
-Container image, persistent disk for data files and the database, Sydney region, domain + HTTPS, secrets,
-backups, error alerts, uptime check. Staging (Stripe test mode) first.
+On the Laravel Forge server alongside the Social Media Suite (second site, Supervisor daemon, Python venv, data
+folder outside releases), or a small separate host if that project is on Laravel Cloud/Vapor (design §6).
+HTTPS, secrets, backups, error alerts, uptime check. Staging (Stripe test mode) first.
 
 ### 4.11 Evaluation set
 Real outcomes (Headstart/examination reports) with expected route; a script that reports how often the route
@@ -136,4 +142,6 @@ matches. Must pass before 4.12.
 Legal advice received (design §10) and reflected in terms, refund and privacy policies and report wording;
 Stripe live keys; first 20 reports reviewed before release.
 
-Founder actions that can start now: legal advice (§10), Stripe test-mode keys, decisions in design §11.
+Founder actions that can start now: legal advice (design §10, including the refund policy and business name),
+register the business name, Stripe test-mode keys, Resend account and sending domain, confirm which Laravel
+hosting the Social Media Suite uses.

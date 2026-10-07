@@ -1,6 +1,8 @@
 # TM Advisor: Paid report design
 
-Status: draft for review. Nothing here is built yet. Legal points are not legal advice; see §10.
+Status: decisions recorded (§11); nothing here is built yet. Legal points are not legal advice; see §10.
+Working business name: **Trademark Advisor** (to be registered). Payments are taken by **Success Meter Pty Ltd**
+through its Stripe account.
 
 ## 1. Goal
 
@@ -18,18 +20,21 @@ themselves through TM Headstart or a standard application.
 |---|---|---|
 | Kind of mark, goods & services search, picklist | ✓ | ✓ |
 | Overall risk level | ✓ | ✓ |
-| Recommended route (headline only) | ✓ | ✓ with full reasoning |
-| Similar marks | Count, and the top 3 with risk level | Every mark, with images, status, owner, why it's similar, overlapping goods, and what to do about each |
-| Distinctiveness | Pass / concern | Full section 41 assessment of the whole mark: meaning, affected terms, options |
+| Which areas raised concerns (distinctiveness, similar marks, wording) | ✓ as counts only | ✓ in full |
+| Recommended route (word / composite / logo / new name / narrower goods) | — | ✓ with full reasoning |
+| Similar marks | How many need attention | Every mark, with images, status, owner, why it's similar, overlapping goods, and what to do about each |
+| Distinctiveness | Concern or not | Full section 41 assessment of the whole mark: meaning, affected terms, options |
 | Goods & services | Picklist yes/no | Recommended specification, ready to paste; terms to drop or narrow (Manual Part 27.3) and why; fee impact |
 | Composite / logo guidance | One line | What the design must do to carry descriptive words; what a composite does and doesn't protect |
 | Explanation with Trade Marks Manual citations | — | ✓ |
 | Filing guide | — | Step-by-step for TM Headstart and standard filing, fees for their classes, what to do with an adverse Headstart report |
 | PDF, dated register snapshot | — | ✓ |
+| Their own logo in the report (uploaded) | — | ✓ |
 | Re-check within 30 days after changing the name or goods | — | ✓ (one free re-run) |
 
 Rule for the free tier: enough to show the problem is real and that the report answers it, never enough to
-file from. The free check must stay honest: if the free check shows High risk, the free headline says so.
+file from. The free check must stay honest: if the free check shows High risk, the free headline says so. No
+attorney review or attorney service is offered (decision §11).
 
 ## 3. Customer journey
 
@@ -37,8 +42,8 @@ file from. The free check must stay honest: if the free check shows High risk, t
 2. Below the free results, a **report preview**: the report's table of contents with the sections they'd get,
    which sections apply to them (e.g. "3 similar marks need attention", "your phrase is likely to be seen as
    descriptive"), a sample page, price, and what's not included (not legal advice, no filing on their behalf).
-3. **Get my report — A$299**: customer enters their email and ticks the terms checkbox (terms, refund policy,
-   not legal advice).
+3. **Get my report — A$299**: customer enters their email, optionally uploads their logo (PNG/JPG/SVG, up to
+   5 MB, for composite and logo marks), and ticks the terms checkbox (terms, refund policy, not legal advice).
 4. Server creates an *order* (status `pending`) from the application details it holds, not from anything the
    browser computed, and redirects to **Stripe Checkout** (hosted page; card details never touch our server).
 5. Stripe redirects back to `/report/{order_id}?t={token}` showing "Preparing your report…".
@@ -96,7 +101,7 @@ New modules (Python, same app):
 | `tm_advisor/report/build.py` | Assemble the full report data from a check + Claude sections. |
 | `tm_advisor/report/render.py` | HTML template → PDF. |
 | `tm_advisor/report/worker.py` | Background generation with retries; order state machine. |
-| `tm_advisor/mailer.py` | Send report links (provider API, e.g. Postmark or Resend). |
+| `tm_advisor/mailer.py` | Send report links through **Resend** (API key in env vars; sending domain verified with SPF/DKIM). |
 | `tm_advisor/static/report.html` | Report page (same design as the PDF). |
 
 Order states: `pending` → `paid` → `generating` → `ready` (or `failed` → retried → staff alert). Refunds:
@@ -109,8 +114,9 @@ price, currency, Stripe Checkout Session id, Stripe Payment Intent id, status, c
 `reports`: order id, report JSON (frozen), PDF path, register searched at, model used, version of the report
 template.
 
-Stored: what's needed to produce and re-send the report. Not stored: card details (Stripe holds them), logo
-images unless the customer chooses to include their logo in the report.
+Stored: what's needed to produce and re-send the report, and the customer's uploaded logo (shown in the report;
+type and size checked, re-encoded on upload, never shared; deleted with the order on request). Not stored: card
+details (Stripe holds them).
 
 ### 5.2 Stripe
 
@@ -137,13 +143,18 @@ the project already uses for the picklist copier). A4, page numbers, the registe
 
 ## 6. Hosting
 
-The app runs on the founder's PC today. Selling requires a public server:
-- **Option A (recommended to start):** a managed container host with a Sydney region and a persistent disk
-  (e.g. Fly.io or Render), about A$15–40/month. Data files (picklist, Manual index, wording list) live on the
-  disk; the existing automatic refresh keeps them current.
-- **Option B:** AWS (App Runner/ECS + RDS + S3, Sydney). More moving parts; worth it at higher volume.
-- Domain + HTTPS, environment secrets, daily backups of the database and report files, error alerts (Sentry or
-  similar), uptime check.
+The app runs on the founder's PC today. Selling requires a public server. The founder's Success Meter Social
+Media Suite already runs on Laravel; the tool stays a Python app either way:
+- **If that project uses Laravel Forge (a server Forge manages):** run this app on the same server as a second
+  site (e.g. `trademark.<domain>`), with Forge's Nginx in front, the app under a Forge daemon (Supervisor), a
+  Python virtual environment, and a data folder outside the release directory. No extra hosting cost; ideally
+  the server is in Sydney.
+- **If it uses Laravel Cloud or Vapor (PHP only):** a small separate host with a Sydney region and a persistent
+  disk (e.g. Fly.io or Render), about A$15–40/month.
+- Not recommended: rebuilding checkout in Laravel and calling this app from it. Two codebases for one flow.
+- Either way: HTTPS, environment secrets, daily backups of the database, logos and report files, error alerts,
+  uptime check. Data files (picklist, Manual index, wording list) live in the data folder; the existing automatic
+  refresh keeps them current.
 
 ## 7. Abuse and cost controls (free tier)
 
@@ -170,17 +181,37 @@ Not legal advice; these are the questions to put to an Australian IP lawyer or t
 1. **Trade marks work for gain (Trade Marks Act s156):** does a paid, tailored report on registrability and what
    to file amount to work reserved for registered attorneys? Options: attorney review and sign-off of each paid
    report (a selling point), or positioning and wording as an information product, confirmed by the lawyer.
-2. **Australian Consumer Law:** claims about chances and outcomes; refund policy (consumer guarantees apply).
+2. **Australian Consumer Law:** claims about chances and outcomes; the refund policy and Headstart promise (§12)
+   (consumer guarantees apply regardless).
+5. **Business name:** register "Trademark Advisor" with ASIC before trading under it. The name is descriptive and
+   "Advisor" may suggest professional advice; ask whether it's suitable given s156, and check it with the tool.
 3. **Terms of service, refund policy, privacy policy** wording.
 4. **Professional indemnity insurance**, if the attorney-review model is used.
 
 Go-live is blocked on this advice (plan task 4.12).
 
-## 11. Open decisions for the founder
+## 11. Decisions
 
-1. Attorney review: included in A$299, an optional add-on, or not offered?
-2. Refund policy: e.g. full refund if the report can't be produced; otherwise within 7 days if not downloaded?
-3. Hosting: Option A or B (§6)?
-4. Email provider and the "from" address/domain.
-5. Business entity for Stripe, GST registration status, and the name on the report.
-6. Whether customers can upload their logo for inclusion in the report.
+| Question | Decision |
+|---|---|
+| Free vs paid | Free check: overall risk and which areas raised concerns. Recommended route and everything else: paid. |
+| Attorney review | Not offered at launch. |
+| Refund policy | Proposed in §12; final wording after legal advice. |
+| Hosting | Alongside the Success Meter Social Media Suite if it uses Laravel Forge; otherwise a small separate host (§6). *Confirm which Laravel hosting is used.* |
+| Email | Resend. |
+| Names | Brand: Trademark Advisor (working name, to be registered). Stripe and invoices: Success Meter Pty Ltd. |
+| Logo upload | Yes, for composite and logo marks, shown in the report. |
+
+## 12. Refund policy (proposal)
+
+A refund "if not happy with the outcome after lodging" was considered and not recommended: examination takes
+months and registration at least 7.5 months, the outcome depends on things the report doesn't control (what is
+actually filed, later filings, oppositions), "not happy" is open-ended, and it reads as an outcome guarantee.
+Instead:
+1. **14-day refund before lodging**, no questions asked.
+2. **Headstart promise:** if the customer files the report's recommended route and goods and services exactly
+   through TM Headstart within 30 days, and the Headstart assessment is adverse on a ground the report rated
+   Low risk, full refund on sending the Headstart letter. Headstart answers in about 5 business days, so this is
+   quick, objective and checkable.
+3. Full refund if the report can't be produced.
+Consumer guarantees under the Australian Consumer Law apply in addition. Final wording after legal advice.
