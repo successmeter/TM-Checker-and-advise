@@ -31,7 +31,9 @@ _CHROME = re.compile(
 
 def _is_note(text: str) -> bool:
     """IP Australia's explanatory notes about a class, not goods or services."""
-    return bool(re.match(r"^class\s*\d{1,2}\b", text, re.I)) or (len(text) > 100 and ". " in text.rstrip("."))
+    if re.match(r"^class\s*\d{1,2}\b", text, re.I) or (len(text) > 100 and ". " in text.rstrip(".")):
+        return True
+    return len(text) > 300 and ";" in text and text.endswith(".")  # a class heading: "Paints, varnishes; ... ."
 
 
 def read_class_file(path: Path) -> tuple[list[str], list[str]]:
@@ -43,7 +45,7 @@ def read_class_file(path: Path) -> tuple[list[str], list[str]]:
         text = " ".join(line.replace("\t", " ").split()).strip(" •·-–*;")
         if not text:
             continue
-        if text.isdigit() or len(text) < 2 or len(text) > 300 or _CHROME.match(text) or _is_note(text):
+        if text.isdigit() or len(text) < 2 or len(text) > 2000 or _CHROME.match(text) or _is_note(text):
             dropped.append(text)
             continue
         if text.lower() not in seen:
