@@ -17,6 +17,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from . import refresh
+from .ipa_auth import has_credentials
 from .refresh import take_lock
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -43,6 +44,9 @@ def data_dates(root: Path = ROOT) -> dict[str, datetime | None]:
             dates["picklist"] = datetime.fromisoformat(updated) if updated else datetime.fromtimestamp(picklist.stat().st_mtime)
         except (ValueError, OSError):
             dates["picklist"] = datetime.fromtimestamp(picklist.stat().st_mtime)
+    if has_credentials():  # the wording list is read from the register with the owner's own API access
+        wording = root / "data" / "register_wording.json"
+        dates["wording"] = datetime.fromtimestamp(wording.stat().st_mtime) if wording.exists() else None
     pages = root / "data" / "manual" / "pages.jsonl"
     if pages.exists():
         dates["manual"] = datetime.fromtimestamp(pages.stat().st_mtime)

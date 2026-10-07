@@ -18,6 +18,7 @@ from .models import Application, Report
 from .picklist import Picklist, load_classes
 from .text import stems
 from .register import FixtureRegisterClient, IpAustraliaRegisterClient, RegisterClient
+from .register.wording import WordingIndex
 
 ROOT = Path(__file__).resolve().parents[1]
 STATIC = Path(__file__).resolve().parent / "static"
@@ -80,9 +81,16 @@ class ManualStatus(BaseModel):
     passages: int
 
 
+class WordingStatus(BaseModel):
+    updated: str
+    terms: int
+    marks: int
+
+
 class DataStatus(BaseModel):
     picklist: PicklistStatus
     manual: ManualStatus | None
+    wording: WordingStatus | None = None
     auto_update_days: int = 0
     next_auto_update: str | None = None
 
@@ -120,6 +128,23 @@ class _PicklistFiles:
         return self._picklist
 
 
+class _WordingFiles:
+    """The saved register wording list (data/register_wording.json) once built; reloaded when a refresh replaces it."""
+
+    def __init__(self) -> None:
+        self.path = Path(os.environ.get("TM_WORDING", ROOT / "data" / "register_wording.json"))
+        self._loaded: float | None = None
+        self._index: WordingIndex | None = None
+
+    def get(self) -> WordingIndex | None:
+        if not self.path.exists():
+            return None
+        stamp = self.path.stat().st_mtime
+        if stamp != self._loaded:
+            self._index, self._loaded = WordingIndex.load(self.path), stamp
+        return self._index
+
+
 class _ManualFiles:
     """The Manual index once it exists (it may be built while the server runs)."""
 
@@ -140,8 +165,12 @@ class _ManualFiles:
 
 def create_app(register: RegisterClient | None = None, picklist: Picklist | None = None,
                manual: ManualIndex | None = None, explainer: Explainer | None = None,
-               auto_refresh: bool = False) -> FastAPI:
+               auto_refresh: bool = False, wording: WordingIndex | None = None) -> FastAPI:
     register = register or _default_register()
+    wording_files = None if wording is not None else _WordingFiles()
+
+    def wi() -> WordingIndex | None:
+        return wording if wording_files is None else wording_files.get()
     picklist_files = None if picklist is not None else _PicklistFiles()
     manual_files = None if manual is not None else _ManualFiles()
 
@@ -225,6 +254,9 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
                     for cls in order if groups[cls]])
 
     def _register_terms(word: str) -> list:
+        saved = wi()
+        if saved is not None and saved.terms:  # all 45 classes, instantly
+            return saved.search(word)
         lookup = getattr(register, "goods_terms", None)
         return lookup(word) if lookup else []
 
@@ -241,6 +273,8 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
         return DataStatus(picklist=PicklistStatus(sample=current.is_sample, updated=current.updated,
                                                   terms=len(current.items)),
                           manual=manual_status, auto_update_days=days,
+                          wording=WordingStatus(updated=saved.updated, terms=len(saved.terms), marks=saved.marks_read)
+                          if (saved := wi()) is not None else None,
                           next_auto_update=upcoming.date().isoformat() if upcoming else None)
 
     @app.get("/api/classes")

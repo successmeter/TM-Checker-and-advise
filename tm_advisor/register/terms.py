@@ -22,6 +22,17 @@ class RegisterTerm:
     uses: int
 
 
+def split_terms(raw: list[str]) -> list[str]:
+    """Specification text split into separate wordings (a description can hold several, separated by semicolons)."""
+    out = []
+    for chunk in raw:
+        for part in str(chunk).split(";"):
+            text = " ".join(part.split()).strip(" ;,.")
+            if 1 < len(text) <= MAX_TERM_LENGTH:
+                out.append(text)
+    return out
+
+
 def terms_from_marks(marks: list[RegisterMark], query: str, limit: int = 60) -> list[RegisterTerm]:
     """Wordings in the marks' goods & services that contain every meaningful word of the query, most used first."""
     wanted = stems(query) - _FILLER
@@ -34,9 +45,8 @@ def terms_from_marks(marks: list[RegisterMark], query: str, limit: int = 60) -> 
             continue
         seen_in_mark: set[tuple[int, str]] = set()
         for cls in mark.classes:
-            for raw in cls.terms:
-                text = " ".join(raw.split()).strip(" ;,.")
-                if not text or len(text) > MAX_TERM_LENGTH or not wanted <= stems(text):
+            for text in split_terms(cls.terms):
+                if not wanted <= stems(text):
                     continue
                 key = (cls.class_number, text.lower())
                 if key in seen_in_mark:

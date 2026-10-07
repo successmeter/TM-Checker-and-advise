@@ -97,6 +97,21 @@ class IpAustraliaRegisterClient:
         self._terms_cache[key] = result
         return result
 
+    def registered_in_class(self, class_number: int, page: int, page_size: int = 100) -> list[dict]:
+        """One page of registered marks in a class, newest first (full records, for the wording list)."""
+        body = {
+            "rows": [{"op": "AND", "query": {"classNumber": {"text": str(class_number), "type": "SINGLE"},
+                                              "statuses": ["REGISTERED"]}}],
+            "pageNumber": page,
+            "pageSize": page_size,
+            "sort": {"field": "NUMBER", "direction": "DESCENDING"},
+        }
+        response = self._http.post(f"{self.base_url}/page/advanced", json=body, headers=self._headers())
+        if response.status_code >= 400:
+            raise SystemExit(f"Class {class_number}: IP Australia answered HTTP {response.status_code}: "
+                             f"{response.text[:300]}")
+        return response.json().get("trademarks") or []
+
     def _quick_then_get(self, mark: str) -> list[RegisterMark]:
         numbers: list[str] = []
         for query in _queries(mark):

@@ -1,7 +1,8 @@
-"""Refresh IP Australia data: the goods & services picklist and the Trade Marks Manual.
+"""Refresh IP Australia data: the goods & services picklist, wording from registered marks, and the Manual.
 
-  python -m tm_advisor.refresh                 refresh both
+  python -m tm_advisor.refresh                 refresh all three
   python -m tm_advisor.refresh --only picklist
+  python -m tm_advisor.refresh --only wording
   python -m tm_advisor.refresh --only manual
   python -m tm_advisor.refresh --force         replace the picklist even if the new one is much smaller
 
@@ -41,13 +42,19 @@ def _picklist(force: bool):
     return sync(force=force)
 
 
+def _wording(force: bool):
+    from .register.wording import harvest  # needs IPA_CLIENT_ID / IPA_CLIENT_SECRET; explains itself if they're missing
+    return harvest(force=force)
+
+
 def _manual(force: bool):
     from .manual.__main__ import refresh
     return refresh()
 
 
-STEPS: dict[str, Callable] = {"picklist": _picklist, "manual": _manual}
-NAMES = {"picklist": "Goods & services picklist", "manual": "Trade Marks Manual"}
+STEPS: dict[str, Callable] = {"picklist": _picklist, "wording": _wording, "manual": _manual}
+NAMES = {"picklist": "Goods & services picklist", "wording": "Registered goods & services wording",
+         "manual": "Trade Marks Manual"}
 
 
 def run(only: str | None = None, force: bool = False, steps: dict[str, Callable] | None = None,
