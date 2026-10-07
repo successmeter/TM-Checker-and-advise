@@ -35,9 +35,25 @@ class Picklist:
         self.updated = ""  # date the list was downloaded from IP Australia
         self._by_class: dict[int, list[PicklistItem]] = {}
         self._stems: dict[str, set[str]] = {}
+        self._keys: dict[tuple[int, str], PicklistItem] = {}
+        self._by_stem: dict[str, list[PicklistItem]] = {}  # word -> items containing it, so searches skip the rest
         for item in items:
             self._by_class.setdefault(item.class_number, []).append(item)
             self._stems[item.id] = stems(item.description) - _FILLER
+            self._keys.setdefault((item.class_number, _key(item.description)), item)
+            for s in self._stems[item.id]:
+                self._by_stem.setdefault(s, []).append(item)
+
+    def _candidates(self, wanted: set[str], partial: bool) -> list[PicklistItem]:
+        """Items sharing a word with the query (or, if partial, a longer or shorter form of one)."""
+        found: dict[str, PicklistItem] = {}
+        for w in wanted:
+            vocab = [w] if not partial or len(w) < 4 else \
+                [h for h in self._by_stem if h == w or h.startswith(w) or (len(h) >= 4 and w.startswith(h))]
+            for h in vocab:
+                for item in self._by_stem.get(h, []):
+                    found.setdefault(item.id, item)
+        return list(found.values())
 
     @classmethod
     def load(cls, path: str | Path) -> "Picklist":
@@ -50,11 +66,7 @@ class Picklist:
 
     def match(self, class_number: int, term: str) -> PicklistItem | None:
         """The picklist entry for this exact term (ignoring case, punctuation and plurals), if any."""
-        wanted = _key(term)
-        for item in self._by_class.get(class_number, []):
-            if _key(item.description) == wanted:
-                return item
-        return None
+        return self._keys.get((class_number, _key(term)))
 
     def suggest(self, class_number: int, term: str, limit: int = 3) -> list[str]:
         """Picklist entries in the class that share the most meaningful words with the term."""
@@ -71,8 +83,9 @@ class Picklist:
         wanted = stems(query) - _FILLER
         if not wanted:
             return []
-        pool = self._by_class.get(class_number, []) if class_number else self.items
-        hits = [i for i in pool if wanted <= stems(i.description)]
+        pool = self._candidates(wanted, partial=False)
+        hits = [i for i in pool if (not class_number or i.class_number == class_number)
+                and wanted <= stems(i.description)]
         return sorted(hits, key=lambda i: (i.class_number, len(i.description)))[:limit]
 
 
@@ -87,7 +100,7 @@ class Picklist:
         if not wanted:
             return []
         scored: dict[int, list[tuple[float, PicklistItem]]] = {}
-        for item in self.items:
+        for item in self._candidates(wanted, partial=mode != "exact"):
             if kinds and classes and classes.get(item.class_number) and classes[item.class_number].kind not in kinds:
                 continue
             have = self._stems[item.id]

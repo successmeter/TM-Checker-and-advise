@@ -20,11 +20,18 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "picklist.json"
 SOURCE = "IP Australia goods & services picklist (tmgns.search.ipaustralia.gov.au), copied by hand"
 _NAME = re.compile(r"^(?:class)?[\s_-]*(\d{1,2})$", re.I)
+# Page furniture only, matched as whole lines: real terms can start with "loading", "search", "copyright" or "showing".
 _CHROME = re.compile(
-    r"^(?:class\s*\d{1,2}\b.*|page\s*\d+.*|showing\b.*|\d+\s*(?:-|to|of)\s*\d+.*|results?\b.*|search\b.*|"
-    r"next|previous|prev|first|last|back|home|help|menu|close|copy|select|select all|add|remove|download|export|print|"
-    r"description|descriptions|goods and services|goods & services|terms?|ok|cancel|loading.*|"
-    r"skip to .*|ip australia.*|australian government.*|copyright.*|privacy.*|disclaimer.*|accessibility.*)$", re.I)
+    r"^(?:class\s*\d{1,2}|page\s*\d+(?:\s*of\s*\d+)?|showing\s+\d+.*|\d+\s*(?:-|to|of)\s*\d+(?:\s*of\s*\d+)?.*|"
+    r"\d+\s+results?|results?|search|next|previous|prev|first|last|back|home|help|menu|close|copy|select|select all|"
+    r"add|remove|download|export|print|description|descriptions|goods and services|goods & services|terms?|ok|cancel|"
+    r"loading\.*|skip to (?:main )?content|ip australia|australian government|(?:copyright\s*)?©.*|privacy|disclaimer|"
+    r"accessibility)$", re.I)
+
+
+def _is_note(text: str) -> bool:
+    """IP Australia's explanatory notes about a class, not goods or services."""
+    return bool(re.match(r"^class\s*\d{1,2}\b", text, re.I)) or (len(text) > 100 and ". " in text.rstrip("."))
 
 
 def read_class_file(path: Path) -> tuple[list[str], list[str]]:
@@ -36,7 +43,7 @@ def read_class_file(path: Path) -> tuple[list[str], list[str]]:
         text = " ".join(line.replace("\t", " ").split()).strip(" •·-–*;")
         if not text:
             continue
-        if text.isdigit() or len(text) < 3 or len(text) > 300 or _CHROME.match(text):
+        if text.isdigit() or len(text) < 2 or len(text) > 300 or _CHROME.match(text) or _is_note(text):
             dropped.append(text)
             continue
         if text.lower() not in seen:

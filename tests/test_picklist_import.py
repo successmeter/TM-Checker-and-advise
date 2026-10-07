@@ -19,6 +19,20 @@ def test_pasted_page_keeps_terms_and_drops_page_furniture(tmp_path):
     assert "Class 1" in dropped and "Next" in dropped
 
 
+def test_real_terms_that_look_like_page_text_are_kept(tmp_path):
+    terms = ["loading dock shelters made of metal", "loading and unloading of goods", "copyright licensing",
+             "search engine optimisation", "showing of films", "TV", "results analysis services"]
+    note = ("Class 18 also includes unworked or semi-worked materials, namely leather, substitutes for leather and "
+            "animal skins.")
+    other = ("Pipes as parts of sanitary installations are in Class 11. There are pipes in Classes 6, 11, 17 and 19. "
+             "The pipes in Class 11 are attached to sinks.")
+    write(tmp_path, "1.txt", "\n".join(["Class 1", "Loading...", "Showing 1 to 50 of 900", "Page 2 of 18",
+                                        "© IP Australia", note, other] + terms))
+    kept, dropped = read_class_file(tmp_path / "1.txt")
+    assert kept == terms
+    assert note in dropped and other in dropped
+
+
 def test_file_names(tmp_path):
     for name in ("1.txt", "class 2.txt", "Class_45.txt", "46.txt", "notes.txt"):
         write(tmp_path, name, "x")
