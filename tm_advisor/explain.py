@@ -36,7 +36,12 @@ say what the tool found without citing anything.
 - Never promise an outcome or give a probability. The examiner decides.
 - Options must be things the founder can weigh themselves (for example: leave out goods they don't sell, \
 choose a more distinctive name, gather evidence of use). When the findings say to escalate, say plainly that \
-this is the point to pay for a registered trade marks attorney, and why."""
+this is the point to pay for a registered trade marks attorney, and why.
+- When the findings include a recommended route (word mark, composite mark, logo mark, a different name, or \
+narrower goods), the overview states it and why, and the next steps start with it. Never suggest adding a logo \
+to get around an earlier similar mark: examiners compare the words.
+- When the findings include an assessment of the mark as a whole (ai_distinctiveness), use it for the \
+distinctiveness explanation."""
 
 _SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -209,8 +214,8 @@ class Explainer:
             self._client = anthropic.Anthropic(api_key=key) if key else anthropic.Anthropic()
         return self._client
 
-    def explain(self, report: Report, excerpts: list[Chunk]) -> Explanation:
-        response = self._call(SYSTEM_PROMPT, _user_message(report, excerpts), _SCHEMA, self.effort, 16000)
+    def explain(self, report: Report, excerpts: list[Chunk], effort: str | None = None) -> Explanation:
+        response = self._call(SYSTEM_PROMPT, _user_message(report, excerpts), _SCHEMA, effort or self.effort, 16000)
         if response.stop_reason == "refusal":
             raise ExplanationUnavailable("An explanation could not be generated for this check.")
         if response.stop_reason == "max_tokens":

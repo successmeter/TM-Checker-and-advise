@@ -73,6 +73,7 @@ def check(application: Application, register: RegisterClient, picklist: Picklist
         mark_kind=application.mark_kind,
         notes=notes,
         own_marks=own,
+        marks_screened=len(found),
         overall_risk=overall,
         conflicts=conflicts,
         picklist=picklist_results,

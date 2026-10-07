@@ -153,6 +153,7 @@ class Report(BaseModel):
     escalate: bool
     escalation_reasons: list[str]
     notes: list[str] = []
+    marks_screened: int = 0  # register results looked at
     own_marks: list[str] = []  # numbers of the applicant's own marks/applications, left out of the conflicts
     register_warning: str | None = None  # e.g. results came from IP Australia's test copy of the register
     ai_distinctiveness: AiDistinctiveness | None = None
