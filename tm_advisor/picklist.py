@@ -33,6 +33,7 @@ class Picklist:
         self.items = items
         self.is_sample = False
         self.updated = ""  # date the list was downloaded from IP Australia
+        self.class_notes: dict[int, dict] = {}  # class -> {"heading": official class heading, "notes": [...]}
         self._by_class: dict[int, list[PicklistItem]] = {}
         self._stems: dict[str, set[str]] = {}
         self._keys: dict[tuple[int, str], PicklistItem] = {}
@@ -62,6 +63,8 @@ class Picklist:
         picklist = cls([PicklistItem(str(r["id"]), int(r["class_number"]), r["description"]) for r in rows])
         picklist.is_sample = isinstance(data, dict) and "SAMPLE" in data.get("_note", "")
         picklist.updated = data.get("updated", "") if isinstance(data, dict) else ""
+        if isinstance(data, dict):
+            picklist.class_notes = {int(k): v for k, v in (data.get("class_notes") or {}).items()}
         return picklist
 
     def match(self, class_number: int, term: str) -> PicklistItem | None:

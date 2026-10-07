@@ -12,6 +12,7 @@ lines that were dropped are shown so you can check. Attribute IP Australia when 
 import argparse
 import json
 import re
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from .picklist_sync import PicklistChange, save
@@ -26,7 +27,7 @@ _CHROME = re.compile(
     r"\d+\s+results?|results?|search|next|previous|prev|first|last|back|home|help|menu|close|copy|select|select all|"
     r"add|remove|download|export|print|description|descriptions|goods and services|goods & services|terms?|ok|cancel|"
     r"loading\.*|skip to (?:main )?content|ip australia|australian government|(?:copyright\s*)?©.*|privacy|disclaimer|"
-    r"accessibility)$", re.I)
+    r"accessibility|notes|show detail|hide detail)$", re.I)
 
 
 def _is_note(text: str) -> bool:
@@ -36,22 +37,61 @@ def _is_note(text: str) -> bool:
     return len(text) > 300 and ";" in text and text.endswith(".")  # a class heading: "Paints, varnishes; ... ."
 
 
-def read_class_file(path: Path) -> tuple[list[str], list[str]]:
-    """(terms kept, lines dropped) from one pasted class file."""
-    kept: list[str] = []
-    dropped: list[str] = []
-    seen: set[str] = set()
-    for line in path.read_text(encoding="utf-8-sig", errors="replace").splitlines():
-        text = " ".join(line.replace("\t", " ").split()).strip(" •·-–*;")
-        if not text:
+@dataclass
+class ClassPage:
+    terms: list[str]
+    dropped: list[str]
+    heading: str = ""
+    notes: list[str] = field(default_factory=list)
+
+
+def _top_section(lines: list[str]) -> tuple[int, str, list[str]]:
+    """The class heading and notes at the top of a page: after "Class N", before the first term.
+
+    Returns how many lines they take up. Headings and notes are prose (they end with a full stop or read as
+    sentences); picklist terms don't.
+    """
+    start = next((i for i, t in enumerate(lines[:10]) if re.fullmatch(r"class\s*\d{1,2}", t, re.I)), None)
+    if start is None:
+        return 0, "", []
+    heading, notes = "", []
+    end = start + 1
+    for text in lines[start + 1:]:
+        if _CHROME.match(text):
+            end += 1
             continue
-        if text.isdigit() or len(text) < 2 or len(text) > 2000 or _CHROME.match(text) or _is_note(text):
+        if not (text.endswith(".") or _is_note(text)):
+            break
+        if not heading and not notes and not re.match(r"^class\s*\d", text, re.I) and ". " not in text.rstrip("."):
+            heading = text
+        else:
+            notes.append(text)
+        end += 1
+    return end, heading, notes
+
+
+def read_class_file(path: Path) -> ClassPage:
+    """Terms, dropped lines, and the class heading and notes from one pasted class file."""
+    lines = [" ".join(line.replace("\t", " ").split()).strip(" •·-–*;")
+             for line in path.read_text(encoding="utf-8-sig", errors="replace").splitlines()]
+    lines = [t for t in lines if t]
+    top, heading, notes = _top_section(lines)
+    kept: list[str] = []
+    dropped: list[str] = lines[:top]
+    seen: set[str] = set()
+    for text in lines[top:]:
+        if _is_note(text) and not re.fullmatch(r"class\s*\d{1,2}", text, re.I):
+            dropped.append(text)
+            if text not in notes:
+                notes.append(text)  # a note further down the page
+            continue
+        if text.isdigit() or len(text) < 2 or len(text) > 2000 or _CHROME.match(text):
             dropped.append(text)
             continue
         if text.lower() not in seen:
             seen.add(text.lower())
             kept.append(text)
-    return kept, dropped
+    return ClassPage(kept, dropped, heading, notes)
 
 
 def class_files(folder: Path) -> dict[int, Path]:
@@ -67,28 +107,38 @@ def import_folder(folder: Path, out: Path = OUT, force: bool = False, log=print)
     files = class_files(Path(folder))
     if not files:
         raise SystemExit(f"No class files found in {folder}. Name them 1.txt to 45.txt (one term per line).")
-    items = [i for i in _existing(out) if int(i["class_number"]) not in files]
+    existing_items, existing_notes = _existing(out)
+    items = [i for i in existing_items if int(i["class_number"]) not in files]
+    class_notes = {k: v for k, v in existing_notes.items() if int(k) not in files}
     for class_number, path in sorted(files.items()):
-        terms, dropped = read_class_file(path)
+        page = read_class_file(path)
+        terms, dropped = page.terms, page.dropped
+        if page.heading or page.notes:
+            class_notes[str(class_number)] = {"heading": page.heading, "notes": page.notes}
         if not terms:
             raise SystemExit(f"{path.name} has no terms in it. Nothing was changed.")
         items += [{"id": f"{class_number}-{n}", "class_number": class_number, "description": t}
                   for n, t in enumerate(terms, 1)]
-        log(f"class {class_number}: {len(terms)} terms" + (f"; left out: {'; '.join(dropped[:6])}"
-                                                            + (" …" if len(dropped) > 6 else "") if dropped else ""))
+        furniture = [d for d in dropped if d != page.heading and d not in page.notes]
+        log(f"class {class_number}: {len(terms)} terms"
+            + (", heading" if page.heading else "") + (f", {len(page.notes)} notes" if page.notes else "")
+            + (f"; left out: {'; '.join(furniture[:6])}" + (" …" if len(furniture) > 6 else "") if furniture else ""))
     missing = sorted(set(range(1, 46)) - {int(i["class_number"]) for i in items})
     if missing:
         log(f"Not imported yet: classes {', '.join(map(str, missing))}")
     items.sort(key=lambda i: int(i["class_number"]))
-    return save(items, out, source=SOURCE, force=force)
+    return save(items, out, source=SOURCE, force=force,
+                extra={"class_notes": dict(sorted(class_notes.items(), key=lambda kv: int(kv[0])))})
 
 
-def _existing(out: Path) -> list[dict]:
+def _existing(out: Path) -> tuple[list[dict], dict]:
     try:
         data = json.loads(out.read_text(encoding="utf-8"))
     except (OSError, ValueError):
-        return []
-    return data.get("items", []) if isinstance(data, dict) and "SAMPLE" not in data.get("_note", "") else []
+        return [], {}
+    if not isinstance(data, dict) or "SAMPLE" in data.get("_note", ""):
+        return [], {}
+    return data.get("items", []), data.get("class_notes", {})
 
 
 def main() -> None:

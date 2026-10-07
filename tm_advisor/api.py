@@ -45,6 +45,8 @@ class ClassOut(BaseModel):
     class_number: int
     title: str
     kind: str
+    heading: str = ""                              # IP Australia's class heading, from the picklist pages
+    notes: list[str] = []                          # IP Australia's explanatory notes for the class
 
 
 class PicklistItemOut(BaseModel):
@@ -279,7 +281,11 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
 
     @app.get("/api/classes")
     def list_classes() -> list[ClassOut]:
-        return [ClassOut(class_number=c.class_number, title=c.title, kind=c.kind) for c in classes.values()]
+        notes = pl().class_notes
+        return [ClassOut(class_number=c.class_number, title=c.title, kind=c.kind,
+                         heading=notes.get(c.class_number, {}).get("heading", ""),
+                         notes=notes.get(c.class_number, {}).get("notes", []))
+                for c in classes.values()]
 
     @app.get("/api/picklist/find")
     def picklist_find(q: str = Query(min_length=2), mode: str = Query("similar", pattern="^(similar|exact)$"),

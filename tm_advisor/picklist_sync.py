@@ -92,7 +92,7 @@ class PicklistChange:
 
 
 def save(items: list[dict], path: str | Path, source: str = "IP Australia TMGnS API /gsDescriptionsFull",
-         force: bool = False) -> PicklistChange:
+         force: bool = False, extra: dict | None = None) -> PicklistChange:
     """Replace the picklist file, but only if the new list looks complete. Reports what changed."""
     path = Path(path)
     old = _load_items(path)
@@ -103,7 +103,8 @@ def save(items: list[dict], path: str | Path, source: str = "IP Australia TMGnS 
                          "Use --force to replace it anyway.")
     path.parent.mkdir(parents=True, exist_ok=True)
     partial = path.with_name(path.name + ".partial")
-    partial.write_text(json.dumps({"source": source, "updated": date.today().isoformat(), "items": items}, indent=1),
+    partial.write_text(json.dumps({"source": source, "updated": date.today().isoformat(), **(extra or {}),
+                                   "items": items}, indent=1),
                        encoding="utf-8")
     partial.replace(path)
     return change

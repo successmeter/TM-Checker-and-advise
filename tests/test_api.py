@@ -108,7 +108,8 @@ def test_explain_degrades_gracefully_without_llm(caplog):
 def test_classes_endpoint(client):
     classes = client.get("/api/classes").json()
     assert len(classes) == 45
-    assert classes[24] == {"class_number": 25, "title": "Clothing, footwear and headwear", "kind": "goods"}
+    assert classes[24] == {"class_number": 25, "title": "Clothing, footwear and headwear", "kind": "goods",
+                           "heading": "", "notes": []}  # heading and notes come with the full picklist
 
 
 def test_find_groups_results_by_class(client):
