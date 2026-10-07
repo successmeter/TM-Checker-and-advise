@@ -254,3 +254,17 @@ def test_check_page_gets_a_readable_error_when_the_register_fails():
     response = TestClient(app).post("/api/check", json={"mark": "Success Meter", "consent": True,
                                                         "classes": [{"class_number": 35, "terms": ["advertising"]}]})
     assert response.status_code == 502 and "register search" in response.json()["detail"]
+
+
+def test_a_mark_in_class_all_covers_every_class():
+    from tm_advisor.register.ipaustralia import _to_register_mark
+    mark = _to_register_mark({"number": "123", "words": ["SUCCESS"], "statusGroup": "REGISTERED",
+                              "goodsAndServices": [{"class": "All", "descriptionText": ["All goods"]},
+                                                   {"class": "Odd", "descriptionText": ["x"]}]}, "123")
+    assert sorted({c.class_number for c in mark.classes}) == list(range(1, 46))
+
+    from tm_advisor.goods_similarity import relate
+    from tm_advisor.models import GoodsLevel
+    c35 = next(c for c in mark.classes if c.class_number == 35)
+    overlap = relate(35, ["business data analysis"], 35, c35.terms)
+    assert overlap.level == GoodsLevel.SAME and not overlap.narrowing_helps

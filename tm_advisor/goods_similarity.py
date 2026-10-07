@@ -57,7 +57,13 @@ def _content(term: str) -> set[str]:
     return stems(term) - _FILLER
 
 
+# How a mark registered for every class (class "All" on the register) lists its goods and services here.
+ALL_GOODS = "All goods and services"
+
+
 def _is_broad(class_number: int, term: str) -> bool:
+    if term == ALL_GOODS:
+        return True
     content = _content(term)
     broad = _BROAD_WORDS.get(class_number, set())
     return bool(content) and content <= broad

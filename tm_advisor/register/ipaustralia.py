@@ -18,6 +18,7 @@ import httpx
 from ..ipa_auth import IpaToken, token_url_for
 from ..models import RegisterClass, RegisterMark
 from ..text import squash, words
+from ..goods_similarity import ALL_GOODS
 from .terms import RegisterTerm, terms_from_marks
 
 log = logging.getLogger("uvicorn.error")
@@ -229,8 +230,13 @@ def _to_register_mark(data: dict, number: str) -> RegisterMark:
         terms = gs.get("descriptionText") or gs.get("description") or []
         if isinstance(terms, str):
             terms = [t.strip() for t in terms.replace(";", ",").split(",") if t.strip()]
-        if number_:
-            classes.append(RegisterClass(class_number=int(number_), terms=terms))
+        label = str(number_ or "").strip()
+        if label.isdigit():
+            classes.append(RegisterClass(class_number=int(label), terms=terms))
+        elif label.lower() == "all":  # a mark registered for all goods and services covers every class
+            classes += [RegisterClass(class_number=n, terms=[ALL_GOODS, *terms]) for n in range(1, 46)]
+        elif label:
+            log.info("Skipping unrecognised class %r on trade mark %s", label, number)
 
     images = (data.get("images") or {}).get("images") if isinstance(data.get("images"), dict) else None
     kinds = data.get("kind") or []
