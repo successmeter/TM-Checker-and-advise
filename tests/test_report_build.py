@@ -125,3 +125,16 @@ def test_claude_sees_only_the_marks_that_need_attention():
     assert len(seen[0].conflicts) <= 8 and all(c.risk != Risk.LOW for c in seen[0].conflicts)
     html = render_html(build_report(APP, report, **KW))
     assert "Also on the register: no action needed" in html
+
+
+def test_citations_are_not_repeated_and_marks_have_one_what_to_do():
+    from tm_advisor.explain import Citation as Cited
+    from tm_advisor.report.build import _unique_citations
+    cites = [Cited(id="1", title="22.9. Words", heading="22.9. Words", url="u"),
+             Cited(id="2", title="22.7. Examination", heading="22.7.8 Honest desire", url="u"),
+             Cited(id="3", title="22.7. Examination", heading="22.7.8 Honest desire", url="u")]
+    out = _unique_citations(cites)
+    assert [(c.title, c.heading) for c in out] == [("22.9. Words", ""), ("22.7. Examination", "22.7.8 Honest desire")]
+    doc = build_report(APP, checked(), explainer=FakeExplainer(), **KW)
+    plus = next(m for m in doc.similar_marks if m.number == "2536546")
+    assert plus.what_to_do == "It leads with SUCCESS."

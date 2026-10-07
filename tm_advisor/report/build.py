@@ -98,6 +98,15 @@ def _explain(report: Report, explainer: Explainer | None, manual: ManualIndex | 
         return None
 
 
+def _unique_citations(cited) -> list[Citation]:
+    """One line per Manual section; no heading when it just repeats the page title."""
+    out: dict[tuple[str, str], Citation] = {}
+    for c in cited:
+        heading = "" if c.heading.strip() == c.title.strip() else c.heading
+        out.setdefault((c.title, heading), Citation(title=c.title, heading=heading, url=c.url, published=c.published))
+    return list(out.values())
+
+
 def _relevant(conflicts: list[Conflict]) -> list[Conflict]:
     order = {Risk.HIGH: 0, Risk.MEDIUM: 1, Risk.LOW: 2}
     return sorted(conflicts, key=lambda c: (not c.live, order[c.risk], -c.mark_score))[:MAX_MARKS]
@@ -112,7 +121,7 @@ def _similar(c: Conflict, explained: str | None) -> SimilarMark:
                        image=c.cited_image, status=c.cited_status, owner=c.cited_owner,
                        classes=sorted({o.cited_class for o in c.overlaps}), live=c.live, risk=c.risk,
                        why_similar=c.mark_reasons, goods_overlap=overlap or "No overlapping goods or services.",
-                       what_to_do=f"{explained} {c.option}" if explained else c.option)
+                       what_to_do=explained or c.option)
 
 
 def _own_note(report: Report) -> str:
@@ -164,10 +173,17 @@ def _route_detail(report: Report) -> list[str]:
     if route is None:
         return []
     if route.recommended == "composite":
-        return ["The concern is that your words describe your goods or services, not an earlier trade mark. That is "
-                "the situation where a design helps: the design, not the words, makes the mark distinctive.",
-                "If owning the words themselves matters to you, the alternative is a different name with an invented "
-                "or unusual element, filed as a word mark."]
+        detail = ["The main concern is that your words describe your goods or services. That is the situation where a "
+                  "design helps: the design, not the words, makes the mark distinctive.",
+                  "If owning the words themselves matters to you, the alternative is a different name with an invented "
+                  "or unusual element, filed as a word mark."]
+        closer = [c for c in report.conflicts if c.live and c.risk == Risk.MEDIUM]
+        if closer:
+            names = ", ".join(c.cited_words for c in closer[:3])
+            detail.insert(1, f"Separately, {len(closer)} similar mark{'s' if len(closer) > 1 else ''} need"
+                             f"{'s' if len(closer) == 1 else ''} a closer look ({names}, section 4). A design doesn't "
+                             "change that: examiners compare the words.")
+        return detail
     if route.recommended in ("new_name", "narrow_goods"):
         return ["The concern is an earlier similar mark (section 44). Adding a logo would not help: examiners compare "
                 "the main feature of each mark, which is usually the words."]
@@ -176,8 +192,8 @@ def _route_detail(report: Report) -> list[str]:
 
 def _distinctiveness(report: Report, explanation: Explanation | None) -> DistinctivenessSection:
     flags = [f"{f.word.upper()}: {f.reason}" for f in report.distinctiveness]
-    citations = [Citation(title=c.title, heading=c.heading, url=c.url, published=c.published)
-                 for c in (explanation.distinctiveness.citations if explanation and explanation.distinctiveness else [])]
+    citations = _unique_citations(explanation.distinctiveness.citations
+                                  if explanation and explanation.distinctiveness else [])
     ai = report.ai_distinctiveness
     if ai:
         return DistinctivenessSection(likelihood=ai.likelihood, meaning=ai.meaning, reasoning=ai.reasoning,

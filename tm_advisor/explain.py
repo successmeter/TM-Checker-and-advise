@@ -41,7 +41,10 @@ this is the point to pay for a registered trade marks attorney, and why.
 narrower goods), the overview states it and why, and the next steps start with it. Never suggest adding a logo \
 to get around an earlier similar mark: examiners compare the words.
 - When the findings include an assessment of the mark as a whole (ai_distinctiveness), use it for the \
-distinctiveness explanation."""
+distinctiveness explanation.
+- Explain the legal tests once, in the overview or the distinctiveness explanation. Each conflict explanation is two \
+to four sentences about that mark only: what makes it similar, which of the founder's goods or services it \
+touches, and the most useful thing to do about it. Don't repeat the general test or the option text."""
 
 _SCHEMA: dict[str, Any] = {
     "type": "object",
