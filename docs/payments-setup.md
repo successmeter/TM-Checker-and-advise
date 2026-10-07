@@ -30,10 +30,11 @@ PDF download. Without a Resend key the "report ready" email is printed in the se
 ## 3. Stripe test mode
 
 1. In the Stripe Dashboard switch on **Test mode**. Developers → API keys: copy the **Secret key** (`sk_test_...`).
-2. Install the Stripe CLI (https://docs.stripe.com/stripe-cli), then `stripe login`.
+2. Install the Stripe CLI: from https://github.com/stripe/stripe-cli/releases/latest download the
+   `windows_x86_64.zip`, unzip, and put `stripe.exe` in the project folder (it's git-ignored). Then `stripe login`.
 3. In a second cmd window, forward Stripe's events to your PC:
    ```
-   stripe listen --forward-to localhost:8000/api/stripe/webhook
+   stripe listen --events checkout.session.completed,checkout.session.async_payment_succeeded,charge.refunded --forward-to localhost:8000/api/stripe/webhook
    ```
    It prints a webhook signing secret (`whsec_...`).
 4. In the server window (one line at a time; your own values):
