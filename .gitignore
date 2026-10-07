@@ -13,3 +13,5 @@ data/refresh_state.json
 data/refresh.lock
 data/register_wording.json
 data/picklist_pages/
+data/sample_report.pdf
+data/sample_report.html

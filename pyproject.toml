@@ -12,6 +12,7 @@ dependencies = [
     "beautifulsoup4>=4.12",
     "fastapi>=0.110",
     "httpx>=0.27",
+    "jinja2>=3.1",
     "pydantic>=2.6",
     "uvicorn>=0.29",
 ]
@@ -21,10 +22,10 @@ dev = ["pytest>=8"]
 browser = ["playwright"]  # py -m tm_advisor.picklist_browser
 
 [tool.setuptools]
-packages = ["tm_advisor", "tm_advisor.register", "tm_advisor.manual"]
+packages = ["tm_advisor", "tm_advisor.register", "tm_advisor.manual", "tm_advisor.report"]
 
 [tool.setuptools.package-data]
-tm_advisor = ["static/*.html"]
+tm_advisor = ["static/*.html", "report/templates/*.html"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ r.brand }} report: {{ r.mark }}</title>
+<style>
+  :root {
+    --ink: #1c1b1f; --muted: #5d5a63; --line: #dcd8e0; --soft: #f4f2f6; --brand: #4b2a6b; --brand-soft: #efe8f5;
+    --high: #b42318; --high-bg: #fdecea; --med: #8a5a00; --med-bg: #fff1d6; --low: #1e6b3a; --low-bg: #e4f3e8;
+  }
+  @page { size: A4; margin: 18mm 16mm 20mm; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--ink); background: #fff; font: 10.5pt/1.5 "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; }
+  .page { max-width: 820px; margin: 0 auto; padding: 24px 16px; }
+  @media print { .page { padding: 0; max-width: none; } }
+  h1 { font-size: 22pt; margin: 0 0 4px; line-height: 1.2; }
+  h2 { font-size: 14pt; margin: 26px 0 8px; padding-bottom: 4px; border-bottom: 2px solid var(--brand); color: var(--brand);
+       break-after: avoid; }
+  h3 { font-size: 11.5pt; margin: 16px 0 6px; break-after: avoid; }
+  p { margin: 0 0 8px; }
+  ul, ol { margin: 0 0 10px; padding-left: 20px; }
+  li { margin-bottom: 3px; }
+  a { color: var(--brand); }
+  .muted { color: var(--muted); }
+  .small { font-size: 9pt; }
+  .brandbar { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--line);
+              padding-bottom: 8px; margin-bottom: 18px; }
+  .brandbar strong { color: var(--brand); font-size: 12pt; letter-spacing: .02em; }
+  .sample { border: 2px dashed var(--med); color: var(--med); background: var(--med-bg); padding: 6px 10px; border-radius: 6px;
+            font-weight: 600; margin-bottom: 14px; }
+  .markline { display: flex; gap: 16px; align-items: center; margin: 10px 0 14px; }
+  .mark { display: inline-block; border: 1px solid var(--line); border-radius: 6px; padding: 6px 14px; font-size: 16pt; font-weight: 700; }
+  .logo { max-height: 70px; max-width: 200px; border: 1px solid var(--line); border-radius: 6px; padding: 4px; background: #fff; }
+  .facts { width: 100%; border-collapse: collapse; margin: 8px 0 14px; }
+  .facts th, .facts td { text-align: left; vertical-align: top; padding: 5px 8px; border-bottom: 1px solid var(--line); }
+  .facts th { width: 34%; color: var(--muted); font-weight: 600; }
+  .risk { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 9pt; font-weight: 700; }
+  .risk.High, .risk.likely { color: var(--high); background: var(--high-bg); }
+  .risk.Medium, .risk.possible { color: var(--med); background: var(--med-bg); }
+  .risk.Low, .risk.unlikely { color: var(--low); background: var(--low-bg); }
+  .box { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin: 10px 0; break-inside: avoid; }
+  .route { border: 2px solid var(--brand); background: var(--brand-soft); }
+  .route .label { font-size: 9pt; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .route h3 { margin: 2px 0 6px; font-size: 13pt; }
+  .actions li { margin-bottom: 5px; }
+  .markcard { display: grid; grid-template-columns: 110px 1fr; gap: 12px; }
+  .markcard .pic { width: 110px; height: 70px; border: 1px solid var(--line); border-radius: 6px; display: flex; align-items: center;
+                   justify-content: center; text-align: center; font-weight: 700; font-size: 8.5pt; padding: 4px; overflow: hidden; background: #fff;
+                   overflow-wrap: anywhere; line-height: 1.2; }
+  .markcard .pic img { max-width: 100%; max-height: 100%; }
+  .spec td { vertical-align: top; }
+  .tag { font-size: 8.5pt; padding: 0 6px; border-radius: 4px; background: var(--soft); color: var(--muted); white-space: nowrap; }
+  .removed { color: var(--muted); }
+  .cite { font-size: 9pt; color: var(--muted); }
+  .pagebreak { break-before: page; }
+  .toc { columns: 2; column-gap: 24px; font-size: 9.5pt; }
+  .toc li { break-inside: avoid; }
+  .copy { font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; background: var(--soft); border-radius: 6px; padding: 8px 10px;
+          white-space: pre-wrap; break-inside: avoid; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="brandbar"><strong>{{ r.brand }}</strong><span class="muted small">Report {{ r.reference }} · {{ r.created }}</span></div>
+  {% if r.sample %}<div class="sample">Sample report. It shows what a paid report contains; the details are illustrative and are not a report on this mark.</div>{% endif %}
+
+  <h1>Trade mark filing report</h1>
+  <div class="markline">
+    <span class="mark">{{ r.mark }}</span>
+    {% if r.logo_image %}<img class="logo" src="{{ r.logo_image }}" alt="Your logo">{% endif %}
+  </div>
+  <table class="facts">
+    <tr><th>Kind of trade mark</th><td>{{ kind_label }}</td></tr>
+    <tr><th>Classes</th><td>{{ r.classes | join(", ") }}</td></tr>
+    {% if r.prepared_for %}<tr><th>Prepared for</th><td>{{ r.prepared_for }}</td></tr>{% endif %}
+    <tr><th>Register searched</th><td>{{ r.register_searched }}</td></tr>
+    <tr><th>Overall risk</th><td><span class="risk {{ r.overall_risk.value }}">{{ r.overall_risk.value }}</span></td></tr>
+  </table>
+
+  <h2>1. Summary</h2>
+  <p>{{ r.summary }}</p>
+  <div class="box route">
+    <div class="label">Recommended route</div>
+    <h3>{{ r.route.headline }}</h3>
+    <ul>{% for x in r.route.reasons %}<li>{{ x }}</li>{% endfor %}</ul>
+  </div>
+  <h3>What to do next</h3>
+  <ol class="actions">{% for a in r.top_actions %}<li>{{ a }}</li>{% endfor %}</ol>
+
+  <h3>In this report</h3>
+  <ol class="toc">
+    <li>Summary</li><li>Recommended route</li><li>Distinctiveness (section 41)</li><li>Similar marks (section 44)</li>
+    <li>Your goods and services</li>{% if r.design_guidance %}<li>Designing your composite mark</li>{% endif %}
+    <li>How to file</li><li>When to get an attorney</li><li>About this report</li>
+  </ol>
+
+  <h2>2. Recommended route</h2>
+  <p><strong>{{ r.route.headline }}.</strong></p>
+  {% for p in r.route_detail %}<p>{{ p }}</p>{% endfor %}
+  <table class="facts">
+    <tr><th>Word mark</th><td>Protects the words in any style, font or logo. The broadest protection, but the words themselves must be distinctive and not already taken for similar goods or services.</td></tr>
+    <tr><th>Composite mark</th><td>Protects a design and words together. A substantial, distinctive design can carry descriptive words; it does not get around an earlier similar mark, and others may still use the words on their own.</td></tr>
+    <tr><th>Logo mark</th><td>Protects the picture only. Your name is not protected.</td></tr>
+  </table>
+
+  <h2>3. Distinctiveness (section 41)</h2>
+  {% set d = r.distinctiveness %}
+  <p><span class="risk {{ d.likelihood }}">{{ {"likely": "Objection likely", "possible": "Objection possible", "unlikely": "Objection unlikely"}[d.likelihood] }}</span></p>
+  <p class="muted small">The test IP Australia's examiners apply: does the trade mark, as a whole, have an ordinary meaning for your goods or services that other traders would want to use honestly?</p>
+  {% if d.meaning %}<p><strong>What “{{ r.mark }}” means in your trade:</strong> {{ d.meaning }}</p>{% endif %}
+  <p>{{ d.reasoning }}</p>
+  {% if d.affected_terms %}<p><strong>Goods and services this applies to:</strong> {{ d.affected_terms | join("; ") }}.</p>{% endif %}
+  {% if d.word_flags %}<p><strong>Individual words:</strong></p><ul>{% for w in d.word_flags %}<li>{{ w }}</li>{% endfor %}</ul>{% endif %}
+  {% if d.options %}<h3>Your options</h3><ul>{% for o in d.options %}<li>{{ o }}</li>{% endfor %}</ul>{% endif %}
+  {% for c in d.citations %}<p class="cite">Trade Marks Manual: <a href="{{ c.url }}">{{ c.title }}{% if c.heading %} › {{ c.heading }}{% endif %}</a>{% if c.published %} (published {{ c.published }}){% endif %}</p>{% endfor %}
+
+  <h2>4. Similar marks (section 44)</h2>
+  <p>We screened {{ r.marks_reviewed }} marks on the register in your classes and the classes IP Australia treats as related.
+     {% if r.similar_marks %}These {{ r.similar_marks | length }} are the ones worth your attention, most important first.{% else %}None needs attention.{% endif %}</p>
+  {% for m in r.similar_marks %}
+  <div class="box">
+    <div class="markcard">
+      <div class="pic">{% if m.image %}<img src="{{ m.image }}" alt="{{ m.words }}">{% else %}{{ m.words }}{% endif %}</div>
+      <div>
+        <p><strong>{{ m.words }}</strong> <span class="risk {{ m.risk.value }}">{{ m.risk.value }}</span>
+           <span class="tag">{{ "Logo/composite" if m.logo else "Word mark" }}</span></p>
+        <p class="small muted"><a href="https://search.ipaustralia.gov.au/trademarks/search/view/{{ m.number }}">#{{ m.number }}</a> · {{ m.status }}{% if m.owner %} · {{ m.owner }}{% endif %} · Classes {{ m.classes | join(", ") }}</p>
+        <p class="small"><strong>Why it's similar:</strong> {{ m.why_similar | join(" ") }}</p>
+        <p class="small"><strong>Goods and services:</strong> {{ m.goods_overlap }}</p>
+        <p class="small"><strong>What to do:</strong> {{ m.what_to_do }}</p>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  <h2>5. Your goods and services</h2>
+  <p>Recommended wording, ready to paste into TM Headstart or your application.
+     {% if r.filing.all_picklist %}Every term is on IP Australia's picklist, so the lower fee applies.{% endif %}</p>
+  {% for c in r.specification %}
+  <h3>Class {{ c.class_number }}: {{ c.title }}</h3>
+  <div class="copy">{{ c.terms | map(attribute="text") | join("; ") }}</div>
+  <table class="facts spec">
+    {% for t in c.terms %}<tr><td>{{ t.text }}</td><td class="small">{% if t.on_picklist %}<span class="tag">Picklist</span>{% else %}<span class="tag">Own wording</span>{% endif %} {{ t.note }}</td></tr>{% endfor %}
+    {% for t in c.removed %}<tr class="removed"><td><s>{{ t.text }}</s></td><td class="small">{{ t.note }}</td></tr>{% endfor %}
+  </table>
+  {% endfor %}
+  {% for n in r.specification_notes %}<p class="small">{{ n }}</p>{% endfor %}
+
+  {% if r.design_guidance %}
+  <h2>6. Designing your composite mark</h2>
+  <ul>{% for g in r.design_guidance %}<li>{{ g }}</li>{% endfor %}</ul>
+  {% endif %}
+
+  <h2>{{ 7 if r.design_guidance else 6 }}. How to file</h2>
+  <table class="facts">
+    <tr><th>TM Headstart</th><td>A${{ r.filing.headstart_part1 }} now (Part 1), then A${{ r.filing.headstart_part2 }} to proceed (Part 2): A${{ r.filing.headstart_part1 + r.filing.headstart_part2 }} in total for {{ r.filing.classes }} class{{ "es" if r.filing.classes > 1 }}.</td></tr>
+    <tr><th>Standard application</th><td>A${{ r.filing.standard }} for {{ r.filing.classes }} class{{ "es" if r.filing.classes > 1 }}.</td></tr>
+  </table>
+  <ol>{% for s in r.filing.steps %}<li>{{ s }}</li>{% endfor %}</ol>
+  <h3>If the Headstart assessment is adverse</h3>
+  <ul>{% for s in r.filing.adverse_headstart %}<li>{{ s }}</li>{% endfor %}</ul>
+  <p class="small muted">Fees as published by IP Australia when this report was produced; check current fees before you pay.</p>
+
+  <h2>{{ 8 if r.design_guidance else 7 }}. When to get an attorney</h2>
+  {% if r.attorney_reasons %}<ul>{% for a in r.attorney_reasons %}<li>{{ a }}</li>{% endfor %}</ul>
+  {% else %}<p>Nothing in this report suggests you need one to file. Consider a registered trade marks attorney if you receive an objection you can't resolve, an opposition, or a demand from another trader.</p>{% endif %}
+
+  <h2>{{ 9 if r.design_guidance else 8 }}. About this report</h2>
+  <ul class="small">
+    {% for s in r.sources %}<li>{{ s }}</li>{% endfor %}
+    {% for l in r.limitations %}<li>{{ l }}</li>{% endfor %}
+  </ul>
+  <p class="small muted">{{ r.brand }} is a service of {{ r.seller }}. Report {{ r.reference }}, produced {{ r.created }}.</p>
+</div>
+</body>
+</html>
