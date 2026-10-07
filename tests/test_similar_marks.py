@@ -22,20 +22,25 @@ def test_two_letters_apart_or_same_start_counts_as_similar_but_low():
         assert compare("Revmax", other).score < 0.5, other
 
 
-def test_similar_marks_in_unrelated_classes_are_listed_separately():
+def test_similar_marks_in_unrelated_classes_are_not_conflicts():
     register = FixtureRegisterClient([
-        mark("1", "RE/MAX", 35, ["Business strategic planning services"]),
-        mark("2", "REMAX", 36, ["Real estate agency services"], image="https://cdn.example/2.jpg", logo=True),
+        mark("1", "RE/MAX", 35, ["Business strategic planning services"], image="https://cdn.example/1.jpg", logo=True),
+        mark("2", "REMAX", 36, ["Real estate agency services"]),
         mark("3", "RevLab", 1, ["Industrial chemicals"]),
-        mark("4", "Bondi", 36, ["Real estate agency services"]),
     ])
     report = check(Application(mark="Revmax", classes=[ClassSpec(class_number=35, terms=["business strategic planning"])]),
                    register, Picklist.load(DATA / "picklist_sample.json"))
     assert [c.cited_number for c in report.conflicts] == ["1"]
-    assert [o.number for o in report.other_marks] == ["2", "3"]  # most alike first; Bondi isn't alike at all
-    assert report.other_marks[0].classes == [36] and report.other_marks[0].logo
-    assert report.other_marks[0].image == "https://cdn.example/2.jpg"
-    assert report.overall_risk == Risk.MEDIUM  # marks in other classes don't raise the risk
+    assert report.conflicts[0].cited_image == "https://cdn.example/1.jpg" and report.conflicts[0].cited_logo
+
+
+def test_a_shared_word_in_a_much_longer_mark_is_low():
+    long_mark = compare("Success Meter", "Q QLD ACCOUNTING GROUP BUILDING FINANCIALLY SUCCESSFUL BUSINESS")
+    assert long_mark.score < 0.7 and "small part" in long_mark.reasons[0]
+    assert compare("Success Meter", "Success Business Coaching Group").score < 0.7
+    assert compare("Success Meter", "SUCCESSMAKER").score >= 0.7
+    assert compare("Success Meter", "The Success Meter Group").score >= 0.7
+    assert compare("Bondi Bakery Fresh Bread", "BONDI").score >= 0.7  # their whole mark inside yours stays serious
 
 
 def test_register_records_carry_the_logo_picture_and_kind():

@@ -106,20 +106,6 @@ class Conflict(BaseModel):
     cited_logo: bool = False
 
 
-class OtherMark(BaseModel):
-    """A similar mark whose goods and services don't overlap with the application's."""
-    number: str
-    words: str
-    status: str
-    owner: str | None
-    live: bool
-    mark_score: float
-    mark_reasons: list[str]
-    classes: list[int]
-    image: str | None = None
-    logo: bool = False
-
-
 class PicklistResult(BaseModel):
     class_number: int
     term: str
@@ -143,5 +129,4 @@ class Report(BaseModel):
     escalate: bool
     escalation_reasons: list[str]
     notes: list[str] = []
-    other_marks: list[OtherMark] = []  # similar marks in unrelated classes, for awareness
     disclaimers: list[str]

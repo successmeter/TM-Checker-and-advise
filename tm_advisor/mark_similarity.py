@@ -11,6 +11,15 @@ from .text import edit_similarity, phonetic_key, squash, words
 _WEAK_WORDS = {"the", "a", "an", "and", "of", "co", "pty", "ltd", "group", "australia", "au", "company"}
 
 
+# A word of yours that makes up only a small part of a longer mark (QLD ACCOUNTING GROUP BUILDING FINANCIALLY
+# SUCCESSFUL BUSINESS vs SUCCESS METER): examiners compare whole marks, so this is a weak resemblance (Low risk).
+MINOR = 0.55
+
+
+def _minor_part(shared_letters: int, cited: str) -> bool:
+    return shared_letters < 0.4 * len(cited)
+
+
 @dataclass
 class MarkSimilarity:
     score: float
@@ -56,18 +65,28 @@ def compare(user_mark: str, cited_mark: str) -> MarkSimilarity:
         reasons.append(f"'{shorter.upper()}' appears inside '{longer.upper()}'.")
 
     common_words = set(words(user_mark)) & set(words(cited_mark))
-    elements = [(w, b, cited_mark) for w in words(user_mark)] + [(w, a, user_mark) for w in words(cited_mark)]
-    for word, other, other_text in [] if whole_contained else elements:
+    elements = [(w, b, cited_mark, True) for w in words(user_mark)] + [(w, a, user_mark, False) for w in words(cited_mark)]
+    for word, other, other_text, ours in [] if whole_contained else elements:
         if len(word) >= 4 and word not in _WEAK_WORDS and word not in common_words and word in other:
-            score = max(score, 0.75)
-            reasons.append(f"The word '{word.upper()}' appears inside '{other_text.upper()}'.")
+            if ours and _minor_part(len(word), b):
+                score = max(score, MINOR)
+                reasons.append(f"The word '{word.upper()}' appears inside '{other_text.upper()}', but only as a "
+                               "small part of a longer mark.")
+            else:
+                score = max(score, 0.75)
+                reasons.append(f"The word '{word.upper()}' appears inside '{other_text.upper()}'.")
             break
 
     shared = common_words - _WEAK_WORDS
     shared = {w for w in shared if len(w) >= 3}
     if shared:
-        score = max(score, 0.7)
-        reasons.append("Shares the word(s): " + ", ".join(sorted(w.upper() for w in shared)) + ".")
+        if _minor_part(sum(len(w) for w in shared), b):
+            score = max(score, MINOR)
+            reasons.append("Shares the word(s) " + ", ".join(sorted(w.upper() for w in shared))
+                           + ", but only as a small part of a longer mark.")
+        else:
+            score = max(score, 0.7)
+            reasons.append("Shares the word(s): " + ", ".join(sorted(w.upper() for w in shared)) + ".")
 
     return MarkSimilarity(round(score, 2), reasons)
 
