@@ -10,6 +10,7 @@ available to the account, the client falls back to POST /search/quick plus GET /
 
 import logging
 import os
+import time
 from concurrent.futures import ThreadPoolExecutor
 
 import httpx
@@ -32,7 +33,7 @@ class IpAustraliaRegisterClient:
         self.max_results = max_results
         self.page_size = page_size
         self._advanced_available = True
-        self._class_type = "ASSOCIATED"  # the class plus IP Australia's associated classes
+        self._class_type: str | None = "ASSOCIATED"  # the class plus its associated classes; None: no class filter
         self._terms_cache: dict[str, list[RegisterTerm]] = {}
         self._http = httpx.Client(transport=transport, timeout=20)
         self._token = IpaToken(client_id, client_secret, token_url, self._http)
@@ -66,25 +67,46 @@ class IpAustraliaRegisterClient:
         """
         self._headers()  # get the access token once, before the parallel requests
         jobs = [(text, kind, c) for text, kind in _advanced_queries(mark) for c in (sorted(set(classes)) or [None])]
-        with ThreadPoolExecutor(max_workers=6) as pool:
-            pages = list(pool.map(lambda job: self._advanced_page(*job), jobs))
+        with ThreadPoolExecutor(max_workers=3) as pool:
+            results = list(pool.map(lambda job: self._try_page(*job), jobs))
+        errors = [r for r in results if isinstance(r, Exception)]
+        if errors and len(errors) == len(results):
+            raise errors[0]  # nothing came back at all
+        for e in errors[:3]:
+            log.warning("One register search failed and was skipped: %s", e)
         found: dict[str, RegisterMark] = {}
-        for records in pages:
+        for records in (r for r in results if not isinstance(r, Exception)):
             for record in records:
                 mark_ = _to_register_mark(record, str(record.get("number", "")))
                 if mark_.number and mark_.number not in found:
                     found[mark_.number] = mark_
         return list(found.values())
 
-    def _advanced_page(self, text: str, kind: str, class_number: int | None) -> list[dict]:
+    def _try_page(self, text: str, kind: str, class_number: int | None) -> list[dict] | Exception:
+        try:
+            return self._advanced_page(text, kind, class_number)
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code in (403, 404, 405, 501):
+                raise  # advanced search isn't enabled for this account: the caller switches to quick search
+            return e
+        except httpx.HTTPError as e:
+            return e
+
+    def _advanced_page(self, text: str, kind: str, class_number: int | None, attempt: int = 0) -> list[dict]:
         query: dict = {"word": {"text": text, "type": kind}, "statuses": ["PENDING_REGISTERED"]}
-        if class_number is not None:
+        if class_number is not None and self._class_type:
             query["classNumber"] = {"text": str(class_number), "type": self._class_type}
         body = {"rows": [{"op": "AND", "query": query}], "pageNumber": 0, "pageSize": self.page_size}
         response = self._http.post(f"{self.base_url}/page/advanced", json=body, headers=self._headers())
-        if response.status_code == 400 and class_number is not None and self._class_type != "SINGLE":
-            self._class_type = "SINGLE"  # associated-class searching refused: search the class itself
-            return self._advanced_page(text, kind, class_number)
+        if response.status_code == 400 and "classNumber" in query:
+            # Class filter refused: try the class on its own, then no class filter at all.
+            self._class_type = "SINGLE" if self._class_type == "ASSOCIATED" else None
+            log.warning("IP Australia refused the class filter (%s); retrying with %s", response.text[:200],
+                        self._class_type or "no class filter")
+            return self._advanced_page(text, kind, class_number, attempt)
+        if response.status_code == 429 and attempt < 3:  # too many requests: wait and try again
+            time.sleep(min(float(response.headers.get("retry-after") or 1 + attempt), 5))
+            return self._advanced_page(text, kind, class_number, attempt + 1)
         response.raise_for_status()
         return response.json().get("trademarks") or []
 

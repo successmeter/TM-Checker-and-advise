@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from datetime import date, datetime
 from pathlib import Path
 
+import httpx
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -207,7 +208,15 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
         if not request.consent:
             raise HTTPException(422, "Please confirm you understand this is not legal advice before running a check.")
         application = Application(mark=request.mark, classes=request.classes, mark_kind=request.mark_kind)
-        report = check(application, register, pl())
+        try:
+            report = check(application, register, pl())
+        except httpx.HTTPStatusError as e:
+            log.warning("Register search failed: %s %s", e, e.response.text[:500])
+            raise HTTPException(502, f"IP Australia's register search returned an error ({e.response.status_code}). "
+                                     "Please try again; if it keeps happening, check your IP Australia API access.")
+        except httpx.HTTPError as e:
+            log.warning("Register search failed: %s", e)
+            raise HTTPException(502, "Couldn't reach IP Australia's register search. Please try again.")
         if not (ai_checks if ai_checks is not None else Explainer.configured()):
             return report.model_copy(update={"ai_distinctiveness_unavailable": "Not set up: add an Anthropic API key "
                                                                                "to check what the mark means as a whole."})

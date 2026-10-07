@@ -1,3 +1,4 @@
+import pytest
 import json
 from pathlib import Path
 
@@ -195,3 +196,61 @@ def test_login_retries_with_basic_auth_when_form_credentials_are_refused():
     assert token.access_token() == "tok"
     assert len(attempts) == 2
     assert attempts[1].headers["authorization"].startswith("Basic ")
+
+
+def _client(handler):
+    def wrapped(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/token"):
+            return httpx.Response(200, json={"access_token": "tok", "expires_in": 3600})
+        return handler(json.loads(request.content)["rows"][0]["query"])
+    return IpAustraliaRegisterClient("id", "secret", "https://auth.example/token", base_url="https://api.example/v1",
+                                     transport=httpx.MockTransport(wrapped))
+
+
+RECORD = {"number": "7", "words": ["SUCCESS BOX"], "statusGroup": "REGISTERED",
+          "goodsAndServices": [{"class": "35", "descriptionText": ["advertising"]}]}
+
+
+def test_without_any_class_filter_when_ip_australia_refuses_both_kinds():
+    client = _client(lambda q: httpx.Response(400) if "classNumber" in q else httpx.Response(200, json={"trademarks": [RECORD]}))
+    assert [m.number for m in client.search("Success Meter", [35])] == ["7"]
+
+
+def test_one_failed_search_is_skipped_not_fatal():
+    client = _client(lambda q: httpx.Response(500) if q["word"]["type"] == "PHONETIC"
+                     else httpx.Response(200, json={"trademarks": [RECORD]}))
+    assert [m.number for m in client.search("Success Meter", [35])] == ["7"]
+
+
+def test_all_searches_failing_is_reported():
+    client = _client(lambda q: httpx.Response(500))
+    with pytest.raises(httpx.HTTPStatusError):
+        client.search("Success Meter", [35])
+
+
+def test_too_many_requests_is_retried(monkeypatch):
+    import tm_advisor.register.ipaustralia as ipa
+    monkeypatch.setattr(ipa.time, "sleep", lambda s: None)
+    calls = []
+
+    def handler(q):
+        calls.append(q["word"]["type"])
+        if calls.count(q["word"]["type"]) == 1 and q["word"]["type"] == "EXACT":
+            return httpx.Response(429, headers={"retry-after": "1"})
+        return httpx.Response(200, json={"trademarks": [RECORD]})
+
+    assert [m.number for m in _client(handler).search("Success Meter", [35])] == ["7"]
+    assert calls.count("EXACT") == 2
+
+
+def test_check_page_gets_a_readable_error_when_the_register_fails():
+    from fastapi.testclient import TestClient
+    from tm_advisor.api import create_app
+    from tm_advisor.picklist import Picklist
+
+    app = create_app(_client(lambda q: httpx.Response(500)),
+                     Picklist.load(Path(__file__).resolve().parents[1] / "data" / "picklist_sample.json"),
+                     ai_checks=False)
+    response = TestClient(app).post("/api/check", json={"mark": "Success Meter", "consent": True,
+                                                        "classes": [{"class_number": 35, "terms": ["advertising"]}]})
+    assert response.status_code == 502 and "register search" in response.json()["detail"]

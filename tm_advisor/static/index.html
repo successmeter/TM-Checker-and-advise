@@ -444,13 +444,14 @@ $("#run").onclick = async () => {
   $("#check-result").innerHTML = '<p class="hint">Checking the register and what your mark means for your goods and services… this can take up to half a minute.</p>';
   try {
     const response = await fetch("/api/check", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(application()) });
-    const data = await response.json();
+    const data = await response.json().catch(() => ({ detail: `The check failed on the server (error ${response.status}). The window running the server shows the details.` }));
     if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Please check your trade mark and goods and services.");
     lastReport = data;
     renderCheck(data);
     $("#explain-box").hidden = false;
     $("#explanation").innerHTML = "";
   } catch (err) {
+    $("#check-result").innerHTML = "";
     $("#check-error").textContent = err.message;
   } finally {
     $("#run").disabled = !$("#consent").checked;
