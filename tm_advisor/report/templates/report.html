@@ -56,11 +56,16 @@
   .pagebreak { break-before: page; }
   .toc { columns: 2; column-gap: 24px; font-size: 9.5pt; }
   .toc li { break-inside: avoid; }
+  .toolbar { position: sticky; top: 0; background: var(--brand); color: #fff; padding: 10px 16px; display: flex; gap: 16px;
+             align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .toolbar a { color: #fff; font-weight: 700; }
+  @media print { .toolbar { display: none; } }
   .copy { font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; background: var(--soft); border-radius: 6px; padding: 8px 10px;
           white-space: pre-wrap; break-inside: avoid; }
 </style>
 </head>
 <body>
+{% if download_url %}<div class="toolbar"><span>{{ r.brand }} · Report {{ r.reference }}</span><a href="{{ download_url }}">Download PDF</a></div>{% endif %}
 <div class="page">
 
   <div class="brandbar"><strong>{{ r.brand }}</strong><span class="muted small">Report {{ r.reference }} · {{ r.created }}</span></div>

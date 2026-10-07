@@ -11,8 +11,9 @@ _env = Environment(loader=FileSystemLoader(TEMPLATES), autoescape=select_autoesc
 KIND_LABELS = {"word": "Word mark", "composite": "Composite mark (design and words)", "logo": "Logo mark (design only)"}
 
 
-def render_html(report: ReportDoc) -> str:
-    return _env.get_template("report.html").render(r=report, kind_label=KIND_LABELS[report.mark_kind])
+def render_html(report: ReportDoc, download_url: str | None = None) -> str:
+    return _env.get_template("report.html").render(r=report, kind_label=KIND_LABELS[report.mark_kind],
+                                                   download_url=download_url)
 
 
 def render_pdf(report: ReportDoc, out: Path, executable_path: str | None = None) -> Path:

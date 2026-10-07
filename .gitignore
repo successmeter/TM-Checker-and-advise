@@ -15,3 +15,6 @@ data/register_wording.json
 data/picklist_pages/
 data/sample_report.pdf
 data/sample_report.html
+data/orders.sqlite*
+data/reports/
+data/secret.key

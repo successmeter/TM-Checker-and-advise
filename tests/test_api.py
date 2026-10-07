@@ -36,7 +36,7 @@ def make_client(explainer=None):
     page = (Path(__file__).parent / "fixtures" / "manual" / "s44-goods.html").read_text()
     manual.build(chunk_page(parse_page("https://manuals.ipaustralia.gov.au/trademark/3.-similar", page)))
     app = create_app(FixtureRegisterClient.load(DATA / "register_fixture.json"), Picklist.load(DATA / "picklist_sample.json"),
-                     manual=manual, explainer=explainer or FakeExplainer())
+                     manual=manual, explainer=explainer or FakeExplainer(), full_check_results=True)
     return TestClient(app)
 
 
