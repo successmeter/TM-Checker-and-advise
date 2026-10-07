@@ -18,3 +18,4 @@ data/sample_report.html
 data/orders.sqlite*
 data/reports/
 data/secret.key
+stripe.exe
