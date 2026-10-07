@@ -9,7 +9,9 @@ from tm_advisor.payments import Payments
 from tm_advisor.picklist import Picklist
 from tm_advisor.register import FixtureRegisterClient
 from tm_advisor.store import Store
-from tests.test_report_build import DATA, REGISTER
+from tests.test_report_build import DATA, mark
+
+REGISTER = FixtureRegisterClient([mark("711535", "SUCCESSMAKER", 35, ["business consultancy"], owner="Savvas")])
 
 APP = {"mark": "Success Meter", "mark_kind": "word", "applicant": "Example Pty Ltd",
        "classes": [{"class_number": 35, "terms": ["business consultancy"]}]}

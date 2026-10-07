@@ -154,7 +154,8 @@ class Report(BaseModel):
     escalation_reasons: list[str]
     notes: list[str] = []
     marks_screened: int = 0  # register results looked at
-    own_marks: list[str] = []  # numbers of the applicant's own marks/applications, left out of the conflicts
+    own_marks: list[str] = []
+    own_marks_assumed: list[str] = []  # left out because the owner is named after the mark (no applicant name given)  # numbers of the applicant's own marks/applications, left out of the conflicts
     register_warning: str | None = None  # e.g. results came from IP Australia's test copy of the register
     ai_distinctiveness: AiDistinctiveness | None = None
     ai_distinctiveness_unavailable: str | None = None  # why the AI assessment didn't run, if it didn't

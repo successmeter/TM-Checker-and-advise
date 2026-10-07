@@ -29,8 +29,9 @@ def test_containment_at_start():
 
 def test_shared_word():
     result = compare("Bondi Brew", "Bondi Bakery")
-    assert result.score >= 0.7
-    assert any("BONDI" in r for r in result.reasons)
+    assert 0.5 <= result.score < 0.7  # BONDI is a place name: a weak thing to share
+    assert any("BONDI" in r and "common word" in r for r in result.reasons)
+    assert compare("Zorblax Brew", "Zorblax Bakery").score >= 0.7  # an invented word shared is serious
 
 
 def test_weak_shared_word_does_not_count():

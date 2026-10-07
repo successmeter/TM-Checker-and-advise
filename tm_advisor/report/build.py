@@ -17,6 +17,7 @@ from .schema import (Citation, DistinctivenessSection, Filing, ReportDoc, Simila
 log = logging.getLogger("uvicorn.error")
 
 MAX_MARKS = 40
+EXPLAIN_MARKS = 8
 REPORT_EFFORT = "high"
 
 DESIGN_GUIDANCE = [
@@ -74,7 +75,7 @@ def build_report(application: Application, report: Report, *, classes: dict[int,
         overall_risk=report.overall_risk, summary=summary, top_actions=actions[:5],
         route=route, route_detail=_route_detail(report),
         distinctiveness=_distinctiveness(report, explanation),
-        similar_marks=marks, marks_reviewed=report.marks_screened,
+        similar_marks=marks, marks_reviewed=report.marks_screened, own_marks_note=_own_note(report),
         specification=_specification(application, report, classes),
         specification_notes=_spec_notes(industry),
         design_guidance=DESIGN_GUIDANCE if route.recommended == "composite" or application.mark_kind != "word" else [],
@@ -89,7 +90,9 @@ def _explain(report: Report, explainer: Explainer | None, manual: ManualIndex | 
         return None
     try:
         excerpts = retrieve(report, manual) if manual is not None else []
-        return explainer.explain(report, excerpts, effort=REPORT_EFFORT)
+        # Only the marks that matter: hundreds of screened marks would make the answer too long to finish.
+        focus = [c for c in _relevant(report.conflicts) if c.live and c.risk != Risk.LOW][:EXPLAIN_MARKS]
+        return explainer.explain(report.model_copy(update={"conflicts": focus}), excerpts, effort=REPORT_EFFORT)
     except ExplanationUnavailable as e:
         log.warning("Report narrative unavailable, using plain wording: %s", e)
         return None
@@ -110,6 +113,17 @@ def _similar(c: Conflict, explained: str | None) -> SimilarMark:
                        classes=sorted({o.cited_class for o in c.overlaps}), live=c.live, risk=c.risk,
                        why_similar=c.mark_reasons, goods_overlap=overlap or "No overlapping goods or services.",
                        what_to_do=f"{explained} {c.option}" if explained else c.option)
+
+
+def _own_note(report: Report) -> str:
+    if report.own_marks_assumed:
+        nums = ", ".join(f"#{n}" for n in report.own_marks_assumed)
+        return (f"Left out as your own: {nums}, the same mark owned by a business named after it. If it isn't yours, "
+                "it is an identical earlier mark and changes this report: run the check again with your name or "
+                "company, and contact us for a free re-check.")
+    if report.own_marks:
+        return "Left out as your own: " + ", ".join(f"#{n}" for n in report.own_marks) + "."
+    return ""
 
 
 def _plain_summary(report: Report, attention: int) -> str:

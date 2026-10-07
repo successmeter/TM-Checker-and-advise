@@ -108,3 +108,20 @@ def test_word_route_mentions_marks_that_need_a_closer_look():
     assert [c.risk for c in report.conflicts] == [Risk.MEDIUM]
     assert report.route.recommended == "word"
     assert "closer look" in report.route.reasons[0] and "RE/MAX" in report.route.reasons[0]
+
+
+def test_claude_sees_only_the_marks_that_need_attention():
+    register = FixtureRegisterClient([mark(str(n), f"SUCCESSMAKER{n}", 35, ["business consultancy"]) for n in range(20)]
+                                     + [mark("x", "ODD METER", 42, ["software as a service"])])
+    report = check(APP, register, PICKLIST)
+    seen = []
+
+    class Recorder(FakeExplainer):
+        def explain(self, report, excerpts, effort=None):
+            seen.append(report)
+            return super().explain(report, excerpts, effort)
+
+    build_report(APP, report, explainer=Recorder(), **KW)
+    assert len(seen[0].conflicts) <= 8 and all(c.risk != Risk.LOW for c in seen[0].conflicts)
+    html = render_html(build_report(APP, report, **KW))
+    assert "Also on the register: no action needed" in html

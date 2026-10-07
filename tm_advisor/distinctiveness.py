@@ -11,6 +11,7 @@ _LAUDATORY = {
     "best", "premium", "quality", "ultimate", "super", "supreme", "elite", "prime", "deluxe", "luxury", "perfect",
     "top", "first", "number", "one", "pro", "professional", "original", "genuine", "smart", "easy", "fresh",
     "natural", "pure", "fast", "quick", "cheap", "value", "gold", "royal", "classic", "superior", "great",
+    "success", "successful", "winning", "winner", "excellence", "expert", "leading", "champion", "ideal",
 }
 _DESCRIPTIVE = {
     "eco", "green", "organic", "vegan", "local", "aussie", "australian", "online", "digital", "global", "kids",
@@ -43,3 +44,7 @@ def screen(mark: str, all_terms: list[str]) -> tuple[list[DistinctivenessFlag], 
 
     wholly_descriptive = bool(meaningful) and len({f.word for f in flags}) == len(set(meaningful))
     return flags, wholly_descriptive
+
+
+# Ordinary words that praise or describe: sharing one of these with another mark is a weak resemblance.
+COMMON_WORDS = _LAUDATORY | _DESCRIPTIVE | _GEOGRAPHIC

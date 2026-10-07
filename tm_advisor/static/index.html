@@ -528,6 +528,9 @@ function renderFree(r) {
     <ul>${r.report_covers.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
     <p><a href="/report/sample" target="_blank" rel="noopener">See a sample report ↗</a></p>
     ${r.payments_enabled ? `
+    <label class="field" for="order-applicant">Who will own the trade mark? (your name or company)</label>
+    <input type="text" id="order-applicant" maxlength="200" autocomplete="organization" placeholder="e.g. Example Pty Ltd" value="${esc(state.applicant || "")}">
+    <p class="hint">Shown on the report. Marks you already own, such as an earlier TM Headstart request, are left out of the similar-marks check.</p>
     <label class="field" for="order-email">Your email (we send the private link to your report here)</label>
     <input type="email" id="order-email" autocomplete="email" placeholder="you@example.com">
     ${designKind ? `<label class="field" for="order-logo">Your logo for the report (optional; PNG, JPG or SVG, up to 5 MB)</label>
@@ -557,7 +560,8 @@ async function placeOrder() {
   try {
     const app = application();
     const body = { email, terms: true, industry: state.industry || "", logo: file ? await readFile(file) : null,
-                   application: { mark: app.mark, mark_kind: app.mark_kind, applicant: app.applicant, classes: app.classes } };
+                   application: { mark: app.mark, mark_kind: app.mark_kind, classes: app.classes,
+                                  applicant: ($("#order-applicant").value || "").trim() } };
     const response = await fetch("/api/orders", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body) });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Please check your details and try again.");

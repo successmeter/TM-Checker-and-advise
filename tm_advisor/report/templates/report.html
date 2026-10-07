@@ -122,9 +122,13 @@
   {% for c in d.citations %}<p class="cite">Trade Marks Manual: <a href="{{ c.url }}">{{ c.title }}{% if c.heading %} › {{ c.heading }}{% endif %}</a>{% if c.published %} (published {{ c.published }}){% endif %}</p>{% endfor %}
 
   <h2>4. Similar marks (section 44)</h2>
+  {% set attention = r.similar_marks | selectattr("live") | rejectattr("risk.value", "equalto", "Low") | list %}
+  {% set others = r.similar_marks | reject("in", attention) | list %}
   <p>We screened {{ r.marks_reviewed }} marks on the register in your classes and the classes IP Australia treats as related.
-     {% if r.similar_marks %}These {{ r.similar_marks | length }} are the ones worth your attention, most important first.{% else %}None needs attention.{% endif %}</p>
-  {% for m in r.similar_marks %}
+     {% if attention %}{{ attention | length }} need{{ "s" if attention | length == 1 }} your attention, most important first.
+     {% else %}None needs your attention.{% endif %}</p>
+  {% if r.own_marks_note %}<p class="small muted">{{ r.own_marks_note }}</p>{% endif %}
+  {% for m in attention %}
   <div class="box">
     <div class="markcard">
       <div class="pic">{% if m.image %}<img src="{{ m.image }}" alt="{{ m.words }}">{% else %}{{ m.words }}{% endif %}</div>
@@ -139,6 +143,16 @@
     </div>
   </div>
   {% endfor %}
+  {% if others %}
+  <h3>Also on the register: no action needed</h3>
+  <p class="small muted">Similar in some way, but rated Low (or no longer in force). Listed so you know they exist.</p>
+  <table class="facts small">
+    <tr><th style="width:auto">Mark</th><th style="width:auto">Number · status</th><th style="width:auto">Why it came up</th></tr>
+    {% for m in others[:25] %}<tr><td><strong>{{ m.words }}</strong></td>
+      <td><a href="https://search.ipaustralia.gov.au/trademarks/search/view/{{ m.number }}">#{{ m.number }}</a> · {{ m.status }}</td>
+      <td>{{ m.why_similar[-1] if m.why_similar else "" }}</td></tr>{% endfor %}
+  </table>
+  {% endif %}
 
   <h2>5. Your goods and services</h2>
   <p>Recommended wording, ready to paste into TM Headstart or your application.

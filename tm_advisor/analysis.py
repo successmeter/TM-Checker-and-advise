@@ -40,6 +40,11 @@ def check(application: Application, register: RegisterClient, picklist: Picklist
     logo_only = application.mark_kind == "logo"
     found = [] if logo_only else register.search(application.mark, class_numbers)
     own = [m.number for m in found if application.applicant and same_owner(application.applicant, m.owner)]
+    assumed: list[str] = []
+    if not application.applicant:  # no name given: an identical mark owned by a company named after it is theirs
+        assumed = [m.number for m in found if compare(application.mark, m.words).score >= 0.97
+                   and same_owner(application.mark, m.owner)]
+        own += assumed
     conflicts = [c for m in found if m.number not in own and (c := _conflict(application, m))]
     conflicts.sort(key=lambda c: (not c.live, -_RISK_ORDER[c.risk], -c.mark_score))
 
@@ -73,6 +78,7 @@ def check(application: Application, register: RegisterClient, picklist: Picklist
         mark_kind=application.mark_kind,
         notes=notes,
         own_marks=own,
+        own_marks_assumed=assumed,
         marks_screened=len(found),
         overall_risk=overall,
         conflicts=conflicts,

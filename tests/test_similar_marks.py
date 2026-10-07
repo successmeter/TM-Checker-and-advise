@@ -36,7 +36,7 @@ def test_similar_marks_in_unrelated_classes_are_not_conflicts():
 
 def test_a_shared_word_in_a_much_longer_mark_is_low():
     long_mark = compare("Success Meter", "Q QLD ACCOUNTING GROUP BUILDING FINANCIALLY SUCCESSFUL BUSINESS")
-    assert long_mark.score < 0.7 and "rest of the marks is different" in long_mark.reasons[0]
+    assert long_mark.score < 0.5  # SUCCESSFUL is a different word, and SUCCESS a weak one to share
     assert compare("Success Meter", "Success Business Coaching Group").score < 0.7
     assert compare("Success Meter", "SUCCESSMAKER").score >= 0.7
     assert compare("Success Meter", "The Success Meter Group").score >= 0.7
@@ -62,8 +62,13 @@ def test_marks_sharing_only_one_ordinary_word_are_low():
     for other in ("RETAIL METER", "AUDOO METER", "imeter", "METERMATE", "MeterTrac", "Meter Mode",
                   "YOUR MEASURE OF SUCCESS", "ODD METER"):
         assert compare("Success Meter", other).score < 0.7, other
-    for other in ("SUCCESSCX", "SUCCESS BOX", "SUCCESS"):  # same leading word, short marks: worth a closer look
-        assert compare("Success Meter", other).score >= 0.7, other
+    # SUCCESS is a common, praising word: sharing it is weak (the examiner raised none of these either).
+    for other in ("SUCCESSCX", "SUCCESS BOX", "Success Delivered", "WORKPLACE SUCCESS", "Successify"):
+        assert compare("Success Meter", other).score < 0.7, other
+    # SUCCESSION is a different word, not SUCCESS with something added.
+    for other in ("SUCCESSION360", "Succession Bond", "SuccessionWise"):
+        assert compare("Success Meter", other).score < 0.7, other
+    assert compare("Success Meter", "SUCCESS").score >= 0.7  # their whole mark is inside yours
 
 
 def test_your_own_application_is_left_out():
@@ -83,10 +88,23 @@ def test_your_own_application_is_left_out():
     assert report.own_marks == ["2696403"]
     assert [c.cited_number for c in report.conflicts] == ["2580382"]
     without_name = check(app.model_copy(update={"applicant": ""}), register, Picklist.load(DATA / "picklist_sample.json"))
-    assert "2696403" in [c.cited_number for c in without_name.conflicts]
+    assert without_name.own_marks_assumed == ["2696403"]  # no name: recognised as theirs by the owner's name
 
 
 def test_a_word_buried_inside_an_unrelated_word_does_not_count():
     for other in ("PERIMETER PRO", "INTERNATIONAL ASSOCIATION OF PET CEMETERIES", "WELCARE EAR THERMOMETER"):
         assert compare("Success Meter", other).score < 0.5, other
     assert compare("Success Meter", "METERMATE").score >= 0.5
+
+
+def test_identical_mark_owned_by_a_company_named_after_it_is_assumed_to_be_yours():
+    register = FixtureRegisterClient([
+        mark("2696403", "SUCCESS METER", 35, ["business data analysis"], group="PENDING", owner="Success Meter Pty Ltd"),
+        mark("1", "SUCCESS METER", 35, ["business data analysis"], owner="Someone Else Pty Ltd"),
+    ])
+    app = Application(mark="Success Meter", classes=[ClassSpec(class_number=35, terms=["business data analysis"])])
+    report = check(app, register, Picklist.load(DATA / "picklist_sample.json"))
+    assert report.own_marks_assumed == ["2696403"] and report.own_marks == ["2696403"]
+    assert [c.cited_number for c in report.conflicts] == ["1"]  # a different owner is still a conflict
+    named = check(app.model_copy(update={"applicant": "Other Co"}), register, Picklist.load(DATA / "picklist_sample.json"))
+    assert named.own_marks_assumed == [] and len(named.conflicts) == 2  # a name given: nothing assumed

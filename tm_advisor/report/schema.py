@@ -90,6 +90,7 @@ class ReportDoc(BaseModel):
     distinctiveness: DistinctivenessSection
     similar_marks: list[SimilarMark]
     marks_reviewed: int                # how many register results were screened
+    own_marks_note: str = ""           # the applicant's own marks that were left out
     specification: list[SpecClass]
     specification_notes: list[str] = []
     design_guidance: list[str] = []    # for composite and logo marks
