@@ -135,3 +135,39 @@ def test_command_line_check_explains_missing_credentials(monkeypatch, capsys):
     monkeypatch.setattr("sys.argv", ["x", "EcoKnit"])
     with pytest.raises(SystemExit, match="Set IPA_CLIENT_ID"):
         main()
+
+
+def test_token_endpoint_matches_the_environment(monkeypatch):
+    from tm_advisor.ipa_auth import DEFAULT_TOKEN_URL, TEST_TOKEN_URL, token_url_for
+    monkeypatch.delenv("IPA_TOKEN_URL", raising=False)
+    assert token_url_for("https://test.api.ipaustralia.gov.au/public/australian-trade-mark-search-api/v1") == TEST_TOKEN_URL
+    assert token_url_for("https://production.api.ipaustralia.gov.au/public/australian-trade-mark-search-api/v1") == DEFAULT_TOKEN_URL
+    assert token_url_for(None) == DEFAULT_TOKEN_URL
+    assert TEST_TOKEN_URL == SPEC["securityDefinitions"]["security.oauth2_client_credentials"]["tokenUrl"]
+    monkeypatch.setenv("IPA_TOKEN_URL", "https://custom/token")
+    assert token_url_for("https://test.api.ipaustralia.gov.au/x") == "https://custom/token"
+
+
+def test_test_credentials_use_the_test_login(monkeypatch):
+    monkeypatch.setenv("IPA_CLIENT_ID", "id")
+    monkeypatch.setenv("IPA_CLIENT_SECRET", "secret")
+    monkeypatch.delenv("IPA_TOKEN_URL", raising=False)
+    monkeypatch.setenv("IPA_BASE_URL", "https://test.api.ipaustralia.gov.au/public/australian-trade-mark-search-api/v1")
+    client = IpAustraliaRegisterClient.from_env()
+    assert client._token.token_url.startswith("https://test.api.ipaustralia.gov.au/")
+
+
+def test_login_retries_with_basic_auth_when_form_credentials_are_refused():
+    from tm_advisor.ipa_auth import IpaToken
+    attempts = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        attempts.append(request)
+        if "authorization" in request.headers:
+            return httpx.Response(200, json={"access_token": "tok", "expires_in": 60})
+        return httpx.Response(400, json={"error": "invalid_request"})
+
+    token = IpaToken("id", "secret", "https://auth.example/token", httpx.Client(transport=httpx.MockTransport(handler)))
+    assert token.access_token() == "tok"
+    assert len(attempts) == 2
+    assert attempts[1].headers["authorization"].startswith("Basic ")

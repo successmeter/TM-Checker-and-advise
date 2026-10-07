@@ -118,7 +118,7 @@ def sync(out: Path = OUT, *, http: httpx.Client | None = None, base: str | None 
                          "then set IPA_CLIENT_ID and IPA_CLIENT_SECRET.")
     http = http or httpx.Client(timeout=60)
     base = (base or os.environ.get("TMGNS_SEARCH_BASE") or SEARCH_BASE).rstrip("/")
-    token = IpaToken.from_env(http)
+    token = IpaToken.from_env(http, base)
     items: list[dict] = []
     for class_id, number in classes(http, token, base):
         time.sleep(delay) if delay else None

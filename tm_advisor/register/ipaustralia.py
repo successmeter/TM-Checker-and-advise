@@ -12,7 +12,7 @@ import os
 
 import httpx
 
-from ..ipa_auth import DEFAULT_TOKEN_URL, IpaToken
+from ..ipa_auth import IpaToken, token_url_for
 from ..models import RegisterClass, RegisterMark
 from ..text import squash, words
 
@@ -32,11 +32,12 @@ class IpAustraliaRegisterClient:
 
     @classmethod
     def from_env(cls) -> "IpAustraliaRegisterClient":
+        base_url = os.environ.get("IPA_BASE_URL") or PRODUCTION_BASE
         return cls(
-            client_id=os.environ["IPA_CLIENT_ID"],
-            client_secret=os.environ["IPA_CLIENT_SECRET"],
-            token_url=os.environ.get("IPA_TOKEN_URL") or DEFAULT_TOKEN_URL,
-            base_url=os.environ.get("IPA_BASE_URL", PRODUCTION_BASE),
+            client_id=os.environ["IPA_CLIENT_ID"].strip(),
+            client_secret=os.environ["IPA_CLIENT_SECRET"].strip(),
+            token_url=token_url_for(base_url),
+            base_url=base_url,
         )
 
     def search(self, mark: str, classes: list[int]) -> list[RegisterMark]:

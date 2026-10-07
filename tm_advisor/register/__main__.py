@@ -26,7 +26,9 @@ def main() -> None:
         marks = client.search(mark, [])
     except httpx.HTTPStatusError as e:
         body = e.response.text[:500]
-        hint = {401: "The client ID or secret was not accepted.",
+        hint = {400: "The login was refused: check the client ID and secret were copied fully, and that they belong to "
+                     "the same environment (Test or Production) as IPA_BASE_URL.",
+                401: "The client ID or secret was not accepted.",
                 403: "These credentials aren't allowed to use this API or environment (check the access request "
                      "and that IPA_BASE_URL matches Test or Production)."}.get(e.response.status_code, "")
         sys.exit(f"IP Australia returned {e.response.status_code} for {e.request.url}\n{hint}\n{body}")
