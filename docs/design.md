@@ -132,6 +132,8 @@ injectable `httpx` transport.
 - Disclaimers: global notice, unticked consent box before every check, in-line notes beside suggestions.
 - Privacy: Phase 1 stores nothing. Any later attorney handoff needs explicit per-report consent.
 
+Paid report (Phase 4): see `docs/paid-report-design.md`, including the questions for legal advice (§10).
+
 ## 8. Open questions
 1. IP Australia API access: apply on the developer portal (manual approval). Who is the applicant entity?
 2. ~~LLM provider for Phase 2~~: Claude via the Anthropic API.

@@ -82,5 +82,58 @@ suite, commit. IP Australia is never called in tests.
 ## Phase 3
 - Task 15: Examination report helper.
 
-## Phase 4 (after legal advice, design §7)
-- Accounts, saved checks, payments, attorney referral with per-report consent.
+## Phase 4: Paid report (design: `docs/paid-report-design.md`)
+
+Each task is test-first and ships behind a switch until 4.12. Stripe stays in **test mode** until then.
+
+### 4.1 Report data (no payment yet)
+`tm_advisor/report/build.py`: from an application, run the check and assemble the full report JSON (sections
+1–9 of the design, §4), frozen with the register search time. Claude writes the narrative sections at higher
+effort, from the findings only; citations kept only when retrieved. Tests: fixture register + fake Claude
+client; the report never adds conflicts or changes risk; route reasoning matches the route.
+
+### 4.2 Report page and PDF
+`static/report.html` and `report/render.py` (HTML → PDF, A4, page numbers, snapshot time in the footer). Tests:
+PDF renders, has every section that applies, page count sane. A sample report for the preview (SUCCESS METER).
+
+### 4.3 Free tier vs preview
+Trim the free check to the free column of design §2 (top 3 similar marks, headline route) and add the report
+preview with the sections that apply to this customer. Tests: free API response never contains paid-only fields.
+
+### 4.4 Store
+`store.py`: orders and reports (SQLite), random ids, hashed access tokens, state machine
+(`pending → paid → generating → ready | failed`, `refunded`). Tests: transitions, token check, idempotency.
+
+### 4.5 Stripe Checkout
+`payments.py` with the `stripe` library: `POST /api/orders` (email, terms consent) creates an order from the
+server-side application and a Checkout Session (A$299 Price, `metadata.order_id`); redirect. Tests with a
+mocked Stripe client.
+
+### 4.6 Webhook
+`POST /api/stripe/webhook`: signature verified with the signing secret; `checkout.session.completed` → paid
+(idempotent); `charge.refunded` → refunded. Tests: signed fixture events, bad signature rejected, repeats ignored.
+
+### 4.7 Report worker
+Background generation after payment, retries, failure alert; optional manual review queue (hold reports until
+approved). Tests: paid order becomes ready; failures retried; review hold works.
+
+### 4.8 Email
+`mailer.py`: report-ready email with the private link; "lost your link" email. Provider via env vars. Tests with
+a fake provider.
+
+### 4.9 Abuse and cost controls
+Rate limits on checks and orders, bot check before the free check, Anthropic spend limit documented.
+
+### 4.10 Hosting
+Container image, persistent disk for data files and the database, Sydney region, domain + HTTPS, secrets,
+backups, error alerts, uptime check. Staging (Stripe test mode) first.
+
+### 4.11 Evaluation set
+Real outcomes (Headstart/examination reports) with expected route; a script that reports how often the route
+matches. Must pass before 4.12.
+
+### 4.12 Go live (**founder**)
+Legal advice received (design §10) and reflected in terms, refund and privacy policies and report wording;
+Stripe live keys; first 20 reports reviewed before release.
+
+Founder actions that can start now: legal advice (§10), Stripe test-mode keys, decisions in design §11.
