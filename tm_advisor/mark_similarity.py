@@ -11,13 +11,14 @@ from .text import edit_similarity, phonetic_key, squash, words
 _WEAK_WORDS = {"the", "a", "an", "and", "of", "co", "pty", "ltd", "group", "australia", "au", "company"}
 
 
-# A word of yours that makes up only a small part of a longer mark (QLD ACCOUNTING GROUP BUILDING FINANCIALLY
-# SUCCESSFUL BUSINESS vs SUCCESS METER): examiners compare whole marks, so this is a weak resemblance (Low risk).
+# A shared word that is only a small part of one of the marks (RETAIL METER, IMETER or QLD ACCOUNTING GROUP ...
+# FINANCIALLY SUCCESSFUL BUSINESS vs SUCCESS METER): examiners compare the marks as a whole, and an ordinary shared
+# word with everything else different is a weak resemblance (Low risk).
 MINOR = 0.55
 
 
-def _minor_part(shared_letters: int, cited: str) -> bool:
-    return shared_letters < 0.4 * len(cited)
+def _minor_part(shared_letters: int, ours: str, theirs: str) -> bool:
+    return shared_letters < 0.5 * len(ours) or shared_letters < 0.4 * len(theirs)
 
 
 @dataclass
@@ -66,12 +67,12 @@ def compare(user_mark: str, cited_mark: str) -> MarkSimilarity:
 
     common_words = set(words(user_mark)) & set(words(cited_mark))
     elements = [(w, b, cited_mark, True) for w in words(user_mark)] + [(w, a, user_mark, False) for w in words(cited_mark)]
-    for word, other, other_text, ours in [] if whole_contained else elements:
+    for word, other, other_text, _ in [] if whole_contained else elements:
         if len(word) >= 4 and word not in _WEAK_WORDS and word not in common_words and word in other:
-            if ours and _minor_part(len(word), b):
+            if _minor_part(len(word), a, b) and len(word) < 0.9 * len(b) and len(word) < 0.9 * len(a):
                 score = max(score, MINOR)
-                reasons.append(f"The word '{word.upper()}' appears inside '{other_text.upper()}', but only as a "
-                               "small part of a longer mark.")
+                reasons.append(f"The word '{word.upper()}' appears inside '{other_text.upper()}', but the rest of "
+                               "the marks is different.")
             else:
                 score = max(score, 0.75)
                 reasons.append(f"The word '{word.upper()}' appears inside '{other_text.upper()}'.")
@@ -80,10 +81,10 @@ def compare(user_mark: str, cited_mark: str) -> MarkSimilarity:
     shared = common_words - _WEAK_WORDS
     shared = {w for w in shared if len(w) >= 3}
     if shared:
-        if _minor_part(sum(len(w) for w in shared), b):
+        if _minor_part(sum(len(w) for w in shared), a, b):
             score = max(score, MINOR)
             reasons.append("Shares the word(s) " + ", ".join(sorted(w.upper() for w in shared))
-                           + ", but only as a small part of a longer mark.")
+                           + ", but the rest of the marks is different.")
         else:
             score = max(score, 0.7)
             reasons.append("Shares the word(s): " + ", ".join(sorted(w.upper() for w in shared)) + ".")

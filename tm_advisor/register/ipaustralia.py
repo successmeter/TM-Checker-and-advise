@@ -10,6 +10,7 @@ available to the account, the client falls back to POST /search/quick plus GET /
 
 import logging
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 import httpx
 
@@ -26,11 +27,12 @@ TEST_BASE = "https://test.api.ipaustralia.gov.au/public/australian-trade-mark-se
 
 class IpAustraliaRegisterClient:
     def __init__(self, client_id: str, client_secret: str, token_url: str, base_url: str = PRODUCTION_BASE,
-                 transport: httpx.BaseTransport | None = None, max_results: int = 40, page_size: int = 50):
+                 transport: httpx.BaseTransport | None = None, max_results: int = 40, page_size: int = 100):
         self.base_url = base_url.rstrip("/")
         self.max_results = max_results
         self.page_size = page_size
         self._advanced_available = True
+        self._class_type = "ASSOCIATED"  # the class plus IP Australia's associated classes
         self._terms_cache: dict[str, list[RegisterTerm]] = {}
         self._http = httpx.Client(transport=transport, timeout=20)
         self._token = IpaToken(client_id, client_secret, token_url, self._http)
@@ -48,31 +50,43 @@ class IpAustraliaRegisterClient:
     def search(self, mark: str, classes: list[int]) -> list[RegisterMark]:
         if self._advanced_available:
             try:
-                return self._advanced_search(mark)
+                return self._advanced_search(mark, classes)
             except httpx.HTTPStatusError as e:
                 if e.response.status_code not in (403, 404, 405, 501):
                     raise
                 self._advanced_available = False  # not enabled for this account: use quick search from now on
         return self._quick_then_get(mark)
 
-    def _advanced_search(self, mark: str) -> list[RegisterMark]:
+    def _advanced_search(self, mark: str, classes: list[int]) -> list[RegisterMark]:
+        """Every word search, run within each of the applicant's classes and their associated classes.
+
+        Searching the whole register returns mostly marks in unrelated classes (METER finds gauges and meters), and
+        only the first page comes back, so the marks that matter would be crowded out. IP Australia's examiners
+        search the application's classes together with the classes associated with them; so does this.
+        """
+        self._headers()  # get the access token once, before the parallel requests
+        jobs = [(text, kind, c) for text, kind in _advanced_queries(mark) for c in (sorted(set(classes)) or [None])]
+        with ThreadPoolExecutor(max_workers=6) as pool:
+            pages = list(pool.map(lambda job: self._advanced_page(*job), jobs))
         found: dict[str, RegisterMark] = {}
-        for text, kind in _advanced_queries(mark):
-            body = {
-                "rows": [{"op": "AND", "query": {"word": {"text": text, "type": kind},
-                                                  "statuses": ["PENDING_REGISTERED"]}}],
-                "pageNumber": 0,
-                "pageSize": self.page_size,
-            }
-            response = self._http.post(f"{self.base_url}/page/advanced", json=body, headers=self._headers())
-            response.raise_for_status()
-            for record in response.json().get("trademarks") or []:
+        for records in pages:
+            for record in records:
                 mark_ = _to_register_mark(record, str(record.get("number", "")))
                 if mark_.number and mark_.number not in found:
                     found[mark_.number] = mark_
-            if len(found) >= self.max_results * 5:
-                break
         return list(found.values())
+
+    def _advanced_page(self, text: str, kind: str, class_number: int | None) -> list[dict]:
+        query: dict = {"word": {"text": text, "type": kind}, "statuses": ["PENDING_REGISTERED"]}
+        if class_number is not None:
+            query["classNumber"] = {"text": str(class_number), "type": self._class_type}
+        body = {"rows": [{"op": "AND", "query": query}], "pageNumber": 0, "pageSize": self.page_size}
+        response = self._http.post(f"{self.base_url}/page/advanced", json=body, headers=self._headers())
+        if response.status_code == 400 and class_number is not None and self._class_type != "SINGLE":
+            self._class_type = "SINGLE"  # associated-class searching refused: search the class itself
+            return self._advanced_page(text, kind, class_number)
+        response.raise_for_status()
+        return response.json().get("trademarks") or []
 
     def goods_terms(self, query: str, limit: int = 60, marks: int = 100) -> list[RegisterTerm]:
         """Accepted goods & services wording from registered marks whose specification contains the query."""

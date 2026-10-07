@@ -36,7 +36,7 @@ def test_similar_marks_in_unrelated_classes_are_not_conflicts():
 
 def test_a_shared_word_in_a_much_longer_mark_is_low():
     long_mark = compare("Success Meter", "Q QLD ACCOUNTING GROUP BUILDING FINANCIALLY SUCCESSFUL BUSINESS")
-    assert long_mark.score < 0.7 and "small part" in long_mark.reasons[0]
+    assert long_mark.score < 0.7 and "rest of the marks is different" in long_mark.reasons[0]
     assert compare("Success Meter", "Success Business Coaching Group").score < 0.7
     assert compare("Success Meter", "SUCCESSMAKER").score >= 0.7
     assert compare("Success Meter", "The Success Meter Group").score >= 0.7
@@ -55,3 +55,12 @@ def test_register_records_carry_the_logo_picture_and_kind():
 def test_search_also_asks_for_marks_starting_the_same_way():
     assert ("rev", "PREFIX") in _advanced_queries("Revmax")
     assert not any(kind == "PREFIX" for _, kind in _advanced_queries("Rev"))
+
+
+def test_marks_sharing_only_one_ordinary_word_are_low():
+    # Marks TM Headstart listed for SUCCESS METER (classes 35 and 42) without raising any of them as a conflict.
+    for other in ("RETAIL METER", "AUDOO METER", "imeter", "METERMATE", "MeterTrac", "Meter Mode",
+                  "YOUR MEASURE OF SUCCESS", "ODD METER"):
+        assert compare("Success Meter", other).score < 0.7, other
+    for other in ("SUCCESSCX", "SUCCESS BOX", "SUCCESS"):  # same leading word, short marks: worth a closer look
+        assert compare("Success Meter", other).score >= 0.7, other

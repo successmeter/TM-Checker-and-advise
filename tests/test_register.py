@@ -100,8 +100,32 @@ def test_advanced_search_returns_full_records_without_extra_lookups():
 
     bodies = [json.loads(r.content) for r in requests if r.url.path.endswith("/page/advanced")]
     kinds = [(b["rows"][0]["query"]["word"]["text"], b["rows"][0]["query"]["word"]["type"]) for b in bodies]
-    assert kinds == [("podicure plus", "EXACT"), ("podicureplus", "FUZZY"), ("podicure plus", "PHONETIC"),
-                     ("podicure", "PART"), ("plus", "PART"), ("pod", "PREFIX")]
+    assert sorted(kinds) == sorted([("podicure plus", "EXACT"), ("podicureplus", "FUZZY"),
+                                    ("podicure plus", "PHONETIC"), ("podicure", "PART"), ("plus", "PART"),
+                                    ("pod", "PREFIX")])
+    assert all(b["rows"][0]["query"]["classNumber"] == {"text": "44", "type": "ASSOCIATED"} for b in bodies)
+    assert {"classNumber"} <= set(_props("TrademarkApiAdvancedSearch"))
+    assert "ASSOCIATED" in DEFS["TrademarkApiClass"]["properties"]["type"]["enum"]
+
+
+def test_each_word_search_runs_in_every_class_and_falls_back_to_the_single_class():
+    seen = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/token"):
+            return httpx.Response(200, json={"access_token": "tok", "expires_in": 3600})
+        query = json.loads(request.content)["rows"][0]["query"]
+        seen.append((query["classNumber"]["text"], query["classNumber"]["type"]))
+        if query["classNumber"]["type"] == "ASSOCIATED":
+            return httpx.Response(400, json={"message": "bad class type"})
+        return httpx.Response(200, json={"trademarks": []})
+
+    client = IpAustraliaRegisterClient("id", "secret", "https://auth.example/token", base_url="https://api.example/v1",
+                                       transport=httpx.MockTransport(handler))
+    client.search("Success Meter", [42, 35])
+    singles = {c for c, t in seen if t == "SINGLE"}
+    assert singles == {"35", "42"}
+    assert sum(1 for c, t in seen if t == "SINGLE") == 2 * 6  # six word searches in each class
 
 
 def test_requests_match_the_published_specification():
