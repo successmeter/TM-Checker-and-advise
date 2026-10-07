@@ -169,7 +169,7 @@
         <label><input type="radio" name="mode" value="similar" checked> Similar matches</label>
         <label><input type="radio" name="mode" value="exact"> Exact matches</label>
       </div>
-      <div id="sample-note" class="info sample" hidden>This is a <strong>sample</strong> list of common terms, not IP Australia's full picklist of 60,000+ terms. The full list loads automatically once IP Australia API access is set up.</div>
+      <div id="sample-note" class="info sample" hidden>This is a <strong>sample</strong> list of common terms, not IP Australia's full picklist of 60,000+ terms. For the complete official list, use the "See all terms on IP Australia" link under each class, then search here for the term you want.</div>
       <div class="info">Trade mark protection depends on the goods and services you choose. <strong>Select all</strong> items your trade mark should cover, and only those you really intend to offer.</div>
       <p id="search-note" class="hint"></p>
       <p id="picklist-status" class="hint"></p>
@@ -185,6 +185,14 @@
           <div class="selected" id="selected"></div>
         </div>
       </div>
+      <div class="row" style="margin-top:12px">
+        <label for="own-term" class="hint" style="font-weight:600;color:var(--text)">Add a term yourself:</label>
+        <input type="text" id="own-term" placeholder="e.g. a term copied from IP Australia's list" style="flex:1;min-width:200px" autocomplete="off">
+        <label class="hint" for="own-class">Class</label>
+        <input type="number" id="own-class" min="1" max="45" style="width:5em;padding:10px;border:1px solid var(--line);border-radius:6px;background:var(--soft);color:var(--text);font:inherit">
+        <button type="button" class="secondary" id="own-add">Add</button>
+      </div>
+      <p id="own-error" class="error" role="alert"></p>
       <label class="field" for="industry">Your industry or customers (optional)</label>
       <input type="text" id="industry" placeholder="e.g. for the hospitality industry; for children" autocomplete="off">
       <p class="hint">If a similar mark comes up, limiting your goods or services to your industry is one way an examiner may accept your application (Trade Marks Manual, Part 27.3).</p>
@@ -233,6 +241,7 @@ const TITLES = {};
 const FRESH = { page: "kind", kind: "word", mark: "", logoWords: "", industry: "", selected: {} };
 let lastReport = null;
 let lastGroups = [];
+let samplePicklist = true;
 
 function load() { try { return JSON.parse(localStorage.getItem("tm-advisor")); } catch { return null; } }
 function save() { try { localStorage.setItem("tm-advisor", JSON.stringify(state)); } catch {} }
@@ -320,6 +329,7 @@ $$('input[name="mode"]').forEach(r => r.onchange = search);
 $("#show-goods").onchange = search;
 $("#show-services").onchange = search;
 
+function ipaClassUrl(n) { return `https://tmgns.search.ipaustralia.gov.au/descriptions?class=${n}`; }
 function isSelected(cls, d) { return (state.selected[cls] || []).includes(d); }
 function toggle(cls, d, on) {
   const list = state.selected[cls] || (state.selected[cls] = []);
@@ -329,11 +339,24 @@ function toggle(cls, d, on) {
   if (!list.length) delete state.selected[cls];
   lastReport = null; save(); renderSelected();
 }
+$("#own-add").onclick = () => {
+  const term = $("#own-term").value.trim().replace(/\s+/g, " ");
+  const cls = Number($("#own-class").value);
+  $("#own-error").textContent = "";
+  if (!term) return $("#own-error").textContent = "Type the term to add.";
+  if (!(cls >= 1 && cls <= 45)) return $("#own-error").textContent = "Enter its class number (1 to 45).";
+  toggle(String(cls), term, true);
+  $("#own-term").value = "";
+  renderResults();
+};
+$("#own-term").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); $("#own-add").click(); } };
+
 function renderResults() {
   if (!lastGroups.length) { $("#results").innerHTML = '<p class="empty">No matches. Try another word, or choose "Similar matches".</p>'; return; }
   $("#results").innerHTML = lastGroups.map(g => `
     <div class="cls"><span class="badge">Class ${g.class_number}</span>
       <h3>${esc(g.title)}</h3>
+      <p class="hint" style="margin:-4px 0 6px"><a href="${ipaClassUrl(g.class_number)}" target="_blank" rel="noopener">See all class ${g.class_number} terms on IP Australia ↗</a></p>
       ${g.items.map(i => `<label><input type="checkbox" data-cls="${g.class_number}" data-d="${esc(i.description)}"${isSelected(g.class_number, i.description) ? " checked" : ""}><span>${esc(i.description)}</span></label>`).join("")}
     </div>`).join("");
   $$("#results input[type=checkbox]").forEach(cb => cb.onchange = () => toggle(cb.dataset.cls, cb.dataset.d, cb.checked));
@@ -418,6 +441,7 @@ function renderCheck(r) {
   const off = r.picklist.filter(p => !p.on_picklist);
   parts.push(accordion("wording", "Goods and services wording", off.length, off.length ? `
     <p>Some terms are not on the picklist. Picklist-only applications cost less and avoid wording objections.</p>
+    ${samplePicklist ? '<p class="note">We only have a sample of the picklist, so a term you copied from IP Australia\'s full list can show here as "not on picklist". Check it on IP Australia\'s class page.</p>' : ""}
     <ul>${off.map(p => `<li>Class ${p.class_number}: ${esc(p.term)}${p.suggestions.length ? ` — closest: ${p.suggestions.map(esc).join("; ")}` : ""}</li>`).join("")}</ul>`
     : "<p>All your terms are on the picklist.</p>", off.length > 0));
 
@@ -508,6 +532,7 @@ function niceDate(iso) {
 function loadDataStatus() {
   fetch("/api/data-status").then(r => r.json()).then(s => {
     const p = s.picklist;
+    samplePicklist = p.sample;
     const pick = p.sample
       ? `Goods & services: sample list of ${p.terms.toLocaleString()} terms (not IP Australia's full picklist).`
       : `Goods & services: IP Australia picklist, ${p.terms.toLocaleString()} terms${p.updated ? `, updated ${niceDate(p.updated)}` : ""}.`;
