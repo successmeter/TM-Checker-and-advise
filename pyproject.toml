@@ -18,6 +18,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
+browser = ["playwright"]  # py -m tm_advisor.picklist_browser
 
 [tool.setuptools]
 packages = ["tm_advisor", "tm_advisor.register", "tm_advisor.manual"]
