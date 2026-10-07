@@ -3,7 +3,7 @@
 from . import distinctiveness, goods_similarity
 from .mark_similarity import compare
 from .models import (AiDistinctiveness, Application, ClassOverlap, Conflict, GoodsLevel, PicklistResult, RegisterMark,
-                     Report, Risk)
+                     Report, Risk, Route)
 from .picklist import Picklist
 from .text import normalise
 from .register import RegisterClient
@@ -21,18 +21,24 @@ DISCLAIMERS = [
 ]
 
 LOGO_DISTINCTIVENESS_NOTE = (
-    "Filing as a logo: a distinctive design can help a descriptive word get accepted, but the registration then "
-    "protects the logo as a whole. Other traders may still be able to use the words on their own.")
+    "Filing as a composite mark (design plus words): a substantial, distinctive design can help descriptive words "
+    "get accepted, but the registration then protects the combination as a whole. Other traders may still be able "
+    "to use the words on their own.")
 LOGO_SIMILARITY_NOTE = (
-    "Filing as a logo rarely avoids a similarity objection: examiners compare the main feature of each mark, "
+    "A composite mark rarely avoids a similarity objection: examiners compare the main feature of each mark, "
     "which is usually the words.")
+LOGO_ONLY_NOTE = (
+    "Logo only (no words): pictures can't be compared automatically, so no register search was run. Search IP "
+    "Australia's image search (Australian Trade Mark Search, by image description) before filing. A logo-only "
+    "registration protects the picture, not your name: consider registering the name as a word mark too.")
 
 _RISK_ORDER = {Risk.LOW: 0, Risk.MEDIUM: 1, Risk.HIGH: 2}
 
 
 def check(application: Application, register: RegisterClient, picklist: Picklist) -> Report:
     class_numbers = [c.class_number for c in application.classes]
-    found = register.search(application.mark, class_numbers)
+    logo_only = application.mark_kind == "logo"
+    found = [] if logo_only else register.search(application.mark, class_numbers)
     own = [m.number for m in found if application.applicant and same_owner(application.applicant, m.owner)]
     conflicts = [c for m in found if m.number not in own and (c := _conflict(application, m))]
     conflicts.sort(key=lambda c: (not c.live, -_RISK_ORDER[c.risk], -c.mark_score))
@@ -49,10 +55,10 @@ def check(application: Application, register: RegisterClient, picklist: Picklist
     ]
 
     all_terms = [t for spec in application.classes for t in spec.terms]
-    flags, wholly_descriptive = distinctiveness.screen(application.mark, all_terms)
+    flags, wholly_descriptive = ([], False) if logo_only else distinctiveness.screen(application.mark, all_terms)
 
-    logo = application.mark_kind == "logo"
-    notes: list[str] = []
+    logo = application.mark_kind in ("composite", "logo")  # has a design element
+    notes: list[str] = [LOGO_ONLY_NOTE] if logo_only else []
     overall = max((c.risk for c in conflicts if c.live), key=_RISK_ORDER.get, default=Risk.LOW)
     if wholly_descriptive:
         overall = max(overall, Risk.MEDIUM if logo else Risk.HIGH, key=_RISK_ORDER.get)
@@ -62,7 +68,7 @@ def check(application: Application, register: RegisterClient, picklist: Picklist
         notes.append(LOGO_SIMILARITY_NOTE)
 
     reasons = _escalation_reasons(conflicts, wholly_descriptive and not logo)
-    return Report(
+    report = Report(
         mark=application.mark,
         mark_kind=application.mark_kind,
         notes=notes,
@@ -72,10 +78,12 @@ def check(application: Application, register: RegisterClient, picklist: Picklist
         picklist=picklist_results,
         picklist_only=all(p.on_picklist for p in picklist_results),
         distinctiveness=flags,
+        wholly_descriptive=wholly_descriptive,
         escalate=bool(reasons),
         escalation_reasons=reasons,
         disclaimers=DISCLAIMERS,
     )
+    return report.model_copy(update={"route": recommend_route(report)})
 
 
 def _conflict(application: Application, cited: RegisterMark) -> Conflict | None:
@@ -166,7 +174,7 @@ def _escalation_reasons(conflicts: list[Conflict], wholly_descriptive: bool) -> 
 
 def with_ai_distinctiveness(report: Report, ai: AiDistinctiveness) -> Report:
     """Add the AI section 41 view: a likely objection is High risk (Medium for a logo), a possible one Medium."""
-    logo = report.mark_kind == "logo"
+    logo = report.mark_kind in ("composite", "logo")
     level = {"likely": Risk.MEDIUM if logo else Risk.HIGH, "possible": Risk.MEDIUM}.get(ai.likelihood, Risk.LOW)
     overall = max(report.overall_risk, level, key=_RISK_ORDER.get)
     reasons = list(report.escalation_reasons)
@@ -174,8 +182,59 @@ def with_ai_distinctiveness(report: Report, ai: AiDistinctiveness) -> Report:
         reasons.append("The mark as a whole is likely to be seen as describing your goods/services (section 41). "
                        "That usually needs a changed mark, or arguments and evidence of use that an attorney can "
                        "help prepare.")
-    return report.model_copy(update={"ai_distinctiveness": ai, "overall_risk": overall,
-                                     "escalate": bool(reasons), "escalation_reasons": reasons})
+    updated = report.model_copy(update={"ai_distinctiveness": ai, "overall_risk": overall,
+                                        "escalate": bool(reasons), "escalation_reasons": reasons})
+    return updated.model_copy(update={"route": recommend_route(updated)})
+
+
+def recommend_route(report: Report) -> Route:
+    """Word mark, composite mark, a new name, or narrower goods, depending on the kind of problem found.
+
+    A design helps when the words are descriptive (section 41), because a distinctive design can carry the mark.
+    It does not help against an earlier similar mark (section 44): examiners compare the main feature, usually the
+    words, so a logo with a taken name is usually refused too.
+    """
+    if report.mark_kind == "logo":
+        return Route(recommended="logo", headline="Logo only: protects the picture, not your name",
+                     reasons=["Check the picture against IP Australia's image search before filing.",
+                              "If your name matters to your brand, a word mark (or composite mark) protects it."])
+
+    blocking = [c for c in report.conflicts if c.live and c.risk == Risk.HIGH]
+    ai = report.ai_distinctiveness
+    descriptive = report.wholly_descriptive or bool(ai and ai.likelihood == "likely")
+    possibly_descriptive = bool(report.distinctiveness) or bool(ai and ai.likelihood == "possible")
+
+    if blocking:
+        names = ", ".join(f"{c.cited_words} ({c.cited_number})" for c in blocking[:3])
+        if all(all(o.narrowing_helps for o in c.overlaps if o.level.value == "same") for c in blocking):
+            return Route(recommended="narrow_goods", headline="Leave out the overlapping goods or services",
+                         reasons=[f"Similar earlier marks: {names}.",
+                                  "Dropping the goods/services you don't actually offer removes the direct overlap.",
+                                  "Adding a logo would not help: examiners compare the words."])
+        return Route(recommended="new_name", headline="Consider a different name",
+                     reasons=[f"Similar earlier marks cover the same goods/services: {names}.",
+                              "A composite mark (logo plus these words) is unlikely to get around them: examiners "
+                              "compare the main feature of each mark, which is usually the words.",
+                              "If you are attached to the name, a registered trade marks attorney can assess "
+                              "arguments such as different trade channels or honest concurrent use."])
+    if descriptive:
+        reasons = ["Your words are likely to be seen as describing your goods/services (section 41), so a word mark "
+                   "is likely to be refused.",
+                   "A composite mark with a substantial, distinctive design has a much better chance: the design "
+                   "gives the mark its distinctiveness.",
+                   "It protects the logo and words together, not the words on their own, so others may still use "
+                   "the words descriptively."]
+        if report.mark_kind == "word":
+            reasons.append("To change a TM Headstart request from a word mark to a composite mark, you send a new "
+                           "representation of the mark (an extra fee applies).")
+        return Route(recommended="composite", headline="File as a composite mark (logo plus words)", reasons=reasons)
+    reasons = ["No major problems found with the words.",
+               "A word mark protects the words in any style, font or logo, so it is the broadest protection.",
+               "You can register your logo as a composite mark later if you want to protect the design too."]
+    if possibly_descriptive:
+        reasons.insert(1, "Some words may be seen as descriptive. If a word mark draws an objection, a composite "
+                          "mark with a distinctive design is the fallback.")
+    return Route(recommended="word", headline="File as a word mark", reasons=reasons)
 
 
 _OWNER_NOISE = {"pty", "ltd", "limited", "proprietary", "inc", "incorporated", "llc", "co", "company", "corp",

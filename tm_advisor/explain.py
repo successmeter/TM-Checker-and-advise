@@ -106,8 +106,9 @@ descriptive meaning (for example, PROFIT TRACKER for accounting software is a th
 traders need it), even when neither word alone describes the services and the exact phrase is not in a \
 dictionary. A combination is distinctive when it is invented, unusual, or alludes to the goods only indirectly so \
 that a real leap of imagination is needed to see a description. Misspellings and run-together words do not fix \
-a descriptive phrase. For a logo, plain styling of descriptive words does not usually overcome the objection; a \
-substantial, distinctive design element can.
+a descriptive phrase. For a composite mark (design plus words), plain styling of descriptive words does not \
+usually overcome the objection; a substantial, distinctive design element can. For a logo with no words, judge \
+whether the described design is more than a simple shape, a common symbol or a picture of the goods.
 
 Calibrate likelihood: "likely" when an examiner would very probably raise section 41 for at least one listed \
 good or service; "possible" when it is arguable either way; "unlikely" when the mark is invented, arbitrary for \
@@ -227,7 +228,9 @@ class Explainer:
     def assess_distinctiveness(self, mark: str, mark_kind: str, classes: list[ClassSpec]) -> AiDistinctiveness:
         """The section 41 view of the whole mark against the chosen goods and services."""
         listing = "\n".join(f"Class {c.class_number}: " + "; ".join(c.terms) for c in classes)
-        user = (f"Trade mark: {mark}\nKind: {'logo (words with a design)' if mark_kind == 'logo' else 'word mark'}\n"
+        kind = {"composite": "composite mark (a design together with these words)",
+                "logo": "logo only, no words (the text is a description of the design)"}.get(mark_kind, "word mark")
+        user = (f"Trade mark: {mark}\nKind: {kind}\n"
                 f"Goods and services:\n{listing}\n\nApply the section 41 test.")
         if user in self._assessed:
             return self._assessed[user]

@@ -64,7 +64,7 @@
   .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; gap: 12px; flex-wrap: wrap; }
   .nav .right { display: flex; gap: 12px; }
 
-  .kinds { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px; }
+  .kinds { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 12px; }
   @media (max-width: 600px) { .kinds { grid-template-columns: 1fr; } }
   .kind { border: 2px solid var(--line); border-radius: 10px; background: var(--soft); padding: 20px; text-align: center; color: var(--text); font-weight: 400; }
   .kind.on { border-color: var(--brand); background: var(--brand-soft); }
@@ -118,6 +118,9 @@
   .mark .pic { display: block; max-width: 100%; max-height: 120px; margin: 0 auto 10px; background: #fff; border-radius: 4px; }
   .mark .mkind { font-size: .8rem; color: var(--muted); margin-left: 4px; }
   .mark .words { display: inline-block; border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; font-weight: 700; margin-bottom: 8px; }
+  .route { border: 2px solid var(--brand); border-radius: 8px; padding: 12px 16px; margin: 12px 0; background: var(--brand-soft); }
+  .route h3 { margin: 2px 0 6px; } .route ul { margin: 0; padding-left: 20px; }
+  .route.new_name { border-color: var(--high); } .route.composite { border-color: var(--med); }
   .warnbox { border-left: 4px solid var(--warn); background: var(--med-bg); padding: 10px 14px; border-radius: 6px; margin: 10px 0; }
   .ai { border-left: 4px solid var(--line); padding: 2px 0 2px 12px; margin: 10px 0; }
   .ai.likely { border-color: var(--high); } .ai.possible { border-color: var(--med); } .ai.unlikely { border-color: var(--low); }
@@ -158,10 +161,13 @@
       <p class="lead">What is your trade mark?</p>
       <div class="kinds" role="radiogroup" aria-label="Kind of trade mark">
         <button type="button" class="kind" data-kind="word" role="radio">
-          <div class="icon">abc</div><strong>Word or phrase</strong><span class="hint">Plain text only</span>
+          <div class="icon">abc</div><strong>Word mark</strong><span class="hint">Words only. Protects the words in any style or logo: the broadest protection.</span>
         </button>
         <button type="button" class="kind" data-kind="logo" role="radio">
-          <div class="icon">◈</div><strong>Logo</strong><span class="hint">Image, with or without words</span>
+          <div class="icon">◈</div><strong>Logo mark</strong><span class="hint">A design with no words. Protects the picture only.</span>
+        </button>
+        <button type="button" class="kind" data-kind="composite" role="radio">
+          <div class="icon">◈ abc</div><strong>Composite mark</strong><span class="hint">A design together with words. Can help when the words alone are descriptive.</span>
         </button>
       </div>
       <div id="word-fields">
@@ -172,9 +178,16 @@
         <label class="field" for="logo-file">Your logo (stays on your computer)</label>
         <input type="file" id="logo-file" accept="image/*">
         <img id="logo-preview" class="logo-preview" alt="Your logo" hidden>
-        <label class="field" for="logo-words">Words in your logo</label>
-        <input type="text" id="logo-words" maxlength="200" placeholder="e.g. EcoKnit" autocomplete="off">
-        <p class="hint">We check the words against the register. A distinctive design can help a descriptive word get accepted, but the registration then protects the logo as a whole, not the words on their own.</p>
+        <div id="composite-fields">
+          <label class="field" for="logo-words">Words in your logo</label>
+          <input type="text" id="logo-words" maxlength="200" placeholder="e.g. EcoKnit" autocomplete="off">
+          <p class="hint">We check the words against the register. A distinctive design can help descriptive words get accepted, but the registration then protects the design and words together, not the words on their own. It doesn't get around an earlier mark with similar words.</p>
+        </div>
+        <div id="logo-only-fields">
+          <label class="field" for="logo-desc">Describe your logo in a few words</label>
+          <input type="text" id="logo-desc" maxlength="200" placeholder="e.g. a stylised green leaf inside a circle" autocomplete="off">
+          <p class="hint">Pictures can't be compared automatically, so we check the goods and services and whether the design is likely to be distinctive. Search IP Australia's image search for similar logos before filing.</p>
+        </div>
       </div>
       <label class="field" for="applicant">Your name or company (optional)</label>
       <input type="text" id="applicant" maxlength="200" placeholder="e.g. Success Meter Pty Ltd" autocomplete="organization">
@@ -272,7 +285,7 @@ const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const PAGES = ["kind", "goods", "check", "summary"];
 const TITLES = {};
-const FRESH = { page: "kind", kind: "word", mark: "", logoWords: "", applicant: "", industry: "", selected: {} };
+const FRESH = { page: "kind", kind: "word", mark: "", logoWords: "", logoDesc: "", applicant: "", industry: "", selected: {} };
 let lastReport = null;
 let lastGroups = [];
 let samplePicklist = true;
@@ -280,7 +293,8 @@ let samplePicklist = true;
 function load() { try { return JSON.parse(localStorage.getItem("tm-advisor")); } catch { return null; } }
 function save() { try { localStorage.setItem("tm-advisor", JSON.stringify(state)); } catch {} }
 const state = Object.assign({}, FRESH, load() || {});
-function markText() { return (state.kind === "logo" ? state.logoWords : state.mark).trim(); }
+if (state.kind === "logo" && state.logoWords && !state.logoDesc) state.kind = "composite";  // saved before composite marks existed
+function markText() { return ({ composite: state.logoWords, logo: state.logoDesc }[state.kind] ?? state.mark ?? "").trim(); }
 function classKeys() { return Object.keys(state.selected).filter(k => state.selected[k].length).sort((a, b) => a - b); }
 
 /* navigation */
@@ -305,7 +319,7 @@ function show(page) {
 }
 const PAGE_NAMES = { kind: "kind of trade mark", goods: "goods and services", check: "automated check", summary: "summary" };
 function problem(page) {  // what must be done on a page before moving past it
-  if (page === "kind" && !markText()) return state.kind === "logo" ? "Enter the words in your logo." : "Enter your word or phrase.";
+  if (page === "kind" && !markText()) return { composite: "Enter the words in your logo.", logo: "Describe your logo in a few words." }[state.kind] || "Enter your word or phrase.";
   if (page === "goods" && !classKeys().length) return "Select at least one good or service.";
   return "";
 }
@@ -334,11 +348,14 @@ function setKind(kind) {
   state.kind = kind; lastReport = null; save();
   $$(".kind").forEach(b => { const on = b.dataset.kind === kind; b.classList.toggle("on", on); b.setAttribute("aria-checked", on); });
   $("#word-fields").hidden = kind !== "word";
-  $("#logo-fields").hidden = kind !== "logo";
+  $("#logo-fields").hidden = kind === "word";
+  $("#composite-fields").hidden = kind !== "composite";
+  $("#logo-only-fields").hidden = kind !== "logo";
 }
 $$(".kind").forEach(b => b.onclick = () => setKind(b.dataset.kind));
 $("#mark").oninput = e => { state.mark = e.target.value; lastReport = null; save(); };
 $("#logo-words").oninput = e => { state.logoWords = e.target.value; lastReport = null; save(); };
+$("#logo-desc").oninput = e => { state.logoDesc = e.target.value; lastReport = null; save(); };
 $("#applicant").oninput = e => { state.applicant = e.target.value; lastReport = null; save(); };
 $("#industry").oninput = e => { state.industry = e.target.value; save(); };
 $("#logo-file").onchange = e => {
@@ -488,6 +505,8 @@ function renderCheck(r) {
   const parts = [`<h2>Result for ${esc(r.mark)} <span class="risk ${r.overall_risk}">${r.overall_risk} risk</span></h2>`];
   if (r.own_marks && r.own_marks.length) parts.push(`<p class="hint">Left out as your own: ${r.own_marks.map(n => markLink(n, false).split("<span")[0]).join(", ")}.</p>`);
   if (r.register_warning) parts.push(`<div class="note warnbox"><strong>Test data.</strong> ${esc(r.register_warning)}</div>`);
+  if (r.route) parts.push(`<div class="route ${r.route.recommended}"><div class="hint">Recommended route</div>
+    <h3>${esc(r.route.headline)}</h3><ul>${r.route.reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`);
   if (r.escalate) parts.push(`<div class="escalate"><strong>We suggest speaking to a registered trade marks attorney before filing.</strong><ul>${r.escalation_reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`);
 
   const flags = r.distinctiveness;
@@ -512,7 +531,7 @@ function renderCheck(r) {
     <strong>What to do</strong>
     <p>Make sure your trade mark contains something other traders in your industry would not need to use.</p>
     ${aiBlock}${wordBlock}
-    ${aiConcern && ai.options.length ? "" : `<p><strong>Ways forward:</strong> change or add a distinctive, invented word; file as a logo with a substantial, distinctive design (it then protects the logo as a whole); or, if you have used the mark for a while, provide evidence of use.</p>`}`
+    ${aiConcern && ai.options.length ? "" : `<p><strong>Ways forward:</strong> change or add a distinctive, invented word; file as a composite mark with a substantial, distinctive design (it then protects the design and words together); or, if you have used the mark for a while, provide evidence of use.</p>`}`
     : `${aiBlock}<p>No descriptive, praising or place-name words found${ai ? "" : " (each word was checked on its own)"}.</p>`, concerns > 0));
 
   const live = r.conflicts.filter(c => c.live && c.risk !== "Low");
@@ -580,13 +599,14 @@ function renderSummary() {
   const keys = classKeys();
   const n = keys.length;
   const allPicklist = lastReport ? lastReport.picklist_only : true;
-  const kindLabel = state.kind === "logo" ? "Logo" : "Word or phrase";
-  const sheet = [`Kind of trade mark: ${kindLabel}`, `${state.kind === "logo" ? "Words in logo" : "Trade mark"}: ${markText()}`, "",
+  const kindLabel = { word: "Word mark", logo: "Logo mark", composite: "Composite mark (logo with words)" }[state.kind];
+  const markLabel = { word: "Trade mark", logo: "Logo (description)", composite: "Words in your logo" }[state.kind];
+  const sheet = [`Kind of trade mark: ${kindLabel}`, `${markLabel}: ${markText()}`, "",
                  ...keys.map(k => `Class ${k}: ${state.selected[k].join("; ")}`)].join("\n");
   $("#summary").innerHTML = `
     <table class="sum">
       <tr><th>Kind of trade mark</th><td>${kindLabel}</td></tr>
-      <tr><th>${state.kind === "logo" ? "Words in your logo" : "Trade mark"}</th><td>${esc(markText())}</td></tr>
+      <tr><th>${markLabel}</th><td>${esc(markText())}</td></tr>
       ${keys.map(k => `<tr><th>Class ${k}<div class="hint">${esc(TITLES[k] || "")}</div></th><td>${state.selected[k].map(esc).join("; ")}</td></tr>`).join("")}
       ${state.industry ? `<tr><th>Your industry or customers</th><td>${esc(state.industry)}</td></tr>` : ""}
       <tr><th>Automated check</th><td>${lastReport ? `<span class="risk ${lastReport.overall_risk}">${lastReport.overall_risk} risk</span>${lastReport.escalate ? " — consider an attorney before filing" : ""}` : "Not run for these details yet"}</td></tr>
@@ -645,7 +665,7 @@ function loadDataStatus() {
 
 /* start */
 loadDataStatus();
-function fillInputs() { $("#mark").value = state.mark; $("#logo-words").value = state.logoWords; $("#applicant").value = state.applicant || ""; $("#industry").value = state.industry; }
+function fillInputs() { $("#mark").value = state.mark; $("#logo-words").value = state.logoWords; $("#logo-desc").value = state.logoDesc || ""; $("#applicant").value = state.applicant || ""; $("#industry").value = state.industry; }
 fetch("/api/classes").then(r => r.json()).then(list => {
   list.forEach(c => { TITLES[c.class_number] = c.title; CLASSINFO[c.class_number] = c; });
   renderSelected();

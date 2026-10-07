@@ -46,6 +46,10 @@ MVP (Phase 1, built here):
    options. A likely objection makes a word mark High risk and escalates (Medium for a logo). Real-world case
    behind this: TM Headstart refused SUCCESS METER for business data analysis, consultancy and SaaS under s41
    ("a quantifiable standard used to measure whether a goal ... has been achieved"), which the word lists missed.
+4a. **Kind of mark and recommended route**: word mark, logo mark (design only) or composite mark (design plus
+   words). The report recommends a route from the kind of problem: descriptive words (s41) -> composite mark with a
+   substantial, distinctive design; an earlier similar mark for the same goods (s44) -> a new name or narrower goods,
+   never "add a logo" (examiners compare the words); no major problems -> word mark (broadest protection).
 5. **Escalation**: explicit "speak to an attorney" triggers (identical mark + same goods, broad overlap that
    narrowing cannot fix, a wholly descriptive mark).
 6. Web page with active consent and in-line disclaimers; JSON API.

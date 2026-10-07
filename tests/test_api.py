@@ -140,14 +140,25 @@ def test_describe_falls_back_to_plain_words():
     assert "main words" in data["note"]
 
 
-def test_logo_kind_softens_descriptive_mark(client):
+def test_composite_kind_softens_descriptive_mark_and_is_recommended(client):
     body = {"mark": "Best Coffee", "consent": True, "classes": [{"class_number": 30, "terms": ["Coffee"]}]}
     word = client.post("/api/check", json=body).json()
-    logo = client.post("/api/check", json={**body, "mark_kind": "logo"}).json()
+    composite = client.post("/api/check", json={**body, "mark_kind": "composite"}).json()
     assert word["overall_risk"] == "High" and word["escalate"]
-    assert logo["overall_risk"] == "Medium" and not logo["escalate"]
-    assert logo["mark_kind"] == "logo"
-    assert any("protects the logo as a whole" in n for n in logo["notes"])
+    assert word["route"]["recommended"] == "composite"
+    assert any("new representation" in r for r in word["route"]["reasons"])
+    assert composite["overall_risk"] == "Medium" and not composite["escalate"]
+    assert composite["mark_kind"] == "composite" and composite["route"]["recommended"] == "composite"
+    assert any("protects the combination as a whole" in n for n in composite["notes"])
+
+
+def test_logo_only_skips_the_word_search(client):
+    body = {"mark": "a stylised green leaf inside a circle", "mark_kind": "logo", "consent": True,
+            "classes": [{"class_number": 30, "terms": ["Coffee"]}]}
+    report = client.post("/api/check", json=body).json()
+    assert report["conflicts"] == [] and report["distinctiveness"] == []
+    assert report["route"]["recommended"] == "logo"
+    assert any("image search" in n for n in report["notes"])
 
 
 def test_data_status_reports_sample_and_manual(client):

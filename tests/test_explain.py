@@ -168,8 +168,9 @@ def test_distinctiveness_assessment_judges_the_whole_mark_and_raises_the_risk(tm
     TestClient(app).post("/api/check", json=body)  # same mark and goods: answered from the cache
     assert len(sent) == 1
 
-    logo = TestClient(app).post("/api/check", json={**body, "mark_kind": "logo"}).json()
+    logo = TestClient(app).post("/api/check", json={**body, "mark_kind": "composite"}).json()
     assert logo["overall_risk"] == "Medium" and not logo["escalate"]
+    assert report["route"]["recommended"] == "composite"
 
 
 def test_check_still_works_when_the_ai_check_fails():

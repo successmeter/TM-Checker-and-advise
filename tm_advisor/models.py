@@ -23,10 +23,15 @@ class ClassSpec(BaseModel):
         return cleaned
 
 
+# word: words only (any style); composite: a design together with words; logo: a design with no words.
+MarkKind = Literal["word", "composite", "logo"]
+
+
 class Application(BaseModel):
-    mark: str = Field(min_length=1, max_length=200)  # for a logo: the words in the logo
+    # word: the words; composite: the words in the logo; logo: a short description of the design (no words)
+    mark: str = Field(min_length=1, max_length=200)
     classes: list[ClassSpec] = Field(min_length=1)
-    mark_kind: Literal["word", "logo"] = "word"
+    mark_kind: MarkKind = "word"
     applicant: str = Field("", max_length=200)  # optional: marks this person or company already owns are left out
 
     @field_validator("mark")
@@ -129,14 +134,22 @@ class AiDistinctiveness(BaseModel):
     model: str = ""
 
 
+class Route(BaseModel):
+    """Which kind of application to make, judged from the kind of problem found."""
+    recommended: Literal["word", "composite", "new_name", "narrow_goods", "logo"]
+    headline: str
+    reasons: list[str]
+
+
 class Report(BaseModel):
     mark: str
-    mark_kind: Literal["word", "logo"] = "word"
+    mark_kind: MarkKind = "word"
     overall_risk: Risk
     conflicts: list[Conflict]
     picklist: list[PicklistResult]
     picklist_only: bool
     distinctiveness: list[DistinctivenessFlag]
+    wholly_descriptive: bool = False  # every word of the mark describes or praises the goods/services
     escalate: bool
     escalation_reasons: list[str]
     notes: list[str] = []
@@ -144,4 +157,5 @@ class Report(BaseModel):
     register_warning: str | None = None  # e.g. results came from IP Australia's test copy of the register
     ai_distinctiveness: AiDistinctiveness | None = None
     ai_distinctiveness_unavailable: str | None = None  # why the AI assessment didn't run, if it didn't
+    route: Route | None = None
     disclaimers: list[str]
