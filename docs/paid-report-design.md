@@ -115,7 +115,7 @@ price, currency, Stripe Checkout Session id, Stripe Payment Intent id, status, c
 template.
 
 Stored: what's needed to produce and re-send the report, and the customer's uploaded logo (shown in the report;
-type and size checked, re-encoded on upload, never shared; deleted with the order on request). Not stored: card
+type and size checked on upload, SVG with scripts refused, never shared; deleted with the order on request). Not stored: card
 details (Stripe holds them).
 
 ### 5.2 Stripe

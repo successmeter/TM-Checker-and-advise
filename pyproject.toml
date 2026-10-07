@@ -17,6 +17,7 @@ dependencies = [
     "stripe>=12",
     "uvicorn>=0.29",
     "playwright>=1.40",  # PDF reports (headless Chromium)
+    "tzdata; sys_platform == 'win32'",  # Australian time zone for report dates on Windows
 ]
 
 [project.optional-dependencies]

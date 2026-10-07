@@ -90,44 +90,44 @@ Each task is test-first and ships behind a switch until 4.12. Stripe stays in **
 `tm_advisor/report/build.py`: from an application, run the check and assemble the full report JSON (sections
 1–9 of the design, §4), frozen with the register search time. Claude writes the narrative sections at higher
 effort, from the findings only; citations kept only when retrieved. Tests: fixture register + fake Claude
-client; the report never adds conflicts or changes risk; route reasoning matches the route.
+client; the report never adds conflicts or changes risk; route reasoning matches the route. *Done.*
 
 ### 4.2 Report page and PDF
 `static/report.html` and `report/render.py` (HTML → PDF, A4, page numbers, snapshot time in the footer). Tests:
-PDF renders, has every section that applies, page count sane. A sample report for the preview (SUCCESS METER).
+PDF renders, has every section that applies, page count sane. A sample report for the preview (SUCCESS METER). *Done.*
 
 ### 4.3 Free tier vs preview
 Trim the free check to the free column of design §2 (overall risk and which areas raised concerns; the
 recommended route moves to the paid report) and add the report preview with the sections that apply to this
-customer. Tests: free API response never contains paid-only fields.
+customer. Tests: free API response never contains paid-only fields. *Done.*
 
 ### 4.3a Logo upload
-Optional logo with the order (PNG/JPG/SVG, 5 MB max, type checked, re-encoded), shown in the report.
+Optional logo with the order (PNG/JPG/SVG, 5 MB max), shown in the report. *Done (type and size checked; SVG with scripts refused).*
 
 ### 4.4 Store
 `store.py`: orders and reports (SQLite), random ids, hashed access tokens, state machine
-(`pending → paid → generating → ready | failed`, `refunded`). Tests: transitions, token check, idempotency.
+(`pending → paid → generating → ready | failed`, `refunded`). Tests: transitions, token check, idempotency. *Done (report links keyed by HMAC of the order id, so they can be re-sent).*
 
 ### 4.5 Stripe Checkout
 `payments.py` with the `stripe` library: `POST /api/orders` (email, terms consent) creates an order from the
 server-side application and a Checkout Session (A$299 Price, `metadata.order_id`); redirect. Tests with a
-mocked Stripe client.
+mocked Stripe client. *Done.*
 
 ### 4.6 Webhook
 `POST /api/stripe/webhook`: signature verified with the signing secret; `checkout.session.completed` → paid
-(idempotent); `charge.refunded` → refunded. Tests: signed fixture events, bad signature rejected, repeats ignored.
+(idempotent); `charge.refunded` → refunded. Tests: signed fixture events, bad signature rejected, repeats ignored. *Done.*
 
 ### 4.7 Report worker
 Background generation after payment, retries, failure alert; optional manual review queue (hold reports until
-approved). Tests: paid order becomes ready; failures retried; review hold works.
+approved). Tests: paid order becomes ready; failures retried; review hold works. *Done.*
 
 ### 4.8 Email
 `mailer.py` with **Resend**: report-ready email with the private link; "lost your link" email. API key and
 sending domain via env vars. Tests with
-a fake provider.
+a fake provider. *Done.*
 
 ### 4.9 Abuse and cost controls
-Rate limits on checks and orders, bot check before the free check, Anthropic spend limit documented.
+Rate limits on checks and orders, bot check before the free check, Anthropic spend limit documented. *Rate limits done; bot check (e.g. Cloudflare Turnstile) to add with hosting.*
 
 ### 4.10 Hosting
 Docker Compose (app + Caddy for HTTPS) on a small VM: Oracle Always Free (Sydney) for staging, ~A$7–10/month
@@ -141,6 +141,8 @@ matches. Must pass before 4.12.
 ### 4.12 Go live (**founder**)
 Legal advice received (design §10) and reflected in terms, refund and privacy policies and report wording;
 Stripe live keys; first 20 reports reviewed before release.
+
+Setup and testing guide: `docs/payments-setup.md`.
 
 Founder actions that can start now: legal advice (design §10, including the refund policy and business name),
 register the business name, Stripe test-mode keys, Resend account and sending domain, an Oracle Cloud account
