@@ -111,7 +111,18 @@ def _conflict(application: Application, cited: RegisterMark) -> Conflict | None:
     )
 
 
+RENEWAL_NOTE = (" Its registration has expired but can still be renewed for a limited time. If the owner doesn't "
+                "renew, it will be removed and stop blocking you; filing after that is one option.")
+
+
 def _option(cited: RegisterMark, overlaps: list[ClassOverlap]) -> str:
+    text = _base_option(cited, overlaps)
+    if cited.is_live and "renewal possible" in cited.status.lower():
+        text += RENEWAL_NOTE
+    return text
+
+
+def _base_option(cited: RegisterMark, overlaps: list[ClassOverlap]) -> str:
     if not cited.is_live:
         return (f"Not live ({cited.status}), so it should not be cited against your application. The owner may "
                 "still be using the name, so check before you launch.")

@@ -90,3 +90,18 @@ def test_wholly_descriptive_mark_is_high_and_escalates(register, picklist):
 def test_disclaimers_always_present(register, picklist):
     report = check(app("Zorbly", c25=["Hats"]), register, picklist)
     assert any("not legal advice" in d for d in report.disclaimers)
+
+
+def test_expired_but_renewable_mark_gets_a_renewal_note(picklist):
+    from tm_advisor.models import RegisterClass, RegisterMark
+
+    class OneMark:
+        def search(self, mark, classes):
+            return [RegisterMark(number="1585901", words="ECO-KNIT", status="Registered: Expired renewal possible",
+                                 status_group="REGISTERED", owner=None,
+                                 classes=[RegisterClass(class_number=25, terms=["Clothing"])])]
+
+    report = check(app("EcoKnit", c25=["Hats"]), OneMark(), picklist)
+    conflict = report.conflicts[0]
+    assert conflict.live and conflict.risk == Risk.HIGH
+    assert "can still be renewed" in conflict.option
