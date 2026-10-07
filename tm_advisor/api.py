@@ -214,7 +214,8 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
     def run_check(request: CheckRequest) -> Report:
         if not request.consent:
             raise HTTPException(422, "Please confirm you understand this is not legal advice before running a check.")
-        application = Application(mark=request.mark, classes=request.classes, mark_kind=request.mark_kind)
+        application = Application(mark=request.mark, classes=request.classes, mark_kind=request.mark_kind,
+                                  applicant=request.applicant)
         try:
             report = check(application, register, pl())
         except httpx.HTTPStatusError as e:

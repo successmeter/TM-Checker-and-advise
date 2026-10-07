@@ -5,6 +5,7 @@ from .mark_similarity import compare
 from .models import (AiDistinctiveness, Application, ClassOverlap, Conflict, GoodsLevel, PicklistResult, RegisterMark,
                      Report, Risk)
 from .picklist import Picklist
+from .text import normalise
 from .register import RegisterClient
 
 MIN_MARK_SCORE = 0.5
@@ -31,7 +32,9 @@ _RISK_ORDER = {Risk.LOW: 0, Risk.MEDIUM: 1, Risk.HIGH: 2}
 
 def check(application: Application, register: RegisterClient, picklist: Picklist) -> Report:
     class_numbers = [c.class_number for c in application.classes]
-    conflicts = [c for m in register.search(application.mark, class_numbers) if (c := _conflict(application, m))]
+    found = register.search(application.mark, class_numbers)
+    own = [m.number for m in found if application.applicant and same_owner(application.applicant, m.owner)]
+    conflicts = [c for m in found if m.number not in own and (c := _conflict(application, m))]
     conflicts.sort(key=lambda c: (not c.live, -_RISK_ORDER[c.risk], -c.mark_score))
 
     picklist_results = [
@@ -63,6 +66,7 @@ def check(application: Application, register: RegisterClient, picklist: Picklist
         mark=application.mark,
         mark_kind=application.mark_kind,
         notes=notes,
+        own_marks=own,
         overall_risk=overall,
         conflicts=conflicts,
         picklist=picklist_results,
@@ -172,3 +176,17 @@ def with_ai_distinctiveness(report: Report, ai: AiDistinctiveness) -> Report:
                        "help prepare.")
     return report.model_copy(update={"ai_distinctiveness": ai, "overall_risk": overall,
                                      "escalate": bool(reasons), "escalation_reasons": reasons})
+
+
+_OWNER_NOISE = {"pty", "ltd", "limited", "proprietary", "inc", "incorporated", "llc", "co", "company", "corp",
+                "corporation", "the", "trustee", "for", "trust", "as", "atf", "and"}
+
+
+def _owner_key(name: str) -> str:
+    return " ".join(w for w in normalise(name).split() if w not in _OWNER_NOISE)
+
+
+def same_owner(applicant: str, owners: str | None) -> bool:
+    """Whether the applicant is one of a mark's owners (ignoring Pty Ltd, punctuation and case)."""
+    wanted = _owner_key(applicant)
+    return bool(wanted) and any(_owner_key(o) == wanted for o in (owners or "").split(", "))

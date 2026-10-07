@@ -176,6 +176,9 @@
         <input type="text" id="logo-words" maxlength="200" placeholder="e.g. EcoKnit" autocomplete="off">
         <p class="hint">We check the words against the register. A distinctive design can help a descriptive word get accepted, but the registration then protects the logo as a whole, not the words on their own.</p>
       </div>
+      <label class="field" for="applicant">Your name or company (optional)</label>
+      <input type="text" id="applicant" maxlength="200" placeholder="e.g. Success Meter Pty Ltd" autocomplete="organization">
+      <p class="hint">As it appears on IP Australia's records. Trade marks and applications you already own, such as an earlier TM Headstart request, are then left out of the similar-marks check.</p>
     </section>
 
     <section data-page="goods" hidden>
@@ -269,7 +272,7 @@ const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const PAGES = ["kind", "goods", "check", "summary"];
 const TITLES = {};
-const FRESH = { page: "kind", kind: "word", mark: "", logoWords: "", industry: "", selected: {} };
+const FRESH = { page: "kind", kind: "word", mark: "", logoWords: "", applicant: "", industry: "", selected: {} };
 let lastReport = null;
 let lastGroups = [];
 let samplePicklist = true;
@@ -336,6 +339,7 @@ function setKind(kind) {
 $$(".kind").forEach(b => b.onclick = () => setKind(b.dataset.kind));
 $("#mark").oninput = e => { state.mark = e.target.value; lastReport = null; save(); };
 $("#logo-words").oninput = e => { state.logoWords = e.target.value; lastReport = null; save(); };
+$("#applicant").oninput = e => { state.applicant = e.target.value; lastReport = null; save(); };
 $("#industry").oninput = e => { state.industry = e.target.value; save(); };
 $("#logo-file").onchange = e => {
   const file = e.target.files[0];
@@ -434,7 +438,7 @@ function renderSelected() {
 
 /* automated check */
 function application() {
-  return { mark: markText(), mark_kind: state.kind, consent: $("#consent").checked,
+  return { mark: markText(), mark_kind: state.kind, applicant: (state.applicant || "").trim(), consent: $("#consent").checked,
            classes: classKeys().map(k => ({ class_number: Number(k), terms: state.selected[k] })) };
 }
 $("#run").disabled = true;
@@ -482,6 +486,7 @@ function markLink(number, logo) {
 }
 function renderCheck(r) {
   const parts = [`<h2>Result for ${esc(r.mark)} <span class="risk ${r.overall_risk}">${r.overall_risk} risk</span></h2>`];
+  if (r.own_marks && r.own_marks.length) parts.push(`<p class="hint">Left out as your own: ${r.own_marks.map(n => markLink(n, false).split("<span")[0]).join(", ")}.</p>`);
   if (r.register_warning) parts.push(`<div class="note warnbox"><strong>Test data.</strong> ${esc(r.register_warning)}</div>`);
   if (r.escalate) parts.push(`<div class="escalate"><strong>We suggest speaking to a registered trade marks attorney before filing.</strong><ul>${r.escalation_reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`);
 
@@ -640,7 +645,7 @@ function loadDataStatus() {
 
 /* start */
 loadDataStatus();
-function fillInputs() { $("#mark").value = state.mark; $("#logo-words").value = state.logoWords; $("#industry").value = state.industry; }
+function fillInputs() { $("#mark").value = state.mark; $("#logo-words").value = state.logoWords; $("#applicant").value = state.applicant || ""; $("#industry").value = state.industry; }
 fetch("/api/classes").then(r => r.json()).then(list => {
   list.forEach(c => { TITLES[c.class_number] = c.title; CLASSINFO[c.class_number] = c; });
   renderSelected();

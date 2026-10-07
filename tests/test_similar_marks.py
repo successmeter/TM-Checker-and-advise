@@ -64,3 +64,29 @@ def test_marks_sharing_only_one_ordinary_word_are_low():
         assert compare("Success Meter", other).score < 0.7, other
     for other in ("SUCCESSCX", "SUCCESS BOX", "SUCCESS"):  # same leading word, short marks: worth a closer look
         assert compare("Success Meter", other).score >= 0.7, other
+
+
+def test_your_own_application_is_left_out():
+    from tm_advisor.analysis import same_owner
+    assert same_owner("Success Meter Pty Ltd", "SUCCESS METER PTY. LTD.")
+    assert same_owner("success meter", "Jane Citizen, Success Meter Pty Ltd")
+    assert not same_owner("Success Meter Pty Ltd", "Success Partners Pty Ltd")
+    assert not same_owner("", "Success Meter Pty Ltd")
+
+    register = FixtureRegisterClient([
+        mark("2696403", "SUCCESS METER", 35, ["business data analysis"], group="PENDING", owner="Success Meter Pty Ltd"),
+        mark("2580382", "SUCCESSCULTURE", 35, ["business data analysis"], owner="Culture Co"),
+    ])
+    app = Application(mark="Success Meter", applicant="Success Meter Pty. Ltd.",
+                      classes=[ClassSpec(class_number=35, terms=["business data analysis"])])
+    report = check(app, register, Picklist.load(DATA / "picklist_sample.json"))
+    assert report.own_marks == ["2696403"]
+    assert [c.cited_number for c in report.conflicts] == ["2580382"]
+    without_name = check(app.model_copy(update={"applicant": ""}), register, Picklist.load(DATA / "picklist_sample.json"))
+    assert "2696403" in [c.cited_number for c in without_name.conflicts]
+
+
+def test_a_word_buried_inside_an_unrelated_word_does_not_count():
+    for other in ("PERIMETER PRO", "INTERNATIONAL ASSOCIATION OF PET CEMETERIES", "WELCARE EAR THERMOMETER"):
+        assert compare("Success Meter", other).score < 0.5, other
+    assert compare("Success Meter", "METERMATE").score >= 0.5

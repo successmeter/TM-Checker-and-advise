@@ -68,7 +68,7 @@ def compare(user_mark: str, cited_mark: str) -> MarkSimilarity:
     common_words = set(words(user_mark)) & set(words(cited_mark))
     elements = [(w, b, cited_mark, True) for w in words(user_mark)] + [(w, a, user_mark, False) for w in words(cited_mark)]
     for word, other, other_text, _ in [] if whole_contained else elements:
-        if len(word) >= 4 and word not in _WEAK_WORDS and word not in common_words and word in other:
+        if len(word) >= 4 and word not in _WEAK_WORDS and word not in common_words and _word_inside(word, other_text):
             if _minor_part(len(word), a, b) and len(word) < 0.9 * len(b) and len(word) < 0.9 * len(a):
                 score = max(score, MINOR)
                 reasons.append(f"The word '{word.upper()}' appears inside '{other_text.upper()}', but the rest of "
@@ -97,3 +97,27 @@ def _common_prefix(a: str, b: str) -> str:
     while n < min(len(a), len(b)) and a[n] == b[n]:
         n += 1
     return a[:n]
+
+
+def _word_inside(word: str, text: str) -> bool:
+    """WORD at the start of one of the other mark's words (METER in METERMATE, ECOKNIT in ECO KNITWEAR), or with a
+    letter or two before it at the end of a word (IMETER); not buried inside an unrelated word (METER in PERIMETER,
+    CEMETERY or THERMOMETER)."""
+    tokens = words(text)
+    if word in tokens:
+        return False  # a shared whole word is handled separately
+    squashed = "".join(tokens)
+    starts, ends, pos = [], [], 0
+    for token in tokens:
+        starts.append(pos)
+        pos += len(token)
+        ends.append(pos)
+    at = squashed.find(word)
+    while at != -1:
+        if at in starts:
+            return True
+        end = at + len(word)
+        if end in ends and at - starts[ends.index(end)] <= 2:
+            return True
+        at = squashed.find(word, at + 1)
+    return False

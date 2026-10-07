@@ -27,6 +27,7 @@ class Application(BaseModel):
     mark: str = Field(min_length=1, max_length=200)  # for a logo: the words in the logo
     classes: list[ClassSpec] = Field(min_length=1)
     mark_kind: Literal["word", "logo"] = "word"
+    applicant: str = Field("", max_length=200)  # optional: marks this person or company already owns are left out
 
     @field_validator("mark")
     @classmethod
@@ -139,6 +140,7 @@ class Report(BaseModel):
     escalate: bool
     escalation_reasons: list[str]
     notes: list[str] = []
+    own_marks: list[str] = []  # numbers of the applicant's own marks/applications, left out of the conflicts
     register_warning: str | None = None  # e.g. results came from IP Australia's test copy of the register
     ai_distinctiveness: AiDistinctiveness | None = None
     ai_distinctiveness_unavailable: str | None = None  # why the AI assessment didn't run, if it didn't
