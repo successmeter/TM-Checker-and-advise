@@ -111,6 +111,10 @@
   .pill.ok { background: var(--low-bg); color: var(--low); }
   .marks { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 10px; }
   .mark { border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
+  .mark .pic { display: block; max-width: 100%; max-height: 120px; margin: 0 auto 10px; background: #fff; border-radius: 4px; }
+  .mark .mkind { font-size: .8rem; color: var(--muted); margin-left: 4px; }
+  details.others { margin-top: 16px; }
+  details.others summary { cursor: pointer; font-weight: 600; }
   .mark .words { display: inline-block; border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; font-weight: 700; margin-bottom: 8px; }
   .risk { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: .8rem; font-weight: 700; }
   .risk.High { color: var(--high); background: var(--high-bg); }
@@ -450,6 +454,23 @@ document.addEventListener("click", e => {
   $(".chev", b).textContent = body.hidden ? "⌄" : "⌃";
 });
 
+function markPicture(url, words) {
+  return url ? `<img class="pic" src="${esc(url)}" alt="${esc(words || "Logo")}" loading="lazy" onerror="this.remove()">` : "";
+}
+function markLink(number, logo) {
+  return `<a href="https://search.ipaustralia.gov.au/trademarks/search/view/${encodeURIComponent(number)}" target="_blank" rel="noopener">#${esc(number)}</a><span class="mkind">${logo ? "Logo mark" : "Word mark"}</span>`;
+}
+function otherMarks(list) {
+  if (!list || !list.length) return "";
+  return `<details class="others"><summary>${list.length} similar mark${list.length > 1 ? "s" : ""} in other classes</summary>
+    <p class="hint">These marks look or sound like yours, but their goods and services don't overlap with the ones you chose, so they are unlikely to stop your application. Check them anyway: if you add classes later they may matter, and the owner of a mark that is well known in Australia can sometimes oppose an application even in a different class (because of its reputation). If one of these is a household name, get a trade marks attorney's view.</p>
+    <div class="marks">${list.map(m => `
+      <div class="mark">${markPicture(m.image, m.words)}<span class="words">${esc(m.words || "(no words)")}</span>${m.live ? "" : ' <span class="hint">· not in force</span>'}
+        <div class="hint">${markLink(m.number, m.logo)} · ${esc(m.status)}${m.owner ? " · " + esc(m.owner) : ""}</div>
+        <div class="hint">Classes ${m.classes.join(", ")}</div>
+        <ul>${m.mark_reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
+      </div>`).join("")}</div></details>`;
+}
 function renderCheck(r) {
   const parts = [`<h2>Result for ${esc(r.mark)} <span class="risk ${r.overall_risk}">${r.overall_risk} risk</span></h2>`];
   if (r.escalate) parts.push(`<div class="escalate"><strong>We suggest speaking to a registered trade marks attorney before filing.</strong><ul>${r.escalation_reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`);
@@ -464,18 +485,19 @@ function renderCheck(r) {
 
   const live = r.conflicts.filter(c => c.live && c.risk !== "Low");
   const area = state.industry.trim().replace(/^for (the )?/i, "");
-  parts.push(accordion("similar", "Similarity", live.length, r.conflicts.length ? `
+  parts.push(accordion("similar", "Similarity", live.length, (r.conflicts.length ? `
     <strong>What to do</strong>
     <p>We found ${r.conflicts.length} mark${r.conflicts.length > 1 ? "s" : ""} that may be similar to yours. Check whether they are similar in the way they look, sound, and in their goods or services.</p>
     <div class="marks">${r.conflicts.map(c => `
-      <div class="mark"><span class="words">${esc(c.cited_words)}</span> <span class="risk ${c.risk}">${c.risk}</span>
-        <div class="hint">#${esc(c.cited_number)} · ${esc(c.cited_status)}${c.cited_owner ? " · " + esc(c.cited_owner) : ""}</div>
+      <div class="mark">${markPicture(c.cited_image, c.cited_words)}<span class="words">${esc(c.cited_words || "(no words)")}</span> <span class="risk ${c.risk}">${c.risk}</span>
+        <div class="hint">${markLink(c.cited_number, c.cited_logo)} · ${esc(c.cited_status)}${c.cited_owner ? " · " + esc(c.cited_owner) : ""}</div>
         <ul>${c.mark_reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
         ${c.overlaps.map(o => `<p class="hint">Your class ${o.user_class} vs their class ${o.cited_class}: ${esc(o.note)}${o.overlapping_terms.length ? ` Overlapping: <strong>${o.overlapping_terms.map(esc).join(", ")}</strong>.` : ""}</p>`).join("")}
         <p><strong>Option:</strong> ${esc(c.option)}</p>
       </div>`).join("")}</div>
     ${area ? `<p class="note">Your industry or customers: “${esc(state.industry)}”. When the other mark's goods are for a different purpose, limiting yours (for example “…; all for use in ${esc(area)}”) may remove the overlap (Trade Marks Manual, Part 27.3). It won't help when the other mark covers the broad term itself.</p>` : ""}`
-    : "<p>No similar marks found for your classes. This is a screen, not a full search: also run IP Australia's free TM Checker.</p>", live.length > 0));
+    : "<p>No similar marks found for your classes. This is a screen, not a full search: also run IP Australia's free TM Checker.</p>")
+    + otherMarks(r.other_marks), live.length > 0));
 
   const off = r.picklist.filter(p => !p.on_picklist);
   parts.push(accordion("wording", "Goods and services wording", off.length, off.length ? `

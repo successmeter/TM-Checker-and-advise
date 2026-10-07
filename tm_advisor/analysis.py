@@ -2,11 +2,13 @@
 
 from . import distinctiveness, goods_similarity
 from .mark_similarity import compare
-from .models import (Application, ClassOverlap, Conflict, GoodsLevel, PicklistResult, RegisterMark, Report, Risk)
+from .models import (Application, ClassOverlap, Conflict, GoodsLevel, OtherMark, PicklistResult, RegisterMark, Report,
+                     Risk)
 from .picklist import Picklist
 from .register import RegisterClient
 
 MIN_MARK_SCORE = 0.5
+MAX_OTHER_MARKS = 40
 
 DISCLAIMERS = [
     "TM Advisor is software, not a law firm or a trade marks attorney, and this report is not legal advice.",
@@ -30,8 +32,16 @@ _RISK_ORDER = {Risk.LOW: 0, Risk.MEDIUM: 1, Risk.HIGH: 2}
 
 def check(application: Application, register: RegisterClient, picklist: Picklist) -> Report:
     class_numbers = [c.class_number for c in application.classes]
-    conflicts = [c for m in register.search(application.mark, class_numbers) if (c := _conflict(application, m))]
+    conflicts: list[Conflict] = []
+    others: list[OtherMark] = []
+    for cited in register.search(application.mark, class_numbers):
+        result = _conflict(application, cited)
+        if isinstance(result, Conflict):
+            conflicts.append(result)
+        elif result is not None:
+            others.append(result)
     conflicts.sort(key=lambda c: (not c.live, -_RISK_ORDER[c.risk], -c.mark_score))
+    others.sort(key=lambda o: (not o.live, -o.mark_score, o.words.lower()))
 
     picklist_results = [
         PicklistResult(
@@ -62,6 +72,7 @@ def check(application: Application, register: RegisterClient, picklist: Picklist
         mark=application.mark,
         mark_kind=application.mark_kind,
         notes=notes,
+        other_marks=others[:MAX_OTHER_MARKS],
         overall_risk=overall,
         conflicts=conflicts,
         picklist=picklist_results,
@@ -73,7 +84,8 @@ def check(application: Application, register: RegisterClient, picklist: Picklist
     )
 
 
-def _conflict(application: Application, cited: RegisterMark) -> Conflict | None:
+def _conflict(application: Application, cited: RegisterMark) -> Conflict | OtherMark | None:
+    """A Conflict when the goods overlap; an OtherMark when only the marks are alike; None if they aren't."""
     similarity = compare(application.mark, cited.words)
     if similarity.score < MIN_MARK_SCORE:
         return None
@@ -85,7 +97,9 @@ def _conflict(application: Application, cited: RegisterMark) -> Conflict | None:
             if overlap.level != GoodsLevel.NONE:
                 overlaps.append(overlap)
     if not overlaps:
-        return None
+        return OtherMark(number=cited.number, words=cited.words, status=cited.status, owner=cited.owner,
+                         live=cited.is_live, mark_score=similarity.score, mark_reasons=similarity.reasons,
+                         classes=sorted({c.class_number for c in cited.classes}), image=cited.image, logo=cited.logo)
 
     has_same = any(o.level == GoodsLevel.SAME for o in overlaps)
     if not cited.is_live:
@@ -108,6 +122,8 @@ def _conflict(application: Application, cited: RegisterMark) -> Conflict | None:
         mark_reasons=similarity.reasons,
         overlaps=overlaps,
         option=_option(cited, overlaps),
+        cited_image=cited.image,
+        cited_logo=cited.logo,
     )
 
 

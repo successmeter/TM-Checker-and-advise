@@ -34,6 +34,14 @@ def compare(user_mark: str, cited_mark: str) -> MarkSimilarity:
     if looks >= 0.75:
         score = max(score, looks)
         reasons.append(f"Spelled very similarly ({round(looks * 100)}% letter match).")
+    elif looks >= 0.6 and min(len(a), len(b)) >= 4:
+        score = max(score, round(looks, 2))
+        reasons.append(f"Spelled somewhat similarly ({round(looks * 100)}% letter match).")
+
+    prefix = _common_prefix(a, b)
+    if looks < 0.75 and len(prefix) >= 3 and len(prefix) * 2 >= min(len(a), len(b)) and abs(len(a) - len(b)) <= 3:
+        score = max(score, 0.6)
+        reasons.append(f"Begins with the same letters ('{prefix.upper()}'), which people tend to notice and remember.")
 
     key_a, key_b = phonetic_key(a), phonetic_key(b)
     if len(key_a) >= 2 and key_a == key_b and abs(len(a) - len(b)) <= 3:
@@ -62,3 +70,10 @@ def compare(user_mark: str, cited_mark: str) -> MarkSimilarity:
         reasons.append("Shares the word(s): " + ", ".join(sorted(w.upper() for w in shared)) + ".")
 
     return MarkSimilarity(round(score, 2), reasons)
+
+
+def _common_prefix(a: str, b: str) -> str:
+    n = 0
+    while n < min(len(a), len(b)) and a[n] == b[n]:
+        n += 1
+    return a[:n]

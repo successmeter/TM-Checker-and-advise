@@ -101,7 +101,7 @@ def test_advanced_search_returns_full_records_without_extra_lookups():
     bodies = [json.loads(r.content) for r in requests if r.url.path.endswith("/page/advanced")]
     kinds = [(b["rows"][0]["query"]["word"]["text"], b["rows"][0]["query"]["word"]["type"]) for b in bodies]
     assert kinds == [("podicure plus", "EXACT"), ("podicureplus", "FUZZY"), ("podicure plus", "PHONETIC"),
-                     ("podicure", "PART"), ("plus", "PART")]
+                     ("podicure", "PART"), ("plus", "PART"), ("pod", "PREFIX")]
 
 
 def test_requests_match_the_published_specification():

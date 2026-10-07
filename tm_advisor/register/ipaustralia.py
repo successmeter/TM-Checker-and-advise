@@ -70,7 +70,7 @@ class IpAustraliaRegisterClient:
                 mark_ = _to_register_mark(record, str(record.get("number", "")))
                 if mark_.number and mark_.number not in found:
                     found[mark_.number] = mark_
-            if len(found) >= self.max_results * 3:
+            if len(found) >= self.max_results * 5:
                 break
         return list(found.values())
 
@@ -150,10 +150,12 @@ def _queries(mark: str) -> list[str]:
 
 
 def _advanced_queries(mark: str) -> list[tuple[str, str]]:
-    """Whole mark exact, fuzzy and sound-alike; then each distinctive word as a part of other marks."""
+    """Whole mark exact, fuzzy and sound-alike; each distinctive word as a part of other marks; the same start."""
     whole = " ".join(words(mark)) or mark
     queries = [(whole, "EXACT"), (squash(mark), "FUZZY"), (whole, "PHONETIC")]
     queries += [(w, "PART") for w in words(mark) if len(w) >= 4]
+    if len(squash(mark)) >= 4:
+        queries.append((squash(mark)[:3], "PREFIX"))  # marks that start the same way: REVMAX -> REVLAB, REVMAN
     seen: list[tuple[str, str]] = []
     for q in queries:
         if q[0] and q not in seen:
@@ -194,5 +196,9 @@ def _to_register_mark(data: dict, number: str) -> RegisterMark:
         if number_:
             classes.append(RegisterClass(class_number=int(number_), terms=terms))
 
+    images = (data.get("images") or {}).get("images") if isinstance(data.get("images"), dict) else None
+    kinds = data.get("kind") or []
     return RegisterMark(number=str(data.get("number") or number), words=words_, status=str(status), owner=owner,
-                        classes=classes, status_group=str(group) if group else None)
+                        classes=classes, status_group=str(group) if group else None,
+                        image=images[0] if images else None,
+                        logo=any(str(k).lower() in ("figurative", "fancy") for k in kinds))

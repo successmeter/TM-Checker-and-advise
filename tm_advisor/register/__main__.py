@@ -36,7 +36,7 @@ def main() -> None:
         sys.exit(f"Could not reach IP Australia: {type(e).__name__}: {e}")
     print(f"Search method: {'advanced search' if client._advanced_available else 'quick search (advanced not enabled)'}")
     print(f"{len(marks)} marks found.")
-    for m in marks[:15]:
+    for m in marks:
         classes = ",".join(str(c.class_number) for c in m.classes)
         print(f"  {m.number:>8}  {m.words[:40]:<40}  {'LIVE' if m.is_live else 'dead'}  {m.status[:40]}  classes {classes}")
 

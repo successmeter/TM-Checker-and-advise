@@ -57,6 +57,8 @@ class RegisterMark(BaseModel):
     owner: str | None = None
     classes: list[RegisterClass]
     status_group: str | None = None  # IP Australia's statusGroup, e.g. REGISTERED, PENDING, NEVER_REGISTERED
+    image: str | None = None         # picture of the mark (logos), from IP Australia's image server
+    logo: bool = False               # a figurative (logo) mark rather than plain words
 
     @property
     def is_live(self) -> bool:
@@ -100,6 +102,22 @@ class Conflict(BaseModel):
     mark_reasons: list[str]
     overlaps: list[ClassOverlap]
     option: str
+    cited_image: str | None = None
+    cited_logo: bool = False
+
+
+class OtherMark(BaseModel):
+    """A similar mark whose goods and services don't overlap with the application's."""
+    number: str
+    words: str
+    status: str
+    owner: str | None
+    live: bool
+    mark_score: float
+    mark_reasons: list[str]
+    classes: list[int]
+    image: str | None = None
+    logo: bool = False
 
 
 class PicklistResult(BaseModel):
@@ -125,4 +143,5 @@ class Report(BaseModel):
     escalate: bool
     escalation_reasons: list[str]
     notes: list[str] = []
+    other_marks: list[OtherMark] = []  # similar marks in unrelated classes, for awareness
     disclaimers: list[str]
