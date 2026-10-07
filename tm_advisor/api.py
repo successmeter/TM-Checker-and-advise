@@ -325,12 +325,16 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
         worker.resume()  # reports paid for before a restart
         yield
 
-    app = FastAPI(title="TM Advisor", description="Brand filing check for Australian trade mark applicants. Not legal advice.",
+    app = FastAPI(title="Trademark Advisor", description="Brand filing check for Australian trade mark applicants. Not legal advice.",
                   lifespan=lifespan)
 
     @app.get("/", include_in_schema=False)
     def index() -> FileResponse:
         return FileResponse(STATIC / "index.html")
+
+    @app.get("/terms", include_in_schema=False)
+    def terms() -> FileResponse:
+        return FileResponse(STATIC / "terms.html")
 
     @app.get("/api/disclaimers")
     def disclaimers() -> list[str]:

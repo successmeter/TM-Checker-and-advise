@@ -11,7 +11,7 @@ from .register import RegisterClient
 MIN_MARK_SCORE = 0.5
 
 DISCLAIMERS = [
-    "TM Advisor is software, not a law firm or a trade marks attorney, and this report is not legal advice.",
+    "Trademark Advisor is software, not a law firm or a trade marks attorney, and this report is not legal advice.",
     "Results are an automated screen of public IP Australia data. They can miss marks and cannot predict an "
     "examiner's decision. Registration is not guaranteed.",
     "You choose the wording of your application and file it yourself. Changing your goods and services changes "
@@ -229,7 +229,14 @@ def recommend_route(report: Report) -> Route:
             reasons.append("To change a TM Headstart request from a word mark to a composite mark, you send a new "
                            "representation of the mark (an extra fee applies).")
         return Route(recommended="composite", headline="File as a composite mark (logo plus words)", reasons=reasons)
-    reasons = ["No major problems found with the words.",
+    closer = [c for c in report.conflicts if c.live and c.risk == Risk.MEDIUM]
+    if closer:
+        names = ", ".join(c.cited_words for c in closer[:3]) + (" and others" if len(closer) > 3 else "")
+        first = (f"{len(closer)} similar mark{'s' if len(closer) > 1 else ''} need{'s' if len(closer) == 1 else ''} a "
+                 f"closer look before you file ({names}). A logo would not change that: examiners compare the words.")
+    else:
+        first = "No major problems found with the words."
+    reasons = [first,
                "A word mark protects the words in any style, font or logo, so it is the broadest protection.",
                "You can register your logo as a composite mark later if you want to protect the design too."]
     if possibly_descriptive:

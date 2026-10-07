@@ -65,7 +65,7 @@ def build_report(application: Application, report: Report, *, classes: dict[int,
     marks = [_similar(c, by_number.get(c.cited_number)) for c in _relevant(report.conflicts)]
     attention = [m for m in marks if m.live and m.risk != Risk.LOW]
     summary = explanation.overview if explanation else _plain_summary(report, len(attention))
-    actions = explanation.next_steps if explanation and explanation.next_steps else route.reasons[:3]
+    actions = explanation.next_steps if explanation and explanation.next_steps else _plain_actions(report, attention)
 
     return ReportDoc(
         reference=reference, created=created, register_searched=register_searched, sources=sources, sample=sample,
@@ -125,6 +125,24 @@ def _plain_summary(report: Report, attention: int) -> str:
     parts.append(f"{attention} similar mark{'s' if attention != 1 else ''} on the register need{'s' if attention == 1 else ''} "
                  "your attention." if attention else "No similar mark on the register needs attention.")
     return " ".join(parts)
+
+
+def _plain_actions(report: Report, attention: list[SimilarMark]) -> list[str]:
+    route = report.route
+    first = {"composite": "Have a logo designed with a substantial, distinctive design element, and file as a composite "
+                          "mark (sections 2 and 6).",
+             "new_name": "Choose a different name and check it again before you file (sections 2 and 4).",
+             "narrow_goods": "Leave out the goods or services that overlap earlier marks (section 5).",
+             "logo": "Search IP Australia's image search for similar logos before you file.",
+             "word": "File as a word mark."}[route.recommended]
+    actions = [first]
+    if attention and route.recommended in ("word", "composite"):
+        actions.append(f"Look at the {len(attention)} similar mark{'s' if len(attention) > 1 else ''} rated Medium or "
+                       "High in section 4, and follow what to do for each.")
+    actions.append("Use the goods and services wording in section 5, and leave out anything you don't offer.")
+    actions.append("File through TM Headstart to get the examiner's view within about 5 business days before you "
+                   "commit (see How to file).")
+    return actions
 
 
 def _route_detail(report: Report) -> list[str]:

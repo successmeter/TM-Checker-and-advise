@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TM Advisor</title>
+<title>Trademark Advisor</title>
 <style>
   :root {
     --bg: #f3f1f5; --card: #ffffff; --text: #1c1b1f; --muted: #5d5a63; --line: #dcd8e0; --soft: #efecf2;
@@ -53,7 +53,7 @@
   h2 { font-size: 1.2rem; margin: 24px 0 8px; }
   p.lead { color: var(--muted); margin: 0 0 20px; }
   label.field { display: block; font-weight: 600; margin: 16px 0 6px; }
-  input[type=text], textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--soft); color: var(--text); font: inherit; }
+  input[type=text], input[type=email], textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--soft); color: var(--text); font: inherit; }
   input:focus-visible, textarea:focus-visible, button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
   .hint { color: var(--muted); font-size: .875rem; }
   .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -121,6 +121,13 @@
   .route { border: 2px solid var(--brand); border-radius: 8px; padding: 12px 16px; margin: 12px 0; background: var(--brand-soft); }
   .route h3 { margin: 2px 0 6px; } .route ul { margin: 0; padding-left: 20px; }
   .route.new_name { border-color: var(--high); } .route.composite { border-color: var(--med); }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 12px 0 18px; }
+  @media (max-width: 700px) { .tiles { grid-template-columns: 1fr; } }
+  .tile { border: 1px solid var(--line); border-left-width: 5px; border-radius: 8px; padding: 10px 12px; }
+  .tile.bad { border-left-color: var(--warn); } .tile.ok { border-left-color: var(--low); }
+  .offer { border: 2px solid var(--brand); border-radius: 10px; padding: 16px 18px; background: var(--brand-soft); }
+  .offer h2 { margin-top: 0; }
+  .offer input[type=email] { width: 100%; }
   .warnbox { border-left: 4px solid var(--warn); background: var(--med-bg); padding: 10px 14px; border-radius: 6px; margin: 10px 0; }
   .ai { border-left: 4px solid var(--line); padding: 2px 0 2px 12px; margin: 10px 0; }
   .ai.likely { border-color: var(--high); } .ai.possible { border-color: var(--med); } .ai.unlikely { border-color: var(--low); }
@@ -141,7 +148,7 @@
 </style>
 </head>
 <body>
-<header class="top"><strong>TM Advisor</strong><span>Prepare your trade mark application before you file with IP Australia</span></header>
+<header class="top"><strong>Trademark Advisor</strong><span>Prepare your trade mark application before you file with IP Australia</span></header>
 
 <div class="wrap">
   <nav aria-label="Progress">
@@ -244,7 +251,7 @@
       <h1>Automated check</h1>
       <p class="lead">We check your trade mark for common problems before you apply. This is an automated screen, not an examiner's decision.</p>
       <label class="consent"><input type="checkbox" id="consent">
-        <span>I understand TM Advisor is software that gives automated information, not legal advice, and cannot guarantee IP Australia will accept my application.</span></label>
+        <span>I understand Trademark Advisor is software that gives automated information, not legal advice, and cannot guarantee IP Australia will accept my application.</span></label>
       <button type="button" id="run">Run check</button>
       <p id="check-error" class="error" role="alert"></p>
       <div id="check-result" aria-live="polite"></div>
@@ -470,7 +477,7 @@ $("#run").onclick = async () => {
     if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Please check your trade mark and goods and services.");
     lastReport = data;
     renderCheck(data);
-    $("#explain-box").hidden = false;
+    $("#explain-box").hidden = !!data.concerns;  // explanations are part of the paid report
     $("#explanation").innerHTML = "";
   } catch (err) {
     $("#check-result").innerHTML = "";
@@ -501,7 +508,68 @@ function markPicture(url, words) {
 function markLink(number, logo) {
   return `<a href="https://search.ipaustralia.gov.au/trademarks/search/view/${encodeURIComponent(number)}" target="_blank" rel="noopener">#${esc(number)}</a><span class="mkind">${logo ? "Logo mark" : "Word mark"}</span>`;
 }
+function renderFree(r) {
+  const label = { likely: "Objection likely", possible: "Objection possible", none: "No concern found" };
+  const dz = r.concerns.distinctiveness, sm = r.concerns.similar_marks, wd = r.concerns.wording;
+  const tile = (title, bad, text) => `<div class="tile ${bad ? "bad" : "ok"}"><div class="hint">${title}</div><strong>${text}</strong></div>`;
+  const price = (r.price_cents / 100).toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
+  const designKind = state.kind !== "word";
+  const parts = [`<h2>Result for ${esc(r.mark)} <span class="risk ${r.overall_risk}">${r.overall_risk} risk</span></h2>`];
+  if (r.own_marks && r.own_marks.length) parts.push(`<p class="hint">Left out as your own: ${r.own_marks.map(n => "#" + esc(n)).join(", ")}.</p>`);
+  if (r.register_warning) parts.push(`<div class="note warnbox"><strong>Test data.</strong> ${esc(r.register_warning)}</div>`);
+  parts.push(`<div class="tiles">
+    ${tile("Distinctiveness", dz !== "none", label[dz])}
+    ${tile("Similar marks", sm > 0, sm ? `${sm} need${sm === 1 ? "s" : ""} attention` : "None need attention")}
+    ${tile("Goods and services wording", wd > 0, wd ? `${wd} term${wd === 1 ? "" : "s"} not on the picklist` : "All on the picklist")}
+  </div>`);
+  parts.push(`<div class="offer">
+    <h2>Your trade mark filing report — ${price}</h2>
+    <p>Everything you need to file with confidence, for <strong>${esc(r.mark)}</strong> and your goods and services:</p>
+    <ul>${r.report_covers.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
+    <p><a href="/report/sample" target="_blank" rel="noopener">See a sample report ↗</a></p>
+    ${r.payments_enabled ? `
+    <label class="field" for="order-email">Your email (we send the private link to your report here)</label>
+    <input type="email" id="order-email" autocomplete="email" placeholder="you@example.com">
+    ${designKind ? `<label class="field" for="order-logo">Your logo for the report (optional; PNG, JPG or SVG, up to 5 MB)</label>
+    <input type="file" id="order-logo" accept="image/png,image/jpeg,image/svg+xml">` : ""}
+    <label class="consent"><input type="checkbox" id="order-terms">
+      <span>I agree to the <a href="/terms" target="_blank" rel="noopener">terms and refund policy</a>, and understand the report is general information from software, not legal advice.</span></label>
+    <button type="button" id="order">Get my report — ${price}</button>
+    <p id="order-error" class="error" role="alert"></p>
+    <p class="hint">Secure payment by Stripe. Refund within 14 days if you haven't lodged; see the refund policy for the TM Headstart promise.</p>`
+    : `<p class="hint">Reports will be available soon.</p>`}
+  </div>`);
+  $("#check-result").innerHTML = parts.join("");
+  if (r.payments_enabled) $("#order").onclick = () => placeOrder();
+}
+
+function readFile(file) {
+  return new Promise((resolve, reject) => { const fr = new FileReader(); fr.onload = () => resolve(fr.result); fr.onerror = reject; fr.readAsDataURL(file); });
+}
+async function placeOrder() {
+  const email = $("#order-email").value.trim();
+  $("#order-error").textContent = "";
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return $("#order-error").textContent = "Enter your email address.";
+  if (!$("#order-terms").checked) return $("#order-error").textContent = "Please accept the terms and refund policy.";
+  const file = ($("#order-logo") && $("#order-logo").files[0]) || ($("#logo-file") && $("#logo-file").files[0]);
+  if (file && file.size > 5 * 1024 * 1024) return $("#order-error").textContent = "The logo is larger than 5 MB.";
+  $("#order").disabled = true; $("#order").textContent = "Taking you to payment…";
+  try {
+    const app = application();
+    const body = { email, terms: true, industry: state.industry || "", logo: file ? await readFile(file) : null,
+                   application: { mark: app.mark, mark_kind: app.mark_kind, applicant: app.applicant, classes: app.classes } };
+    const response = await fetch("/api/orders", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body) });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Please check your details and try again.");
+    window.location.href = data.url;
+  } catch (err) {
+    $("#order-error").textContent = err.message;
+    $("#order").disabled = false; $("#order").textContent = "Try again";
+  }
+}
+
 function renderCheck(r) {
+  if (r.concerns) return renderFree(r);
   const parts = [`<h2>Result for ${esc(r.mark)} <span class="risk ${r.overall_risk}">${r.overall_risk} risk</span></h2>`];
   if (r.own_marks && r.own_marks.length) parts.push(`<p class="hint">Left out as your own: ${r.own_marks.map(n => markLink(n, false).split("<span")[0]).join(", ")}.</p>`);
   if (r.register_warning) parts.push(`<div class="note warnbox"><strong>Test data.</strong> ${esc(r.register_warning)}</div>`);
@@ -664,6 +732,9 @@ function loadDataStatus() {
 }
 
 /* start */
+if (new URLSearchParams(location.search).get("cancelled")) {
+  setTimeout(() => { const e = $("#nav-error"); if (e) e.textContent = "Payment cancelled. Nothing was charged; your details are still here."; }, 0);
+}
 loadDataStatus();
 function fillInputs() { $("#mark").value = state.mark; $("#logo-words").value = state.logoWords; $("#logo-desc").value = state.logoDesc || ""; $("#applicant").value = state.applicant || ""; $("#industry").value = state.industry; }
 fetch("/api/classes").then(r => r.json()).then(list => {

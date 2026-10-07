@@ -92,3 +92,19 @@ def test_narrow_goods_route_moves_overlapping_terms_out():
         assert [t.text for t in doc.specification[0].removed] == ["hosting of websites"]
     else:
         assert any("Overlaps" in t.note for t in doc.specification[0].terms)
+
+
+def test_plain_next_steps_are_actions_not_the_route_reasons():
+    doc = build_report(APP, checked(), explainer=FakeExplainer(fail=True), **KW)
+    assert doc.top_actions != doc.route.reasons[:3]
+    assert doc.top_actions[0].startswith("Have a logo designed")
+    assert any("section 5" in a for a in doc.top_actions)
+
+
+def test_word_route_mentions_marks_that_need_a_closer_look():
+    register = FixtureRegisterClient([mark("1", "RE/MAX", 35, ["business consultancy"])])
+    app = Application(mark="Revmax", classes=[ClassSpec(class_number=35, terms=["business consultancy"])])
+    report = check(app, register, PICKLIST)
+    assert [c.risk for c in report.conflicts] == [Risk.MEDIUM]
+    assert report.route.recommended == "word"
+    assert "closer look" in report.route.reasons[0] and "RE/MAX" in report.route.reasons[0]
