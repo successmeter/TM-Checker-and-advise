@@ -197,14 +197,18 @@
           <div class="selected" id="selected"></div>
         </div>
       </div>
-      <div class="row" style="margin-top:12px">
-        <label for="own-term" class="hint" style="font-weight:600;color:var(--text)">Add a term yourself:</label>
-        <input type="text" id="own-term" placeholder="e.g. a term copied from IP Australia's list" style="flex:1;min-width:200px" autocomplete="off">
-        <label class="hint" for="own-class">Class</label>
-        <input type="number" id="own-class" min="1" max="45" style="width:5em;padding:10px;border:1px solid var(--line);border-radius:6px;background:var(--soft);color:var(--text);font:inherit">
-        <button type="button" class="secondary" id="own-add">Add</button>
-      </div>
-      <p id="own-error" class="error" role="alert"></p>
+      <details class="own" style="margin-top:12px">
+        <summary class="hint">Can't find what you sell? Describe it in your own words</summary>
+        <p class="hint">Only if nothing on IP Australia's list fits. Your own wording costs $400 per class instead of $250, and the examiner checks it is clear and in the right class.</p>
+        <div class="row">
+          <label for="own-term" class="hint" style="font-weight:600;color:var(--text)">Your wording:</label>
+          <input type="text" id="own-term" placeholder="e.g. hand-dyed merino knitting kits" style="flex:1;min-width:200px" autocomplete="off">
+          <label class="hint" for="own-class">Class</label>
+          <input type="number" id="own-class" min="1" max="45" style="width:5em;padding:10px;border:1px solid var(--line);border-radius:6px;background:var(--soft);color:var(--text);font:inherit">
+          <button type="button" class="secondary" id="own-add">Add</button>
+        </div>
+        <p id="own-error" class="error" role="alert"></p>
+      </details>
       <label class="field" for="industry">Your industry or customers (optional)</label>
       <input type="text" id="industry" placeholder="e.g. for the hospitality industry; for children" autocomplete="off">
       <p class="hint">If a similar mark comes up, limiting your goods or services to your industry is one way an examiner may accept your application (Trade Marks Manual, Part 27.3).</p>
