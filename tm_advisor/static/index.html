@@ -118,6 +118,8 @@
   .mark .pic { display: block; max-width: 100%; max-height: 120px; margin: 0 auto 10px; background: #fff; border-radius: 4px; }
   .mark .mkind { font-size: .8rem; color: var(--muted); margin-left: 4px; }
   .mark .words { display: inline-block; border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; font-weight: 700; margin-bottom: 8px; }
+  .ai { border-left: 4px solid var(--line); padding: 2px 0 2px 12px; margin: 10px 0; }
+  .ai.likely { border-color: var(--high); } .ai.possible { border-color: var(--med); } .ai.unlikely { border-color: var(--low); }
   .risk { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: .8rem; font-weight: 700; }
   .risk.High { color: var(--high); background: var(--high-bg); }
   .risk.Medium { color: var(--med); background: var(--med-bg); }
@@ -439,6 +441,7 @@ $("#consent").onchange = e => { $("#run").disabled = !e.target.checked; };
 $("#run").onclick = async () => {
   $("#check-error").textContent = "";
   $("#run").disabled = true;
+  $("#check-result").innerHTML = '<p class="hint">Checking the register and what your mark means for your goods and services… this can take up to half a minute.</p>';
   try {
     const response = await fetch("/api/check", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(application()) });
     const data = await response.json();
@@ -480,12 +483,29 @@ function renderCheck(r) {
   if (r.escalate) parts.push(`<div class="escalate"><strong>We suggest speaking to a registered trade marks attorney before filing.</strong><ul>${r.escalation_reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`);
 
   const flags = r.distinctiveness;
-  parts.push(accordion("distinct", "Distinctiveness", flags.length ? 1 : 0, flags.length ? `
+  const ai = r.ai_distinctiveness;
+  const aiConcern = ai && ai.likelihood !== "unlikely";
+  const aiLabel = { likely: "Likely objection", possible: "Possible objection", unlikely: "Objection unlikely" };
+  const aiBlock = ai ? `
+    <div class="ai ${ai.likelihood}">
+      <p><span class="risk ${ai.likelihood === "likely" ? "High" : ai.likelihood === "possible" ? "Medium" : "Low"}">${aiLabel[ai.likelihood]}</span>
+        <strong> The mark as a whole (section 41)</strong></p>
+      ${ai.meaning ? `<p><strong>What “${esc(r.mark)}” means to people in this trade:</strong> ${esc(ai.meaning)}</p>` : ""}
+      <p>${esc(ai.reasoning)}</p>
+      ${aiConcern && ai.affected_terms.length ? `<p class="hint">Goods/services this applies to: ${ai.affected_terms.map(esc).join("; ")}</p>` : ""}
+      ${aiConcern && ai.options.length ? `<strong>Options</strong><ul>${ai.options.map(o => `<li>${esc(o)}</li>`).join("")}</ul>` : ""}
+      <p class="hint">Assessed by AI using the test IP Australia examiners apply: does the mark have an ordinary meaning for your goods or services that other traders would need to use? It can be wrong; the examiner decides.</p>
+    </div>` : (r.ai_distinctiveness_unavailable ? `<p class="hint">Meaning of the whole mark not checked: ${esc(r.ai_distinctiveness_unavailable)}</p>` : "");
+  const wordBlock = flags.length ? `
+    <strong>Words that describe or praise</strong>
+    <ul>${flags.map(f => `<li><strong>${esc(f.word)}</strong>: ${esc(f.reason)}</li>`).join("")}</ul>` : "";
+  const concerns = (flags.length ? 1 : 0) + (aiConcern ? 1 : 0);
+  parts.push(accordion("distinct", "Distinctiveness", concerns, concerns ? `
     <strong>What to do</strong>
     <p>Make sure your trade mark contains something other traders in your industry would not need to use.</p>
-    <ul>${flags.map(f => `<li><strong>${esc(f.word)}</strong>: ${esc(f.reason)}</li>`).join("")}</ul>
-    <p><strong>Options:</strong> change or add a distinctive, invented word; file as a logo with a distinctive design (it then protects the logo as a whole); or, if you have used the mark for a while, provide evidence of use.</p>`
-    : "<p>No descriptive, praising or place-name words found.</p>", flags.length > 0));
+    ${aiBlock}${wordBlock}
+    ${aiConcern && ai.options.length ? "" : `<p><strong>Ways forward:</strong> change or add a distinctive, invented word; file as a logo with a substantial, distinctive design (it then protects the logo as a whole); or, if you have used the mark for a while, provide evidence of use.</p>`}`
+    : `${aiBlock}<p>No descriptive, praising or place-name words found${ai ? "" : " (each word was checked on its own)"}.</p>`, concerns > 0));
 
   const live = r.conflicts.filter(c => c.live && c.risk !== "Low");
   const area = state.industry.trim().replace(/^for (the )?/i, "");

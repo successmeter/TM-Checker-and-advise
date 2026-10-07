@@ -12,7 +12,7 @@ import anthropic
 from pydantic import BaseModel
 
 from .manual import Chunk, ManualIndex
-from .models import Report, Risk
+from .models import AiDistinctiveness, ClassSpec, Report, Risk
 
 DEFAULT_MODEL = "claude-opus-5-5"
 MAX_EXCERPTS = 8
@@ -87,6 +87,50 @@ _KEYWORDS_SCHEMA: dict[str, Any] = {
 }
 
 
+DISTINCTIVENESS_PROMPT = """You assess Australian trade mark applications the way an IP Australia examiner applies \
+section 41 of the Trade Marks Act 1995: is the trade mark capable of distinguishing the applicant's goods or \
+services from those of other traders? You are part of a screening tool that founders use before filing; what you \
+write is general information, not legal advice.
+
+The examiner's test, for the trade mark as a whole and for each of the applicant's goods or services:
+1. Ordinary signification: does the mark, read as a whole, have a meaning to people in Australia who buy, use or \
+trade in those goods or services? Meanings that count include describing the kind, quality, quantity, intended \
+purpose, value, geographical origin or another characteristic of the goods or services, what they do, measure or \
+deliver, the result or benefit they bring, or praise (laudatory words).
+2. Other traders' need: would other traders, acting honestly, be likely to want to use the mark, or something \
+very like it, for that ordinary meaning in connection with similar goods or services?
+If both are true for a good or service, the examiner raises section 41 for it.
+
+Judge the phrase as a whole, not only word by word. Two ordinary words joined together often keep a plain \
+descriptive meaning (for example, PROFIT TRACKER for accounting software is a thing that tracks profit, so other \
+traders need it), even when neither word alone describes the services and the exact phrase is not in a \
+dictionary. A combination is distinctive when it is invented, unusual, or alludes to the goods only indirectly so \
+that a real leap of imagination is needed to see a description. Misspellings and run-together words do not fix \
+a descriptive phrase. For a logo, plain styling of descriptive words does not usually overcome the objection; a \
+substantial, distinctive design element can.
+
+Calibrate likelihood: "likely" when an examiner would very probably raise section 41 for at least one listed \
+good or service; "possible" when it is arguable either way; "unlikely" when the mark is invented, arbitrary for \
+these goods or services, or only indirectly suggestive. List the affected goods and services exactly as the \
+applicant wrote them. Options are things the applicant can weigh: add or substitute a distinctive element, drop \
+goods or services the meaning describes if they don't need them, or (when they have used the mark for some \
+time) gather evidence of use. Never promise an outcome."""
+
+_DISTINCTIVENESS_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "likelihood": {"type": "string", "enum": ["likely", "possible", "unlikely"]},
+        "meaning": {"type": "string", "description": "What the mark as a whole ordinarily means for these goods or "
+                                                     "services; empty if it has no such meaning."},
+        "reasoning": {"type": "string", "description": "Two to four plain-English sentences applying the test."},
+        "affected_terms": {"type": "array", "items": {"type": "string"}},
+        "options": {"type": "array", "items": {"type": "string"}},
+    },
+    "required": ["likelihood", "meaning", "reasoning", "affected_terms", "options"],
+    "additionalProperties": False,
+}
+
+
 class Citation(BaseModel):
     id: str
     title: str
@@ -130,6 +174,9 @@ def retrieve(report: Report, index: ManualIndex, per_query: int = 3) -> list[Chu
     if report.distinctiveness:
         reasons = " ".join({f.reason for f in report.distinctiveness})
         queries.append(f"section 41 inherently adapted to distinguish descriptive {reasons}")
+    ai = report.ai_distinctiveness
+    if ai and ai.likelihood != "unlikely":
+        queries.append("section 41 ordinary signification other traders desire to use combination of descriptive words")
     if report.conflicts and any(not c.live for c in report.conflicts):
         queries.append("lapsed removed trade marks not cited section 44")
 
@@ -145,6 +192,12 @@ class Explainer:
         self._client = client
         self.model = model or os.environ.get("TM_LLM_MODEL", DEFAULT_MODEL)
         self.effort = effort
+        self._assessed: dict[str, AiDistinctiveness] = {}
+
+    @staticmethod
+    def configured() -> bool:
+        """Whether automatic AI checks should run (an API key is set and TM_AI_CHECKS isn't 0)."""
+        return bool(os.environ.get("ANTHROPIC_API_KEY", "").strip()) and os.environ.get("TM_AI_CHECKS", "1") != "0"
 
     @property
     def client(self) -> Any:
@@ -170,6 +223,25 @@ class Explainer:
             raise ExplanationUnavailable("Couldn't work out search words for that description.")
         words = _json_text(response).get("keywords", [])
         return [w.strip() for w in dict.fromkeys(words) if w.strip()][:15]
+
+    def assess_distinctiveness(self, mark: str, mark_kind: str, classes: list[ClassSpec]) -> AiDistinctiveness:
+        """The section 41 view of the whole mark against the chosen goods and services."""
+        listing = "\n".join(f"Class {c.class_number}: " + "; ".join(c.terms) for c in classes)
+        user = (f"Trade mark: {mark}\nKind: {'logo (words with a design)' if mark_kind == 'logo' else 'word mark'}\n"
+                f"Goods and services:\n{listing}\n\nApply the section 41 test.")
+        if user in self._assessed:
+            return self._assessed[user]
+        response = self._call(DISTINCTIVENESS_PROMPT, user, _DISTINCTIVENESS_SCHEMA, "medium", 8000)
+        if response.stop_reason in ("refusal", "max_tokens"):
+            raise ExplanationUnavailable("The AI distinctiveness check couldn't complete for this mark.")
+        data = _json_text(response)
+        result = AiDistinctiveness(likelihood=data["likelihood"], meaning=data["meaning"].strip(),
+                                   reasoning=data["reasoning"].strip(), affected_terms=data["affected_terms"],
+                                   options=data["options"], model=getattr(response, "model", self.model))
+        if len(self._assessed) > 200:
+            self._assessed.clear()
+        self._assessed[user] = result
+        return result
 
     def _call(self, system: str, user: str, schema: dict, effort: str, max_tokens: int) -> Any:
         try:

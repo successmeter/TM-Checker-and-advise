@@ -40,7 +40,12 @@ MVP (Phase 1, built here):
 3. **Conflict check (s44 screen)**: search the register, score each live mark for mark similarity and goods
    relationship, band the risk, list the user terms causing each overlap.
 4. **Distinctiveness screen (s41)**: flag mark words that describe the user's own goods or are common laudatory or
-   descriptive words.
+   descriptive words. Word lists can't judge what a *phrase* means, so when an Anthropic API key is set, Claude
+   also applies the examiner's two-part test to the whole mark against the chosen goods and services (ordinary
+   signification + other traders' need) and returns likely / possible / unlikely, the meaning, affected terms and
+   options. A likely objection makes a word mark High risk and escalates (Medium for a logo). Real-world case
+   behind this: TM Headstart refused SUCCESS METER for business data analysis, consultancy and SaaS under s41
+   ("a quantifiable standard used to measure whether a goal ... has been achieved"), which the word lists missed.
 5. **Escalation**: explicit "speak to an attorney" triggers (identical mark + same goods, broad overlap that
    narrowing cannot fix, a wholly descriptive mark).
 6. Web page with active consent and in-line disclaimers; JSON API.

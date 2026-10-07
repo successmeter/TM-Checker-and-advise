@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from . import autorefresh
-from .analysis import DISCLAIMERS, check
+from .analysis import DISCLAIMERS, check, with_ai_distinctiveness
 from .explain import Explainer, Explanation, ExplanationUnavailable, retrieve
 from .manual import ManualIndex
 from .models import Application, Report
@@ -167,7 +167,9 @@ class _ManualFiles:
 
 def create_app(register: RegisterClient | None = None, picklist: Picklist | None = None,
                manual: ManualIndex | None = None, explainer: Explainer | None = None,
-               auto_refresh: bool = False, wording: WordingIndex | None = None) -> FastAPI:
+               auto_refresh: bool = False, wording: WordingIndex | None = None,
+               ai_checks: bool | None = None) -> FastAPI:
+    """ai_checks: run Claude's section 41 check with every check (default: when an API key is set)."""
     register = register or _default_register()
     wording_files = None if wording is not None else _WordingFiles()
 
@@ -204,8 +206,17 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
     def run_check(request: CheckRequest) -> Report:
         if not request.consent:
             raise HTTPException(422, "Please confirm you understand this is not legal advice before running a check.")
-        return check(Application(mark=request.mark, classes=request.classes, mark_kind=request.mark_kind),
-                     register, pl())
+        application = Application(mark=request.mark, classes=request.classes, mark_kind=request.mark_kind)
+        report = check(application, register, pl())
+        if not (ai_checks if ai_checks is not None else Explainer.configured()):
+            return report.model_copy(update={"ai_distinctiveness_unavailable": "Not set up: add an Anthropic API key "
+                                                                               "to check what the mark means as a whole."})
+        try:
+            ai = explainer.assess_distinctiveness(application.mark, application.mark_kind, application.classes)
+        except ExplanationUnavailable as e:
+            log.warning("AI distinctiveness check failed: %s", e, exc_info=e.__cause__)
+            return report.model_copy(update={"ai_distinctiveness_unavailable": str(e)})
+        return with_ai_distinctiveness(report, ai)
 
     @app.post("/api/explain")
     def run_explain(request: CheckRequest) -> ExplainResponse:

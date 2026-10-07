@@ -131,3 +131,57 @@ def test_keywords_asks_claude_for_picklist_search_words():
     assert words == ["cafe", "coffee", "takeaway food"]
     assert sent["body"]["output_config"]["effort"] == "low"
     assert sent["body"]["messages"][0]["content"] == "We run a cafe"
+
+
+ASSESSMENT = {"likelihood": "likely",
+              "meaning": "A measure of whether a goal or strategy has been achieved.",
+              "reasoning": "Other consultants and software providers would want to describe their tools this way.",
+              "affected_terms": ["business data analysis", "strategic business consultancy"],
+              "options": ["Add an invented word to the mark."]}
+
+
+def test_distinctiveness_assessment_judges_the_whole_mark_and_raises_the_risk(tmp_path):
+    from fastapi.testclient import TestClient
+    from tm_advisor.api import create_app
+
+    sent = []
+
+    def handler(request):
+        sent.append(json.loads(request.content))
+        return httpx2.Response(200, json=message(ASSESSMENT))
+
+    explainer = Explainer(client=sdk_client(handler))
+    app = create_app(FixtureRegisterClient([]), Picklist.load(ROOT / "data" / "picklist_sample.json"),
+                     explainer=explainer, ai_checks=True)
+    body = {"mark": "Success Meter", "consent": True,
+            "classes": [{"class_number": 35, "terms": ["business data analysis", "strategic business consultancy"]},
+                        {"class_number": 42, "terms": ["software as a service [SaaS]"]}]}
+    report = TestClient(app).post("/api/check", json=body).json()
+
+    assert report["ai_distinctiveness"]["likelihood"] == "likely"
+    assert report["overall_risk"] == "High" and report["escalate"]
+    assert any("section 41" in r for r in report["escalation_reasons"])
+    prompt = sent[0]["messages"][0]["content"]
+    assert "Success Meter" in prompt and "Class 35: business data analysis; strategic business consultancy" in prompt
+    assert sent[0]["output_config"]["format"]["type"] == "json_schema"
+
+    TestClient(app).post("/api/check", json=body)  # same mark and goods: answered from the cache
+    assert len(sent) == 1
+
+    logo = TestClient(app).post("/api/check", json={**body, "mark_kind": "logo"}).json()
+    assert logo["overall_risk"] == "Medium" and not logo["escalate"]
+
+
+def test_check_still_works_when_the_ai_check_fails():
+    from fastapi.testclient import TestClient
+    from tm_advisor.api import create_app
+
+    explainer = Explainer(client=sdk_client(lambda r: httpx2.Response(401, json={
+        "type": "error", "error": {"type": "authentication_error", "message": "bad key"}})))
+    app = create_app(FixtureRegisterClient([]), Picklist.load(ROOT / "data" / "picklist_sample.json"),
+                     explainer=explainer, ai_checks=True)
+    report = TestClient(app).post("/api/check", json={"mark": "Zorblax", "consent": True,
+                                                      "classes": [{"class_number": 9, "terms": ["software"]}]}).json()
+    assert report["ai_distinctiveness"] is None
+    assert "API key" in report["ai_distinctiveness_unavailable"]
+    assert report["overall_risk"] == "Low"

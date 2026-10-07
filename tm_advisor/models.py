@@ -118,6 +118,16 @@ class DistinctivenessFlag(BaseModel):
     reason: str
 
 
+class AiDistinctiveness(BaseModel):
+    """Claude's view of the section 41 test for the mark as a whole (word lists can't judge phrase meanings)."""
+    likelihood: Literal["likely", "possible", "unlikely"]  # chance an examiner raises a section 41 objection
+    meaning: str                  # what the mark as a whole would ordinarily mean in this trade ("" if nothing)
+    reasoning: str
+    affected_terms: list[str]     # the applicant's goods/services the meaning describes
+    options: list[str]
+    model: str = ""
+
+
 class Report(BaseModel):
     mark: str
     mark_kind: Literal["word", "logo"] = "word"
@@ -129,4 +139,6 @@ class Report(BaseModel):
     escalate: bool
     escalation_reasons: list[str]
     notes: list[str] = []
+    ai_distinctiveness: AiDistinctiveness | None = None
+    ai_distinctiveness_unavailable: str | None = None  # why the AI assessment didn't run, if it didn't
     disclaimers: list[str]

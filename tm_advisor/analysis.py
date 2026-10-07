@@ -2,7 +2,8 @@
 
 from . import distinctiveness, goods_similarity
 from .mark_similarity import compare
-from .models import (Application, ClassOverlap, Conflict, GoodsLevel, PicklistResult, RegisterMark, Report, Risk)
+from .models import (AiDistinctiveness, Application, ClassOverlap, Conflict, GoodsLevel, PicklistResult, RegisterMark,
+                     Report, Risk)
 from .picklist import Picklist
 from .register import RegisterClient
 
@@ -157,3 +158,17 @@ def _escalation_reasons(conflicts: list[Conflict], wholly_descriptive: bool) -> 
         reasons.append("Every word in the mark describes or praises the goods/services, a likely section 41 "
                        "objection that usually needs a new mark or evidence of use.")
     return reasons
+
+
+def with_ai_distinctiveness(report: Report, ai: AiDistinctiveness) -> Report:
+    """Add the AI section 41 view: a likely objection is High risk (Medium for a logo), a possible one Medium."""
+    logo = report.mark_kind == "logo"
+    level = {"likely": Risk.MEDIUM if logo else Risk.HIGH, "possible": Risk.MEDIUM}.get(ai.likelihood, Risk.LOW)
+    overall = max(report.overall_risk, level, key=_RISK_ORDER.get)
+    reasons = list(report.escalation_reasons)
+    if ai.likelihood == "likely" and not logo:
+        reasons.append("The mark as a whole is likely to be seen as describing your goods/services (section 41). "
+                       "That usually needs a changed mark, or arguments and evidence of use that an attorney can "
+                       "help prepare.")
+    return report.model_copy(update={"ai_distinctiveness": ai, "overall_risk": overall,
+                                     "escalate": bool(reasons), "escalation_reasons": reasons})
