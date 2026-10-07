@@ -36,6 +36,10 @@
   .steps li.done .dot { background: var(--brand); border-color: var(--brand); }
   .steps li.current { color: var(--brand); font-weight: 700; }
   .steps li.current .dot { border-color: var(--brand); box-shadow: inset 0 0 0 4px var(--card); background: var(--brand); }
+  .steplink { font: inherit; color: inherit; background: none; border: 0; padding: 0; text-align: left; cursor: pointer; }
+  .steplink:hover, .steplink:focus-visible { text-decoration: underline; }
+  .backtop { font: inherit; font-size: .95rem; color: var(--brand); background: none; border: 0; padding: 0; margin-bottom: 14px; cursor: pointer; }
+  .backtop:hover, .backtop:focus-visible { text-decoration: underline; }
   .steps .sub { display: block; font-size: .85rem; font-weight: 400; margin-top: 6px; color: var(--muted); }
   .steps .sub.on { color: var(--brand); font-weight: 600; }
   @media (max-width: 860px) {
@@ -138,15 +142,16 @@
 <div class="wrap">
   <nav aria-label="Progress">
     <ol class="steps" id="steps">
-      <li data-step="kind,goods"><span class="dot"></span>Trade mark details
-        <span class="sub" data-sub="kind">Kind of trade mark</span>
-        <span class="sub" data-sub="goods">Goods and services</span></li>
-      <li data-step="check"><span class="dot"></span>Automated check</li>
-      <li data-step="summary"><span class="dot"></span>Summary</li>
+      <li data-step="kind,goods"><span class="dot"></span><button type="button" class="steplink" data-go="kind">Trade mark details</button>
+        <button type="button" class="sub steplink" data-sub="kind" data-go="kind">Kind of trade mark</button>
+        <button type="button" class="sub steplink" data-sub="goods" data-go="goods">Goods and services</button></li>
+      <li data-step="check"><span class="dot"></span><button type="button" class="steplink" data-go="check">Automated check</button></li>
+      <li data-step="summary"><span class="dot"></span><button type="button" class="steplink" data-go="summary">Summary</button></li>
     </ol>
   </nav>
 
   <main class="panel">
+    <button type="button" class="backtop" id="back-top" hidden></button>
     <section data-page="kind">
       <h1>Kind of trade mark</h1>
       <p class="lead">What is your trade mark?</p>
@@ -287,19 +292,31 @@ function show(page) {
   $$("[data-sub]").forEach(s => s.classList.toggle("on", s.dataset.sub === page));
   $("#back").hidden = i === 0;
   $("#next").hidden = i === PAGES.length - 1;
+  $("#back-top").hidden = i === 0;
+  if (i > 0) $("#back-top").textContent = `← Back to ${PAGE_NAMES[PAGES[i - 1]]}`;
   $("#nav-error").textContent = "";
   if (page === "goods") renderSelected();
   if (page === "summary") renderSummary();
   window.scrollTo(0, 0);
 }
-$("#next").onclick = () => {
-  const page = state.page;
-  if (page === "kind" && !markText())
-    return $("#nav-error").textContent = state.kind === "logo" ? "Enter the words in your logo." : "Enter your word or phrase.";
-  if (page === "goods" && !classKeys().length) return $("#nav-error").textContent = "Select at least one good or service.";
-  show(PAGES[PAGES.indexOf(page) + 1]);
-};
+const PAGE_NAMES = { kind: "kind of trade mark", goods: "goods and services", check: "automated check", summary: "summary" };
+function problem(page) {  // what must be done on a page before moving past it
+  if (page === "kind" && !markText()) return state.kind === "logo" ? "Enter the words in your logo." : "Enter your word or phrase.";
+  if (page === "goods" && !classKeys().length) return "Select at least one good or service.";
+  return "";
+}
+function goTo(target) {  // back to any step freely; forward only past steps that are complete
+  const from = PAGES.indexOf(state.page), to = PAGES.indexOf(target);
+  for (let i = Math.min(from, to); i < to; i++) {
+    const p = problem(PAGES[i]);
+    if (p) { show(PAGES[i]); $("#nav-error").textContent = p; return; }
+  }
+  show(target);
+}
+$("#next").onclick = () => goTo(PAGES[PAGES.indexOf(state.page) + 1]);
 $("#back").onclick = () => show(PAGES[PAGES.indexOf(state.page) - 1]);
+$("#back-top").onclick = () => show(PAGES[PAGES.indexOf(state.page) - 1]);
+$$("[data-go]").forEach(b => b.onclick = () => goTo(b.dataset.go));
 $("#reset").onclick = () => {
   if (!confirm("Clear everything and start again?")) return;
   Object.assign(state, FRESH, { selected: {} });
