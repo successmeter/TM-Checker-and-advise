@@ -139,6 +139,7 @@ class Report(BaseModel):
     escalate: bool
     escalation_reasons: list[str]
     notes: list[str] = []
+    register_warning: str | None = None  # e.g. results came from IP Australia's test copy of the register
     ai_distinctiveness: AiDistinctiveness | None = None
     ai_distinctiveness_unavailable: str | None = None  # why the AI assessment didn't run, if it didn't
     disclaimers: list[str]

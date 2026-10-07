@@ -118,6 +118,7 @@
   .mark .pic { display: block; max-width: 100%; max-height: 120px; margin: 0 auto 10px; background: #fff; border-radius: 4px; }
   .mark .mkind { font-size: .8rem; color: var(--muted); margin-left: 4px; }
   .mark .words { display: inline-block; border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; font-weight: 700; margin-bottom: 8px; }
+  .warnbox { border-left: 4px solid var(--warn); background: var(--med-bg); padding: 10px 14px; border-radius: 6px; margin: 10px 0; }
   .ai { border-left: 4px solid var(--line); padding: 2px 0 2px 12px; margin: 10px 0; }
   .ai.likely { border-color: var(--high); } .ai.possible { border-color: var(--med); } .ai.unlikely { border-color: var(--low); }
   .risk { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: .8rem; font-weight: 700; }
@@ -481,6 +482,7 @@ function markLink(number, logo) {
 }
 function renderCheck(r) {
   const parts = [`<h2>Result for ${esc(r.mark)} <span class="risk ${r.overall_risk}">${r.overall_risk} risk</span></h2>`];
+  if (r.register_warning) parts.push(`<div class="note warnbox"><strong>Test data.</strong> ${esc(r.register_warning)}</div>`);
   if (r.escalate) parts.push(`<div class="escalate"><strong>We suggest speaking to a registered trade marks attorney before filing.</strong><ul>${r.escalation_reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`);
 
   const flags = r.distinctiveness;

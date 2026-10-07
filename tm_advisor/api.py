@@ -110,6 +110,13 @@ def _default_register() -> RegisterClient:
     return FixtureRegisterClient.load(os.environ.get("TM_REGISTER_FIXTURE", ROOT / "data" / "register_fixture.json"))
 
 
+TEST_REGISTER_WARNING = (
+    "These results come from IP Australia's TEST environment, a copy of the register that is not kept up to date. "
+    "Statuses can be wrong (a mark shown as awaiting examination may be registered, an expired one may have been "
+    "removed) and recent marks are missing. Click a mark number to see its live record. Use Production access for "
+    "real checks.")
+
+
 class _PicklistFiles:
     """The full picklist if it has been downloaded, else the sample; reloaded when a refresh replaces the file."""
 
@@ -217,6 +224,8 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
         except httpx.HTTPError as e:
             log.warning("Register search failed: %s", e)
             raise HTTPException(502, "Couldn't reach IP Australia's register search. Please try again.")
+        if "://test." in str(getattr(register, "base_url", "")):
+            report = report.model_copy(update={"register_warning": TEST_REGISTER_WARNING})
         if not (ai_checks if ai_checks is not None else Explainer.configured()):
             return report.model_copy(update={"ai_distinctiveness_unavailable": "Not set up: add an Anthropic API key "
                                                                                "to check what the mark means as a whole."})

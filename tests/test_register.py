@@ -268,3 +268,18 @@ def test_a_mark_in_class_all_covers_every_class():
     c35 = next(c for c in mark.classes if c.class_number == 35)
     overlap = relate(35, ["business data analysis"], 35, c35.terms)
     assert overlap.level == GoodsLevel.SAME and not overlap.narrowing_helps
+
+
+def test_results_from_the_test_register_carry_a_warning():
+    from fastapi.testclient import TestClient
+    from tm_advisor.api import create_app
+    from tm_advisor.picklist import Picklist
+
+    register = _client(lambda q: httpx.Response(200, json={"trademarks": [RECORD]}))
+    register.base_url = "https://test.api.ipaustralia.gov.au/public/australian-trade-mark-search-api/v1"
+    app = create_app(register, Picklist.load(Path(__file__).resolve().parents[1] / "data" / "picklist_sample.json"),
+                     ai_checks=False)
+    body = {"mark": "Success Meter", "consent": True, "classes": [{"class_number": 35, "terms": ["advertising"]}]}
+    assert "TEST environment" in TestClient(app).post("/api/check", json=body).json()["register_warning"]
+    register.base_url = "https://production.api.ipaustralia.gov.au/public/australian-trade-mark-search-api/v1"
+    assert TestClient(app).post("/api/check", json=body).json()["register_warning"] is None
