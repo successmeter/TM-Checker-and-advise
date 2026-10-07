@@ -126,3 +126,12 @@ def test_status_groups_decide_liveness():
                         ("NEVER_REGISTERED", False), ("DISCONTINUED", False)]:
         assert RegisterMark(number="1", words="A", status="x", classes=[], status_group=group).is_live is live
     assert not RegisterMark(number="1", words="A", status="DISCONTINUED", classes=[]).is_live
+
+
+def test_command_line_check_explains_missing_credentials(monkeypatch, capsys):
+    import pytest
+    from tm_advisor.register.__main__ import main
+    monkeypatch.delenv("IPA_CLIENT_ID", raising=False)
+    monkeypatch.setattr("sys.argv", ["x", "EcoKnit"])
+    with pytest.raises(SystemExit, match="Set IPA_CLIENT_ID"):
+        main()
