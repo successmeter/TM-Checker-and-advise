@@ -143,18 +143,20 @@ the project already uses for the picklist copier). A4, page numbers, the registe
 
 ## 6. Hosting
 
-The app runs on the founder's PC today. Selling requires a public server. The founder's Success Meter Social
-Media Suite already runs on Laravel; the tool stays a Python app either way:
-- **If that project uses Laravel Forge (a server Forge manages):** run this app on the same server as a second
-  site (e.g. `trademark.<domain>`), with Forge's Nginx in front, the app under a Forge daemon (Supervisor), a
-  Python virtual environment, and a data folder outside the release directory. No extra hosting cost; ideally
-  the server is in Sydney.
-- **If it uses Laravel Cloud or Vapor (PHP only):** a small separate host with a Sydney region and a persistent
-  disk (e.g. Fly.io or Render), about A$15–40/month.
-- Not recommended: rebuilding checkout in Laravel and calling this app from it. Two codebases for one flow.
-- Either way: HTTPS, environment secrets, daily backups of the database, logos and report files, error alerts,
-  uptime check. Data files (picklist, Manual index, wording list) live in the data folder; the existing automatic
-  refresh keeps them current.
+The app runs on the founder's PC today. Selling requires a public server that is always on (Stripe webhooks,
+background data refresh) and has a persistent disk (database, data files, logos, PDFs). The Social Media Suite
+runs on Laravel Cloud, which only runs PHP, so this Python app needs its own small host. Lowest-cost options
+(prices approximate; check current pricing):
+
+| Option | Cost | Notes |
+|---|---|---|
+| Oracle Cloud Always Free VM, Sydney region | Free | Generous (ARM, several GB RAM). Sign-up needs a card; free capacity is sometimes unavailable. **Start here for staging.** |
+| Small Sydney VPS (Vultr, DigitalOcean, AWS Lightsail) | ~A$7–10/month | Simple and reliable. **Recommended for production.** |
+| Free tiers of Render / Fly.io / Railway | Free–A$8 | Free tiers sleep when idle and have no persistent disk: not suitable. |
+
+Deployment on either VM: Docker Compose with the app and Caddy (automatic HTTPS), data folder on the host disk,
+nightly backup of the database, logos and reports to object storage, error alerts and an uptime check. The same
+setup moves between hosts unchanged.
 
 ## 7. Abuse and cost controls (free tier)
 
@@ -196,13 +198,13 @@ Go-live is blocked on this advice (plan task 4.12).
 |---|---|
 | Free vs paid | Free check: overall risk and which areas raised concerns. Recommended route and everything else: paid. |
 | Attorney review | Not offered at launch. |
-| Refund policy | Proposed in §12; final wording after legal advice. |
-| Hosting | Alongside the Success Meter Social Media Suite if it uses Laravel Forge; otherwise a small separate host (§6). *Confirm which Laravel hosting is used.* |
+| Refund policy | Agreed as in §12; final wording after legal advice. |
+| Hosting | Own small host (the Social Media Suite is on Laravel Cloud, PHP only): Oracle Always Free for staging, a ~A$7–10/month Sydney VPS for production (§6). |
 | Email | Resend. |
 | Names | Brand: Trademark Advisor (working name, to be registered). Stripe and invoices: Success Meter Pty Ltd. |
 | Logo upload | Yes, for composite and logo marks, shown in the report. |
 
-## 12. Refund policy (proposal)
+## 12. Refund policy (agreed; final wording after legal advice)
 
 A refund "if not happy with the outcome after lodging" was considered and not recommended: examination takes
 months and registration at least 7.5 months, the outcome depends on things the report doesn't control (what is

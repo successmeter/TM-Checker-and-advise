@@ -130,9 +130,9 @@ a fake provider.
 Rate limits on checks and orders, bot check before the free check, Anthropic spend limit documented.
 
 ### 4.10 Hosting
-On the Laravel Forge server alongside the Social Media Suite (second site, Supervisor daemon, Python venv, data
-folder outside releases), or a small separate host if that project is on Laravel Cloud/Vapor (design §6).
-HTTPS, secrets, backups, error alerts, uptime check. Staging (Stripe test mode) first.
+Docker Compose (app + Caddy for HTTPS) on a small VM: Oracle Always Free (Sydney) for staging, ~A$7–10/month
+Sydney VPS for production (design §6). Data folder on the host disk, nightly backups, secrets in env vars, error
+alerts, uptime check. Staging runs Stripe test mode.
 
 ### 4.11 Evaluation set
 Real outcomes (Headstart/examination reports) with expected route; a script that reports how often the route
@@ -143,5 +143,5 @@ Legal advice received (design §10) and reflected in terms, refund and privacy p
 Stripe live keys; first 20 reports reviewed before release.
 
 Founder actions that can start now: legal advice (design §10, including the refund policy and business name),
-register the business name, Stripe test-mode keys, Resend account and sending domain, confirm which Laravel
-hosting the Social Media Suite uses.
+register the business name, Stripe test-mode keys, Resend account and sending domain, an Oracle Cloud account
+(or a Sydney VPS) for staging.
