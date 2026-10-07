@@ -8,6 +8,7 @@ EXACT, FUZZY, PHONETIC and PART matches, limited to pending and registered marks
 available to the account, the client falls back to POST /search/quick plus GET /trade-mark/{number} per hit.
 """
 
+import logging
 import os
 
 import httpx
@@ -15,6 +16,9 @@ import httpx
 from ..ipa_auth import IpaToken, token_url_for
 from ..models import RegisterClass, RegisterMark
 from ..text import squash, words
+from .terms import RegisterTerm, terms_from_marks
+
+log = logging.getLogger("uvicorn.error")
 
 PRODUCTION_BASE = "https://production.api.ipaustralia.gov.au/public/australian-trade-mark-search-api/v1"
 TEST_BASE = "https://test.api.ipaustralia.gov.au/public/australian-trade-mark-search-api/v1"
@@ -27,6 +31,7 @@ class IpAustraliaRegisterClient:
         self.max_results = max_results
         self.page_size = page_size
         self._advanced_available = True
+        self._terms_cache: dict[str, list[RegisterTerm]] = {}
         self._http = httpx.Client(transport=transport, timeout=20)
         self._token = IpaToken(client_id, client_secret, token_url, self._http)
 
@@ -68,6 +73,29 @@ class IpAustraliaRegisterClient:
             if len(found) >= self.max_results * 3:
                 break
         return list(found.values())
+
+    def goods_terms(self, query: str, limit: int = 60, marks: int = 100) -> list[RegisterTerm]:
+        """Accepted goods & services wording from registered marks whose specification contains the query."""
+        key = " ".join(query.lower().split())
+        if key in self._terms_cache:
+            return self._terms_cache[key]
+        body = {
+            "rows": [{"op": "AND", "query": {"goodsAndServices": query, "statuses": ["REGISTERED"]}}],
+            "pageNumber": 0,
+            "pageSize": marks,
+        }
+        try:
+            response = self._http.post(f"{self.base_url}/page/advanced", json=body, headers=self._headers())
+            response.raise_for_status()
+            records = response.json().get("trademarks") or []
+        except httpx.HTTPError as e:
+            log.warning("Goods and services lookup on the register failed: %s", e)
+            return []
+        result = terms_from_marks([_to_register_mark(r, str(r.get("number", ""))) for r in records], query, limit)
+        if len(self._terms_cache) > 200:
+            self._terms_cache.clear()
+        self._terms_cache[key] = result
+        return result
 
     def _quick_then_get(self, mark: str) -> list[RegisterMark]:
         numbers: list[str] = []

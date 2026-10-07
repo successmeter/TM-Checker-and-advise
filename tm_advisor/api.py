@@ -16,6 +16,7 @@ from .explain import Explainer, Explanation, ExplanationUnavailable, retrieve
 from .manual import ManualIndex
 from .models import Application, Report
 from .picklist import Picklist, load_classes
+from .text import stems
 from .register import FixtureRegisterClient, IpAustraliaRegisterClient, RegisterClient
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -48,6 +49,8 @@ class ClassOut(BaseModel):
 class PicklistItemOut(BaseModel):
     id: str
     description: str
+    source: str = "picklist"  # "picklist", or "register": accepted wording from registered marks
+    uses: int = 0             # for register wording: how many registered marks use it
 
 
 class PicklistGroup(BaseModel):
@@ -186,12 +189,44 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
         return ExplainResponse(report=report, explanation=explanation, unavailable_reason=reason,
                                manual_excerpts_used=len(excerpts))
 
-    def group(found: list, query: str, keywords: list[str], note: str | None = None) -> FindResponse:
+    def group(found: list, query: str, keywords: list[str], note: str | None = None,
+              kinds: set[str] | None = None) -> FindResponse:
+        """Picklist matches, plus accepted wording from registered marks for the same search words."""
+        groups: dict[int, list[PicklistItemOut]] = {}
+        for cls, items in found:
+            groups[cls] = [PicklistItemOut(id=i.id, description=i.description) for i in items]
+        order = list(groups)
+        extra: dict[int, int] = {}
+        for word in keywords[:5]:
+            for term in _register_terms(word):
+                if term.class_number not in classes:
+                    continue
+                if kinds and classes[term.class_number].kind not in kinds:
+                    continue
+                items = groups.setdefault(term.class_number, [])
+                if any(i.description.lower() == term.description.lower() for i in items):
+                    continue
+                items.append(PicklistItemOut(id=f"reg-{term.class_number}-{term.description.lower()}",
+                                             description=term.description, source="register", uses=term.uses))
+                extra[term.class_number] = extra.get(term.class_number, 0) + term.uses
+        wanted = [stems(k) - _MATCH_FILLER for k in keywords]
+
+        def complete(cls: int) -> bool:  # some item in the class contains every word of a search
+            return any(w and w <= stems(i.description) for i in groups[cls] for w in wanted)
+
+        full = [c for c in order if complete(c)]
+        partial = [c for c in order if not complete(c)]
+        from_register = sorted((c for c in groups if c not in order), key=lambda c: -extra.get(c, 0))
+        order = full + from_register + partial
         return FindResponse(
             query=query, keywords=keywords, sample_picklist=pl().is_sample, note=note,
             groups=[PicklistGroup(class_number=cls, title=classes[cls].title, kind=classes[cls].kind,
-                                  items=[PicklistItemOut(id=i.id, description=i.description) for i in items])
-                    for cls, items in found])
+                                  items=groups[cls][:80])
+                    for cls in order if groups[cls]])
+
+    def _register_terms(word: str) -> list:
+        lookup = getattr(register, "goods_terms", None)
+        return lookup(word) if lookup else []
 
     @app.get("/api/data-status")
     def data_status() -> DataStatus:
@@ -215,7 +250,8 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
     @app.get("/api/picklist/find")
     def picklist_find(q: str = Query(min_length=2), mode: str = Query("similar", pattern="^(similar|exact)$"),
                       kinds: str = "goods,services") -> FindResponse:
-        return group(pl().find(q, mode, set(kinds.split(",")), classes), q, [q])
+        kind_set = set(kinds.split(","))
+        return group(pl().find(q, mode, kind_set, classes), q, [q], kinds=kind_set)
 
     @app.post("/api/picklist/describe")
     def picklist_describe(request: DescribeRequest) -> FindResponse:
@@ -240,7 +276,7 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
                 for item in items:
                     merged[cls].setdefault(item.id, item)
         found = [(cls, list(merged[cls].values())) for cls in order]
-        return group(found, text, keywords, note)
+        return group(found, text, keywords, note, kinds=set(request.kinds))
 
     @app.get("/api/picklist/search")
     def picklist_search(q: str = Query(min_length=2), class_number: int | None = Query(None, ge=1, le=45)) -> list[PicklistHit]:
@@ -248,6 +284,8 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
 
     return app
 
+
+_MATCH_FILLER = {"and", "of", "for", "in", "the", "to", "a", "relation", "services", "service"}
 
 _STOP = {"i", "we", "our", "my", "and", "or", "the", "a", "an", "to", "of", "for", "in", "on", "with", "sell", "selling",
          "make", "making", "provide", "providing", "offer", "offering", "run", "running", "business", "company", "do",

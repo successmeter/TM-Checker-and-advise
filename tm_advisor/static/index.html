@@ -357,7 +357,7 @@ function renderResults() {
     <div class="cls"><span class="badge">Class ${g.class_number}</span>
       <h3>${esc(g.title)}</h3>
       <p class="hint" style="margin:-4px 0 6px"><a href="${ipaClassUrl(g.class_number)}" target="_blank" rel="noopener">See all class ${g.class_number} terms on IP Australia ↗</a></p>
-      ${g.items.map(i => `<label><input type="checkbox" data-cls="${g.class_number}" data-d="${esc(i.description)}"${isSelected(g.class_number, i.description) ? " checked" : ""}><span>${esc(i.description)}</span></label>`).join("")}
+      ${g.items.map(i => `<label><input type="checkbox" data-cls="${g.class_number}" data-d="${esc(i.description)}"${isSelected(g.class_number, i.description) ? " checked" : ""}><span>${esc(i.description)}${i.source === "register" ? ` <span class="hint">· used in ${i.uses} registered mark${i.uses === 1 ? "" : "s"}</span>` : ""}</span></label>`).join("")}
     </div>`).join("");
   $$("#results input[type=checkbox]").forEach(cb => cb.onchange = () => toggle(cb.dataset.cls, cb.dataset.d, cb.checked));
 }
@@ -441,7 +441,7 @@ function renderCheck(r) {
   const off = r.picklist.filter(p => !p.on_picklist);
   parts.push(accordion("wording", "Goods and services wording", off.length, off.length ? `
     <p>Some terms are not on the picklist. Picklist-only applications cost less and avoid wording objections.</p>
-    ${samplePicklist ? '<p class="note">We only have a sample of the picklist, so a term you copied from IP Australia\'s full list can show here as "not on picklist". Check it on IP Australia\'s class page.</p>' : ""}
+    ${samplePicklist ? '<p class="note">We only have a sample of the picklist, so a term copied from IP Australia\'s full list, or one marked "used in registered marks", can show here as "not on picklist". Check it on IP Australia\'s class page.</p>' : ""}
     <ul>${off.map(p => `<li>Class ${p.class_number}: ${esc(p.term)}${p.suggestions.length ? ` — closest: ${p.suggestions.map(esc).join("; ")}` : ""}</li>`).join("")}</ul>`
     : "<p>All your terms are on the picklist.</p>", off.length > 0));
 
