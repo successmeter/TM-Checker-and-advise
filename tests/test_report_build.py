@@ -70,7 +70,7 @@ def test_report_follows_the_check_and_uses_claude_only_for_wording():
 
 def test_report_is_complete_without_claude():
     doc = build_report(APP, checked(), explainer=FakeExplainer(fail=True), **KW)
-    assert "Recommended route" in doc.summary and doc.top_actions
+    assert "Option to consider first" in doc.summary and doc.top_actions
     assert render_html(doc)
 
 
@@ -97,7 +97,7 @@ def test_narrow_goods_route_moves_overlapping_terms_out():
 def test_plain_next_steps_are_actions_not_the_route_reasons():
     doc = build_report(APP, checked(), explainer=FakeExplainer(fail=True), **KW)
     assert doc.top_actions != doc.route.reasons[:3]
-    assert doc.top_actions[0].startswith("Have a logo designed")
+    assert doc.top_actions[0].startswith("Consider a composite mark")
     assert any("section 5" in a for a in doc.top_actions)
 
 
@@ -124,7 +124,7 @@ def test_claude_sees_only_the_marks_that_need_attention():
     build_report(APP, report, explainer=Recorder(), **KW)
     assert len(seen[0].conflicts) <= 8 and all(c.risk != Risk.LOW for c in seen[0].conflicts)
     html = render_html(build_report(APP, report, **KW))
-    assert "Also on the register: no action needed" in html
+    assert "Also on the register: low review priority" in html
 
 
 def test_citations_are_not_repeated_and_marks_have_one_what_to_do():
@@ -138,3 +138,18 @@ def test_citations_are_not_repeated_and_marks_have_one_what_to_do():
     doc = build_report(APP, checked(), explainer=FakeExplainer(), **KW)
     plus = next(m for m in doc.similar_marks if m.number == "2536546")
     assert plus.what_to_do == "It leads with SUCCESS."
+
+
+
+FORBIDDEN = ["you should", "you must", "file as", "ready to paste", "safe to", "will be accepted", "no risk",
+             "don't need a lawyer", "guarantee that"]
+
+
+def test_report_reads_as_options_not_instructions():
+    """Risk assessment §4.1: research and options, never instructions or conclusions."""
+    for explainer in (None, FakeExplainer(fail=True)):
+        doc = build_report(APP, checked(), explainer=explainer, **KW)
+        text = render_html(doc).lower()
+        for phrase in FORBIDDEN:
+            assert phrase not in text, phrase
+    assert "what this doesn't mean" in render_html(build_report(APP, checked(), **KW)).lower()

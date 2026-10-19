@@ -22,7 +22,7 @@ from .store import Store
 
 log = logging.getLogger("uvicorn.error")
 
-PRODUCT_NAME = "Trade mark filing report"
+PRODUCT_NAME = "Trade mark research report"
 
 
 @dataclass

@@ -30,7 +30,12 @@ DESIGN_GUIDANCE = [
 ]
 
 LIMITATIONS = [
-    "This report is general information produced by software, not legal advice. It is not a clearance search for "
+    "This report provides automated research and decision-support information based on publicly available Australian "
+    "trade mark data and IP Australia materials. It does not provide legal advice, a legal opinion, or a "
+    "determination of whether a trade mark is registrable or infringes another person's rights. Results are "
+    "indicative only and may be incomplete or inaccurate. For advice on your circumstances, consult a registered "
+    "Australian trade marks attorney or lawyer.",
+    "This report is produced by software. It is not a clearance search for "
     "using the brand, and Trademark Advisor does not file applications for you.",
     "It is based on the register on the date above; marks filed later, or not yet published, are not included.",
     "Examiners decide each case on its facts, and other traders can oppose an application; no outcome is guaranteed.",
@@ -136,35 +141,36 @@ def _own_note(report: Report) -> str:
 
 
 def _plain_summary(report: Report, attention: int) -> str:
-    parts = [f"Overall risk: {report.overall_risk.value}."]
+    parts = [f"Overall review priority: {report.overall_risk.value}."]
     if report.route:
-        parts.append(f"Recommended route: {report.route.headline.lower()}.")
+        parts.append(f"{report.route.headline}.")
     ai = report.ai_distinctiveness
     if ai and ai.likelihood != "unlikely":
         parts.append(f"The mark as a whole is {'likely' if ai.likelihood == 'likely' else 'possibly'} going to be "
                      "seen as describing your goods or services.")
     elif report.distinctiveness:
         parts.append("Some words in the mark describe or praise your goods or services.")
-    parts.append(f"{attention} similar mark{'s' if attention != 1 else ''} on the register need{'s' if attention == 1 else ''} "
-                 "your attention." if attention else "No similar mark on the register needs attention.")
+    parts.append(f"{attention} similar mark{'s' if attention != 1 else ''} on the register deserve{'s' if attention == 1 else ''} "
+                 "a closer look." if attention else "No similar mark on the register was flagged for a closer look.")
     return " ".join(parts)
 
 
 def _plain_actions(report: Report, attention: list[SimilarMark]) -> list[str]:
     route = report.route
-    first = {"composite": "Have a logo designed with a substantial, distinctive design element, and file as a composite "
-                          "mark (sections 2 and 6).",
-             "new_name": "Choose a different name and check it again before you file (sections 2 and 4).",
-             "narrow_goods": "Leave out the goods or services that overlap earlier marks (section 5).",
-             "logo": "Search IP Australia's image search for similar logos before you file.",
-             "word": "File as a word mark."}[route.recommended]
+    first = {"composite": "Consider a composite mark with a substantial, distinctive design element (sections 2 and 6).",
+             "new_name": "Consider whether a different name would suit you, and check any new name before deciding "
+                         "(sections 2 and 4).",
+             "narrow_goods": "Consider whether you need the goods or services that overlap earlier marks (section 5).",
+             "logo": "Consider searching IP Australia's image search for similar logos.",
+             "word": "Consider a word mark: it is the broadest kind of protection (section 2)."}[route.recommended]
     actions = [first]
     if attention and route.recommended in ("word", "composite"):
-        actions.append(f"Look at the {len(attention)} similar mark{'s' if len(attention) > 1 else ''} rated Medium or "
-                       "High in section 4, and follow what to do for each.")
-    actions.append("Use the goods and services wording in section 5, and leave out anything you don't offer.")
-    actions.append("File through TM Headstart to get the examiner's view within about 5 business days before you "
-                   "commit (see How to file).")
+        actions.append(f"Review the {len(attention)} similar mark{'s' if len(attention) > 1 else ''} given a medium or "
+                       "high review priority in section 4, and the points to consider for each.")
+    actions.append("Check each of your goods and services in section 5: do you offer it, and does it overlap a mark in "
+                   "section 4?")
+    actions.append("TM Headstart gives you an IP Australia examiner's view within about 5 business days, before you "
+                   "commit to a full application (see How to file).")
     return actions
 
 
@@ -173,10 +179,10 @@ def _route_detail(report: Report) -> list[str]:
     if route is None:
         return []
     if route.recommended == "composite":
-        detail = ["The main concern is that your words describe your goods or services. That is the situation where a "
-                  "design helps: the design, not the words, makes the mark distinctive.",
-                  "If owning the words themselves matters to you, the alternative is a different name with an invented "
-                  "or unusual element, filed as a word mark."]
+        detail = ["The main concern found is that your words describe your goods or services. That is the situation "
+                  "where a design can help: the design, not the words, makes the mark distinctive.",
+                  "If owning the words themselves matters to you, another option is a different name with an invented "
+                  "or unusual element, as a word mark."]
         closer = [c for c in report.conflicts if c.live and c.risk == Risk.MEDIUM]
         if closer:
             names = ", ".join(c.cited_words for c in closer[:3])
@@ -235,10 +241,10 @@ def _specification(application: Application, report: Report, classes: dict[int, 
             other = narrowable.get((spec.class_number, term))
             if other and narrow_route:
                 removed.append(SpecTerm(text=term, on_picklist=on,
-                                        note=f"Leave out unless you offer it: it overlaps {other}."))
+                                        note=f"Overlaps {other}. Do you offer it? If not, you may not need it."))
             else:
                 if other:
-                    note = (note + f" Overlaps {other}: leave it out if you don't offer it.").strip()
+                    note = (note + f" Overlaps {other}. Do you offer it? If not, you may not need it.").strip()
                 kept.append(SpecTerm(text=term, on_picklist=on, note=note))
         title = classes[spec.class_number].title if spec.class_number in classes else ""
         out.append(SpecClass(class_number=spec.class_number, title=title, terms=kept, removed=removed))

@@ -71,7 +71,7 @@
   <div class="brandbar"><strong>{{ r.brand }}</strong><span class="muted small">Report {{ r.reference }} · {{ r.created }}</span></div>
   {% if r.sample %}<div class="sample">Sample report. It shows what a paid report contains; the details are illustrative and are not a report on this mark.</div>{% endif %}
 
-  <h1>Trade mark filing report</h1>
+  <h1>Trade mark research report</h1>
   <div class="markline">
     <span class="mark">{{ r.mark }}</span>
     {% if r.logo_image %}<img class="logo" src="{{ r.logo_image }}" alt="Your logo">{% endif %}
@@ -81,27 +81,27 @@
     <tr><th>Classes</th><td>{{ r.classes | join(", ") }}</td></tr>
     {% if r.prepared_for %}<tr><th>Prepared for</th><td>{{ r.prepared_for }}</td></tr>{% endif %}
     <tr><th>Register searched</th><td>{{ r.register_searched }}</td></tr>
-    <tr><th>Overall risk</th><td><span class="risk {{ r.overall_risk.value }}">{{ r.overall_risk.value }}</span></td></tr>
+    <tr><th>Overall review priority</th><td><span class="risk {{ r.overall_risk.value }}">{{ r.overall_risk.value }}</span></td></tr>
   </table>
 
   <h2>1. Summary</h2>
   <p>{{ r.summary }}</p>
   <div class="box route">
-    <div class="label">Recommended route</div>
+    <div class="label">Option to consider first</div>
     <h3>{{ r.route.headline }}</h3>
     <ul>{% for x in r.route.reasons %}<li>{{ x }}</li>{% endfor %}</ul>
   </div>
-  <h3>What to do next</h3>
+  <h3>Things to consider</h3>
   <ol class="actions">{% for a in r.top_actions %}<li>{{ a }}</li>{% endfor %}</ol>
 
   <h3>In this report</h3>
   <ol class="toc">
-    <li>Summary</li><li>Recommended route</li><li>Distinctiveness (section 41)</li><li>Similar marks (section 44)</li>
+    <li>Summary</li><li>Options worth considering</li><li>Distinctiveness (section 41)</li><li>Similar marks (section 44)</li>
     <li>Your goods and services</li>{% if r.design_guidance %}<li>Designing your composite mark</li>{% endif %}
     <li>How to file</li><li>When to get an attorney</li><li>About this report</li>
   </ol>
 
-  <h2>2. Recommended route</h2>
+  <h2>2. Options worth considering</h2>
   <p><strong>{{ r.route.headline }}.</strong></p>
   {% for p in r.route_detail %}<p>{{ p }}</p>{% endfor %}
   <table class="facts">
@@ -112,8 +112,9 @@
 
   <h2>3. Distinctiveness (section 41)</h2>
   {% set d = r.distinctiveness %}
-  <p><span class="risk {{ d.likelihood }}">{{ {"likely": "Objection likely", "possible": "Objection possible", "unlikely": "Objection unlikely"}[d.likelihood] }}</span></p>
+  <p><span class="risk {{ d.likelihood }}">{{ {"likely": "Likely to be raised as an issue", "possible": "May be raised as an issue", "unlikely": "Not expected to be raised as an issue"}[d.likelihood] }}</span></p>
   <p class="muted small">The test IP Australia's examiners apply: does the trade mark, as a whole, have an ordinary meaning for your goods or services that other traders would want to use honestly?</p>
+  <p class="small muted"><strong>What this doesn't mean:</strong> this is an automated assessment, not the examiner's decision or a legal opinion on whether your mark can be registered.</p>
   {% if d.meaning %}<p><strong>What “{{ r.mark }}” means in your trade:</strong> {{ d.meaning }}</p>{% endif %}
   <p>{{ d.reasoning }}</p>
   {% if d.affected_terms %}<p><strong>Goods and services this applies to:</strong> {{ d.affected_terms | join("; ") }}.</p>{% endif %}
@@ -125,27 +126,28 @@
   {% set attention = r.similar_marks | selectattr("live") | rejectattr("risk.value", "equalto", "Low") | list %}
   {% set others = r.similar_marks | reject("in", attention) | list %}
   <p>We screened {{ r.marks_reviewed }} marks on the register in your classes and the classes IP Australia treats as related.
-     {% if attention %}{{ attention | length }} need{{ "s" if attention | length == 1 }} your attention, most important first.
-     {% else %}None needs your attention.{% endif %}</p>
+     {% if attention %}{{ attention | length }} deserve{{ "s" if attention | length == 1 }} a closer look, highest review priority first.
+     {% else %}None was flagged for a closer look.{% endif %}</p>
+  <p class="small muted"><strong>What review priority means:</strong> how closely we suggest you look at each mark, based on how alike the marks are and how their goods and services relate. It doesn't decide whether your mark can be registered or used, or whether either mark infringes the other.</p>
   {% if r.own_marks_note %}<p class="small muted">{{ r.own_marks_note }}</p>{% endif %}
   {% for m in attention %}
   <div class="box">
     <div class="markcard">
       <div class="pic">{% if m.image %}<img src="{{ m.image }}" alt="{{ m.words }}">{% else %}{{ m.words }}{% endif %}</div>
       <div>
-        <p><strong>{{ m.words }}</strong> <span class="risk {{ m.risk.value }}">{{ m.risk.value }}</span>
+        <p><strong>{{ m.words }}</strong> <span class="risk {{ m.risk.value }}">Review priority: {{ m.risk.value }}</span>
            <span class="tag">{{ "Logo/composite" if m.logo else "Word mark" }}</span></p>
         <p class="small muted"><a href="https://search.ipaustralia.gov.au/trademarks/search/view/{{ m.number }}">#{{ m.number }}</a> · {{ m.status }}{% if m.owner %} · {{ m.owner }}{% endif %} · Classes {{ m.classes | join(", ") }}</p>
         <p class="small"><strong>Why it's similar:</strong> {{ m.why_similar | join(" ") }}</p>
         <p class="small"><strong>Goods and services:</strong> {{ m.goods_overlap }}</p>
-        <p class="small"><strong>What to do:</strong> {{ m.what_to_do }}</p>
+        <p class="small"><strong>Points to consider:</strong> {{ m.what_to_do }}</p>
       </div>
     </div>
   </div>
   {% endfor %}
   {% if others %}
-  <h3>Also on the register: no action needed</h3>
-  <p class="small muted">Similar in some way, but rated Low (or no longer in force). Listed so you know they exist.</p>
+  <h3>Also on the register: low review priority</h3>
+  <p class="small muted">Similar in some way, but given a low review priority (or no longer in force). Listed so you know they exist.</p>
   <table class="facts small">
     <tr><th style="width:auto">Mark</th><th style="width:auto">Number · status</th><th style="width:auto">Why it came up</th></tr>
     {% for m in others[:25] %}<tr><td><strong>{{ m.words }}</strong></td>
@@ -154,16 +156,17 @@
   </table>
   {% endif %}
 
-  <h2>5. Your goods and services</h2>
-  <p>Recommended wording, ready to paste into TM Headstart or your application.
-     {% if r.filing.all_picklist %}Every term is on IP Australia's picklist, so the lower fee applies.{% endif %}</p>
+  <h2>5. Your goods and services, as you selected them</h2>
+  <p>These are the terms you chose, checked against IP Australia's picklist.
+     {% if r.filing.all_picklist %}Every term is on the picklist, so the lower application fee applies.{% endif %}
+     For each one, consider: do you offer it, or genuinely intend to? Does it overlap a mark in section 4?</p>
   {% for c in r.specification %}
   <h3>Class {{ c.class_number }}: {{ c.title }}</h3>
-  <div class="copy">{{ c.terms | map(attribute="text") | join("; ") }}</div>
   <table class="facts spec">
     {% for t in c.terms %}<tr><td>{{ t.text }}</td><td class="small">{% if t.on_picklist %}<span class="tag">Picklist</span>{% else %}<span class="tag">Own wording</span>{% endif %} {{ t.note }}</td></tr>{% endfor %}
-    {% for t in c.removed %}<tr class="removed"><td><s>{{ t.text }}</s></td><td class="small">{{ t.note }}</td></tr>{% endfor %}
+    {% for t in c.removed %}<tr><td>{{ t.text }}</td><td class="small"><span class="tag">To think about</span> {{ t.note }}</td></tr>{% endfor %}
   </table>
+  <div class="copy">{{ (c.terms + c.removed) | map(attribute="text") | join("; ") }}</div>
   {% endfor %}
   {% for n in r.specification_notes %}<p class="small">{{ n }}</p>{% endfor %}
 

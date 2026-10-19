@@ -126,6 +126,15 @@ Use a fuller statement on the check page, the offer, the report cover and the te
 - Evaluation set and human review before launch (A1).
 - Bot check and spend limit (P4).
 
+### 4.6 Status (19 October 2026)
+Done in the product: options instead of instructions (route headlines, "Things to consider", Claude prompt rules),
+"Review priority" labels with "what this doesn't mean" boundaries, "Likely to be raised as an issue" for section 41,
+the specification shown as the customer's own selected terms with points to think about, the fuller disclaimer on the
+check page, offer, report and terms, the Headstart refund worded as a goodwill refund, "research report" instead of
+"filing report", and no paid reports while connected to the test register. A test fails if instruction phrases
+("you should", "file as", "ready to paste", "safe to", "will be accepted") appear in a report.
+Still open: brand name, price, attorney-review tier, bot check, evaluation set, privacy policy detail, legal review.
+
 ## 5. Competition and price
 
 - **Free official tools:** ATMS (search), TM Checker (AI similarity and distinctiveness), and TM Headstart (an

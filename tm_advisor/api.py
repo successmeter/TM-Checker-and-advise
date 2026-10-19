@@ -311,6 +311,9 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
     bypass_payment = os.environ.get("TM_DEV_FREE_REPORTS") == "1"  # local testing only: reports without paying
     price = payments.amount if payments else int(os.environ.get("TM_REPORT_PRICE_CENTS", "29900"))
 
+    def on_test_register() -> bool:
+        return "://test." in str(getattr(register, "base_url", ""))
+
     def report_link(order_id: str) -> str:
         return f"{public_url}/report/{order_id}?t={store.token_for(order_id)}"
 
@@ -377,19 +380,20 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
                     "likely" if report.wholly_descriptive else "possible" if report.distinctiveness else "none")
         similar = sum(1 for c in report.conflicts if c.live and c.risk != Risk.LOW)
         wording = sum(1 for p in report.picklist if not p.on_picklist)
-        covers = ["Your recommended route: word mark, composite mark, logo mark, a different name or narrower goods, "
-                  "and why",
+        covers = ["The options worth considering for your mark (word mark, composite mark, logo mark, a different "
+                  "name or narrower goods), and the reasons",
                   "What your mark means as a whole for your goods and services, and your options" if distinct != "none"
                   else "Confirmation that your mark is distinctive, and what it protects",
                   f"The {similar} similar mark{'s' if similar != 1 else ''} that need attention: why each matters and "
                   "what to do" if similar else "Every similar mark we screened, and why none needs action",
-                  "Your goods and services wording, ready to paste, with what to drop or narrow",
-                  "Step-by-step filing through TM Headstart, with fees for your classes",
+                  "Your goods and services checked against the picklist, with the ones that overlap other marks",
+                  "How TM Headstart and standard applications work, with fees for your classes",
                   "A dated PDF to keep"]
         return FreeCheck(mark=report.mark, mark_kind=report.mark_kind, overall_risk=report.overall_risk,
                          concerns=Concerns(distinctiveness=distinct, similar_marks=similar, wording=wording),
                          report_covers=covers, own_marks=report.own_marks, register_warning=report.register_warning,
-                         price_cents=price, currency="aud", payments_enabled=payments is not None or bypass_payment)
+                         price_cents=price, currency="aud",
+                         payments_enabled=bypass_payment or (payments is not None and not on_test_register()))
 
     def make_report(application: Application, order_id: str, logo: str | None, industry: str) -> ReportDoc:
         when = local_now()
@@ -413,6 +417,8 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
             raise HTTPException(422, "Please accept the terms and refund policy to continue.")
         if payments is None and not bypass_payment:
             raise HTTPException(503, "Payments aren't set up yet.")
+        if on_test_register() and not bypass_payment:
+            raise HTTPException(503, "Reports aren't available: the tool is connected to IP Australia's test register.")
         _rate_limit(http_request, "order", 10)
         logo, logo_type = _read_logo(request.logo)
         application = request.application.model_dump(mode="json")

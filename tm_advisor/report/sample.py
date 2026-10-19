@@ -28,22 +28,22 @@ def sample_report() -> ReportDoc:
                  "IP Australia Trade Marks Manual of Practice and Procedure, downloaded 1 October 2026."],
         mark="SUCCESS METER", mark_kind="word", classes=[35, 42],
         overall_risk=Risk.HIGH,
-        summary=("SUCCESS METER is likely to be refused as a word mark because, read as a whole, it describes what your "
-                 "services do: measure business success. No earlier mark blocks you outright, but two marks that lead "
-                 "with SUCCESS in class 35 need a closer look. Your best route is a composite mark: a distinctive "
-                 "design together with the words, or a more distinctive name."),
+        summary=("Read as a whole, SUCCESS METER is likely to be seen as describing what your services do (measure "
+                 "business success), a common reason word marks are refused. No earlier mark blocks you outright, but two marks that lead "
+                 "with SUCCESS in class 35 deserve a closer look. The option to consider first is a composite mark: "
+                 "a distinctive design together with the words. A more distinctive name is the other option."),
         top_actions=[
-            "Commission a logo with a substantial, distinctive design element (see section 6) and file SUCCESS METER "
-            "as a composite mark, or choose a more distinctive word mark.",
-            "Leave out website hosting and website design from class 42 unless you actually offer them (section 5).",
-            "File through TM Headstart with the specification in section 5; you get the examiner's view within about "
-            "5 business days and can amend before paying Part 2.",
+            "Consider a composite mark with a substantial, distinctive design element (section 6), or a more "
+            "distinctive word mark.",
+            "Check whether you offer website hosting and website design (section 5): if not, you may not need them.",
+            "TM Headstart gives you an examiner's view within about 5 business days, and you can amend before paying "
+            "Part 2.",
         ],
-        route=Route(recommended="composite", headline="File as a composite mark (logo plus words)",
-                    reasons=["Your words are likely to be seen as describing your services (section 41), so a word "
-                             "mark is likely to be refused.",
-                             "A composite mark with a substantial, distinctive design has a much better chance: the "
-                             "design gives the mark its distinctiveness.",
+        route=Route(recommended="composite", headline="Option to consider first: a composite mark (logo plus words)",
+                    reasons=["Your words are likely to be seen as describing your services (section 41), which is a "
+                             "common reason word marks are refused.",
+                             "A composite mark with a substantial, distinctive design is the option that addresses "
+                             "this: the design can give the mark its distinctiveness.",
                              "It protects the logo and words together, not the words on their own, so others may still "
                              "use the words “success meter” descriptively."]),
         route_detail=[
@@ -79,33 +79,33 @@ def sample_report() -> ReportDoc:
                                      "Short marks that lead with the same word are compared closely."],
                         goods_overlap=GOODS_NOTE.format(c=35),
                         what_to_do=("Check its class 35 services on the linked record. If they are business "
-                                    "consultancy or analysis, a distinctive design in a composite mark lowers the "
-                                    "risk only a little; consider a more distinctive name.")),
+                                    "consultancy or analysis, a distinctive design in a composite mark changes little "
+                                    "here; a more distinctive name is the option to weigh.")),
             SimilarMark(number="2580382", words="SUCCESSCULTURE", status="Registered: Registered/protected",
                         classes=[35, 41], risk=Risk.MEDIUM,
                         why_similar=["Both marks begin with SUCCESS, which people tend to notice first."],
                         goods_overlap=GOODS_NOTE.format(c=35),
-                        what_to_do="Usually manageable: the second word differs. Keep your class 35 terms specific."),
+                        what_to_do="The second word differs. Keeping your class 35 terms specific is worth considering."),
             SimilarMark(number="2451395", words="P PRACTICE SUCCESS", logo=True, status="Registered: Registered/protected",
                         classes=[35, 42], risk=Risk.LOW,
                         why_similar=["Shares the word SUCCESS, but the rest of the marks is different."],
                         goods_overlap=GOODS_NOTE.format(c="35 and 42"),
-                        what_to_do="No action needed; listed so you know it exists."),
+                        what_to_do="Listed so you know it exists."),
             SimilarMark(number="2390609", words="ODD METER", status="Protected: Registered/protected", classes=[42],
                         risk=Risk.LOW,
                         why_similar=["Shares the word METER, but the rest of the marks is different."],
                         goods_overlap=GOODS_NOTE.format(c=42),
-                        what_to_do="No action needed."),
+                        what_to_do="Listed so you know it exists."),
             SimilarMark(number="2248191", words="AUDOO METER", status="Protected: Registered/protected", classes=[9, 42],
                         risk=Risk.LOW,
                         why_similar=["Shares the word METER, but the rest of the marks is different."],
                         goods_overlap=GOODS_NOTE.format(c=42),
-                        what_to_do="No action needed."),
+                        what_to_do="Listed so you know it exists."),
             SimilarMark(number="2505432", words="METERMATE", status="Registered: Registered/protected", classes=[9, 42],
                         risk=Risk.LOW,
                         why_similar=["METER begins this mark, but the rest is different."],
                         goods_overlap=GOODS_NOTE.format(c=42),
-                        what_to_do="No action needed."),
+                        what_to_do="Listed so you know it exists."),
         ],
         specification=[
             SpecClass(class_number=35, title="Advertising, business management and administration", terms=[
@@ -117,10 +117,10 @@ def sample_report() -> ReportDoc:
             SpecClass(class_number=42, title="Scientific, technology and software services", terms=[
                 SpecTerm(text="software as a service [SaaS]", note="Covers your platform."),
             ], removed=[
-                SpecTerm(text="hosting of websites", note="Leave out unless you host websites for others: unused terms "
-                                                          "add conflict risk and can later be removed for non-use."),
+                SpecTerm(text="hosting of websites", note="Do you host websites for others? Unused terms add overlap "
+                                                          "with other marks and can later be removed for non-use."),
                 SpecTerm(text="design and development of homepages and websites",
-                         note="Leave out unless you build websites for clients."),
+                         note="Do you build websites for clients? If not, you may not need it."),
             ]),
         ],
         specification_notes=[

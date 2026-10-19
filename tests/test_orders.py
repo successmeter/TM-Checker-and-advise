@@ -80,7 +80,7 @@ def test_paid_order_produces_a_private_report():
     assert wait_for(store, order_id, "ready")
 
     page = client.get(f"/report/{order_id}?t={token}")
-    assert "Trade mark filing report" in page.text and "Download PDF" in page.text and "data:image/png;base64" in page.text
+    assert "Trade mark research report" in page.text and "Download PDF" in page.text and "data:image/png;base64" in page.text
     pdf = client.get(f"/report/{order_id}/pdf?t={token}")
     assert pdf.status_code == 200 and pdf.content.startswith(b"%PDF")
     assert client.get(f"/report/{order_id}?t=wrong").status_code == 404
@@ -124,3 +124,16 @@ def test_review_hold_and_no_payments_configured():
 def test_sample_report_page():
     client, *_ = setup()
     assert "Sample report" in client.get("/report/sample").text
+
+
+
+def test_no_paid_reports_from_the_test_register():
+    client, store, mailer, pay = setup()
+    client.app  # noqa: B018
+    REGISTER.base_url = "https://test.api.ipaustralia.gov.au/public/australian-trade-mark-search-api/v1"
+    try:
+        assert client.post("/api/check", json={**APP, "consent": True}).json()["payments_enabled"] is False
+        r = client.post("/api/orders", json={"email": "a@b.co", "terms": True, "application": APP})
+        assert r.status_code == 503 and "test register" in r.json()["detail"]
+    finally:
+        del REGISTER.base_url

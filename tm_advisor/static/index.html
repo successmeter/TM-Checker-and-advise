@@ -251,7 +251,7 @@
       <h1>Automated check</h1>
       <p class="lead">We check your trade mark for common problems before you apply. This is an automated screen, not an examiner's decision.</p>
       <label class="consent"><input type="checkbox" id="consent">
-        <span>I understand Trademark Advisor is software that gives automated information, not legal advice, and cannot guarantee IP Australia will accept my application.</span></label>
+        <span>I understand Trademark Advisor is software that gives automated research information, not legal advice, and can't tell me whether IP Australia will accept my application.</span></label>
       <button type="button" id="run">Run check</button>
       <p id="check-error" class="error" role="alert"></p>
       <div id="check-result" aria-live="polite"></div>
@@ -509,22 +509,23 @@ function markLink(number, logo) {
   return `<a href="https://search.ipaustralia.gov.au/trademarks/search/view/${encodeURIComponent(number)}" target="_blank" rel="noopener">#${esc(number)}</a><span class="mkind">${logo ? "Logo mark" : "Word mark"}</span>`;
 }
 function renderFree(r) {
-  const label = { likely: "Objection likely", possible: "Objection possible", none: "No concern found" };
+  const label = { likely: "Likely to be raised as an issue", possible: "May be raised as an issue", none: "No significant issue identified" };
   const dz = r.concerns.distinctiveness, sm = r.concerns.similar_marks, wd = r.concerns.wording;
   const tile = (title, bad, text) => `<div class="tile ${bad ? "bad" : "ok"}"><div class="hint">${title}</div><strong>${text}</strong></div>`;
   const price = (r.price_cents / 100).toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
   const designKind = state.kind !== "word";
-  const parts = [`<h2>Result for ${esc(r.mark)} <span class="risk ${r.overall_risk}">${r.overall_risk} risk</span></h2>`];
+  const parts = [`<h2>Result for ${esc(r.mark)} <span class="risk ${r.overall_risk}">Review priority: ${r.overall_risk}</span></h2>
+    <p class="hint">An automated screen of the register and your goods and services. It doesn't decide whether your mark can be registered or used.</p>`];
   if (r.own_marks && r.own_marks.length) parts.push(`<p class="hint">Left out as your own: ${r.own_marks.map(n => "#" + esc(n)).join(", ")}.</p>`);
   if (r.register_warning) parts.push(`<div class="note warnbox"><strong>Test data.</strong> ${esc(r.register_warning)}</div>`);
   parts.push(`<div class="tiles">
     ${tile("Distinctiveness", dz !== "none", label[dz])}
-    ${tile("Similar marks", sm > 0, sm ? `${sm} need${sm === 1 ? "s" : ""} attention` : "None need attention")}
+    ${tile("Similar marks", sm > 0, sm ? `${sm} worth a closer look` : "None flagged for a closer look")}
     ${tile("Goods and services wording", wd > 0, wd ? `${wd} term${wd === 1 ? "" : "s"} not on the picklist` : "All on the picklist")}
   </div>`);
   parts.push(`<div class="offer">
-    <h2>Your trade mark filing report — ${price}</h2>
-    <p>Everything you need to file with confidence, for <strong>${esc(r.mark)}</strong> and your goods and services:</p>
+    <h2>Your trade mark research report — ${price}</h2>
+    <p>A detailed research report on <strong>${esc(r.mark)}</strong> and your goods and services:</p>
     <ul>${r.report_covers.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
     <p><a href="/report/sample" target="_blank" rel="noopener">See a sample report ↗</a></p>
     ${r.payments_enabled ? `
@@ -536,7 +537,7 @@ function renderFree(r) {
     ${designKind ? `<label class="field" for="order-logo">Your logo for the report (optional; PNG, JPG or SVG, up to 5 MB)</label>
     <input type="file" id="order-logo" accept="image/png,image/jpeg,image/svg+xml">` : ""}
     <label class="consent"><input type="checkbox" id="order-terms">
-      <span>I agree to the <a href="/terms" target="_blank" rel="noopener">terms and refund policy</a>, and understand the report is general information from software, not legal advice.</span></label>
+      <span>I agree to the <a href="/terms" target="_blank" rel="noopener">terms and refund policy</a>, and understand the report is automated research, not legal advice or a decision on whether my mark can be registered.</span></label>
     <button type="button" id="order">Get my report — ${price}</button>
     <p id="order-error" class="error" role="alert"></p>
     <p class="hint">Secure payment by Stripe. Refund within 14 days if you haven't lodged; see the refund policy for the TM Headstart promise.</p>`
@@ -574,10 +575,10 @@ async function placeOrder() {
 
 function renderCheck(r) {
   if (r.concerns) return renderFree(r);
-  const parts = [`<h2>Result for ${esc(r.mark)} <span class="risk ${r.overall_risk}">${r.overall_risk} risk</span></h2>`];
+  const parts = [`<h2>Result for ${esc(r.mark)} <span class="risk ${r.overall_risk}">Review priority: ${r.overall_risk}</span></h2>`];
   if (r.own_marks && r.own_marks.length) parts.push(`<p class="hint">Left out as your own: ${r.own_marks.map(n => markLink(n, false).split("<span")[0]).join(", ")}.</p>`);
   if (r.register_warning) parts.push(`<div class="note warnbox"><strong>Test data.</strong> ${esc(r.register_warning)}</div>`);
-  if (r.route) parts.push(`<div class="route ${r.route.recommended}"><div class="hint">Recommended route</div>
+  if (r.route) parts.push(`<div class="route ${r.route.recommended}"><div class="hint">Option to consider first</div>
     <h3>${esc(r.route.headline)}</h3><ul>${r.route.reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`);
   if (r.escalate) parts.push(`<div class="escalate"><strong>We suggest speaking to a registered trade marks attorney before filing.</strong><ul>${r.escalation_reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`);
 
@@ -681,7 +682,7 @@ function renderSummary() {
       <tr><th>${markLabel}</th><td>${esc(markText())}</td></tr>
       ${keys.map(k => `<tr><th>Class ${k}<div class="hint">${esc(TITLES[k] || "")}</div></th><td>${state.selected[k].map(esc).join("; ")}</td></tr>`).join("")}
       ${state.industry ? `<tr><th>Your industry or customers</th><td>${esc(state.industry)}</td></tr>` : ""}
-      <tr><th>Automated check</th><td>${lastReport ? `<span class="risk ${lastReport.overall_risk}">${lastReport.overall_risk} risk</span>${lastReport.escalate ? " — consider an attorney before filing" : ""}` : "Not run for these details yet"}</td></tr>
+      <tr><th>Automated check</th><td>${lastReport ? `<span class="risk ${lastReport.overall_risk}">Review priority: ${lastReport.overall_risk}</span>${lastReport.escalate ? " — consider an attorney's view before filing" : ""}` : "Not run for these details yet"}</td></tr>
     </table>
 
     <h2>Estimated IP Australia fees for ${n} class${n > 1 ? "es" : ""}</h2>

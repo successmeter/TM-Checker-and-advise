@@ -11,12 +11,17 @@ from .register import RegisterClient
 MIN_MARK_SCORE = 0.5
 
 DISCLAIMERS = [
-    "Trademark Advisor is software, not a law firm or a trade marks attorney, and this report is not legal advice.",
+    "This tool provides automated research and decision-support information based on publicly available Australian "
+    "trade mark data and IP Australia materials. It does not provide legal advice, a legal opinion, or a "
+    "determination of whether a trade mark is registrable or infringes another person's rights. Results are "
+    "indicative only and may be incomplete or inaccurate. For advice on your circumstances, consult a registered "
+    "Australian trade marks attorney or lawyer.",
+    "Trademark Advisor is software, not a law firm or a trade marks attorney.",
     "Results are an automated screen of public IP Australia data. They can miss marks and cannot predict an "
     "examiner's decision. Registration is not guaranteed.",
     "You choose the wording of your application and file it yourself. Changing your goods and services changes "
     "what your registration would protect.",
-    "This is not a clearance search for using the brand. For that, or for any High risk result, speak to a "
+    "This is not a clearance search for using the brand. For that, or for any high-priority result, speak to a "
     "registered trade marks attorney.",
 ]
 
@@ -202,9 +207,11 @@ def recommend_route(report: Report) -> Route:
     words, so a logo with a taken name is usually refused too.
     """
     if report.mark_kind == "logo":
-        return Route(recommended="logo", headline="Logo only: protects the picture, not your name",
-                     reasons=["Check the picture against IP Australia's image search before filing.",
-                              "If your name matters to your brand, a word mark (or composite mark) protects it."])
+        return Route(recommended="logo", headline="A logo mark protects the picture, not your name",
+                     reasons=["Pictures aren't compared automatically: IP Australia's image search is the place to "
+                              "look for similar logos.",
+                              "If your name matters to your brand, a word mark or composite mark is the kind of "
+                              "registration that covers it."])
 
     blocking = [c for c in report.conflicts if c.live and c.risk == Risk.HIGH]
     ai = report.ai_distinctiveness
@@ -214,41 +221,44 @@ def recommend_route(report: Report) -> Route:
     if blocking:
         names = ", ".join(f"{c.cited_words} ({c.cited_number})" for c in blocking[:3])
         if all(all(o.narrowing_helps for o in c.overlaps if o.level.value == "same") for c in blocking):
-            return Route(recommended="narrow_goods", headline="Leave out the overlapping goods or services",
-                         reasons=[f"Similar earlier marks: {names}.",
-                                  "Dropping the goods/services you don't actually offer removes the direct overlap.",
-                                  "Adding a logo would not help: examiners compare the words."])
-        return Route(recommended="new_name", headline="Consider a different name",
-                     reasons=[f"Similar earlier marks cover the same goods/services: {names}.",
+            return Route(recommended="narrow_goods",
+                         headline="Option to consider first: leaving out the overlapping goods or services",
+                         reasons=[f"Similar earlier marks were found: {names}.",
+                                  "The overlap is with goods or services you may not need: if you don't offer them, "
+                                  "leaving them out takes away the direct overlap.",
+                                  "A logo is unlikely to change this: examiners compare the words."])
+        return Route(recommended="new_name", headline="Option to consider first: a different name",
+                     reasons=[f"Similar earlier marks were found for the same goods/services: {names}.",
                               "A composite mark (logo plus these words) is unlikely to get around them: examiners "
                               "compare the main feature of each mark, which is usually the words.",
-                              "If you are attached to the name, a registered trade marks attorney can assess "
-                              "arguments such as different trade channels or honest concurrent use."])
+                              "If the name matters to you, a registered trade marks attorney can assess arguments "
+                              "such as different trade channels or honest concurrent use."])
     if descriptive:
-        reasons = ["Your words are likely to be seen as describing your goods/services (section 41), so a word mark "
-                   "is likely to be refused.",
-                   "A composite mark with a substantial, distinctive design has a much better chance: the design "
-                   "gives the mark its distinctiveness.",
+        reasons = ["Your words are likely to be seen as describing your goods/services (section 41), which is a "
+                   "common reason word marks are refused.",
+                   "A composite mark with a substantial, distinctive design is the option that addresses this: the "
+                   "design can give the mark its distinctiveness.",
                    "It protects the logo and words together, not the words on their own, so others may still use "
                    "the words descriptively."]
         if report.mark_kind == "word":
             reasons.append("To change a TM Headstart request from a word mark to a composite mark, you send a new "
                            "representation of the mark (an extra fee applies).")
-        return Route(recommended="composite", headline="File as a composite mark (logo plus words)", reasons=reasons)
+        return Route(recommended="composite", headline="Option to consider first: a composite mark (logo plus words)",
+                     reasons=reasons)
     closer = [c for c in report.conflicts if c.live and c.risk == Risk.MEDIUM]
     if closer:
         names = ", ".join(c.cited_words for c in closer[:3]) + (" and others" if len(closer) > 3 else "")
-        first = (f"{len(closer)} similar mark{'s' if len(closer) > 1 else ''} need{'s' if len(closer) == 1 else ''} a "
-                 f"closer look before you file ({names}). A logo would not change that: examiners compare the words.")
+        first = (f"{len(closer)} similar mark{'s' if len(closer) > 1 else ''} deserve{'s' if len(closer) == 1 else ''} "
+                 f"a closer look ({names}). A logo is unlikely to change that: examiners compare the words.")
     else:
-        first = "No major problems found with the words."
+        first = "No significant problem was identified with the words in the searches performed."
     reasons = [first,
                "A word mark protects the words in any style, font or logo, so it is the broadest protection.",
-               "You can register your logo as a composite mark later if you want to protect the design too."]
+               "A composite mark can be registered later if you want to protect a design too."]
     if possibly_descriptive:
         reasons.insert(1, "Some words may be seen as descriptive. If a word mark draws an objection, a composite "
-                          "mark with a distinctive design is the fallback.")
-    return Route(recommended="word", headline="File as a word mark", reasons=reasons)
+                          "mark with a distinctive design is the usual alternative.")
+    return Route(recommended="word", headline="Option to consider first: a word mark", reasons=reasons)
 
 
 _OWNER_NOISE = {"pty", "ltd", "limited", "proprietary", "inc", "incorporated", "llc", "co", "company", "corp",

@@ -37,8 +37,11 @@ say what the tool found without citing anything.
 - Options must be things the founder can weigh themselves (for example: leave out goods they don't sell, \
 choose a more distinctive name, gather evidence of use). When the findings say to escalate, say plainly that \
 this is the point to pay for a registered trade marks attorney, and why.
-- When the findings include a recommended route (word mark, composite mark, logo mark, a different name, or \
-narrower goods), the overview states it and why, and the next steps start with it. Never suggest adding a logo \
+- Write options and things to consider, never instructions or conclusions: say "consider", "one option is", \
+"you may want to"; never "you should", "you must", "safe", "will be accepted", "no risk", or "you don't need a \
+lawyer". Risk levels are review priorities from an automated screen, not predictions.
+- When the findings include a route (word mark, composite mark, logo mark, a different name, or narrower goods), \
+the overview describes it as the option to consider first and why, and the next steps start with it. Never suggest adding a logo \
 to get around an earlier similar mark: examiners compare the words.
 - When the findings include an assessment of the mark as a whole (ai_distinctiveness), use it for the \
 distinctiveness explanation.

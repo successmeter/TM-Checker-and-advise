@@ -89,7 +89,7 @@ def test_wholly_descriptive_mark_is_high_and_escalates(register, picklist):
 
 def test_disclaimers_always_present(register, picklist):
     report = check(app("Zorbly", c25=["Hats"]), register, picklist)
-    assert any("not legal advice" in d for d in report.disclaimers)
+    assert any("does not provide legal advice" in d for d in report.disclaimers)
 
 
 def test_expired_but_renewable_mark_gets_a_renewal_note(picklist):
