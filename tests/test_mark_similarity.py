@@ -48,10 +48,9 @@ def test_distinctive_word_inside_other_mark_despite_extra_words():
     assert any("ECOKNIT" in r for r in result.reasons)
 
 
-def test_differences_in_two_places_are_not_very_similar():
+def test_differences_in_two_places_are_not_similar():
     result = compare("NAMELIGHT", "GAMEFIGHT")
-    assert result.score < 0.7
-    assert not any("very similarly" in r for r in result.reasons)
+    assert result.score == 0 and not result.reasons
 
 
 def test_one_changed_part_still_very_similar():
