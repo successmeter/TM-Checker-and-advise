@@ -308,6 +308,19 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
     def on_test_register() -> bool:
         return "://test." in str(getattr(register, "base_url", ""))
 
+    if full_results:
+        log.info("Mode: full results (TM_FREE_FULL=1): everything shown free, no order form.")
+    elif bypass_payment:
+        log.info("Payments: skipped (TM_DEV_FREE_REPORTS=1): reports are made without paying.")
+    elif payments is None:
+        log.warning("Payments: OFF. STRIPE_SECRET_KEY isn't set in this window, so the order form says 'Reports will be "
+                    "available soon'. Set it with setx, then open a NEW Command Prompt window.")
+    elif on_test_register():
+        log.warning("Payments: OFF. The IP Australia TEST register is in use (IPA_BASE_URL); paid reports need production.")
+    else:
+        log.info("Payments: on (%s mode)%s.", "Stripe test" if payments.test_mode else "LIVE",
+                 "" if payments.webhook_secret else ", but STRIPE_WEBHOOK_SECRET isn't set, so payments won't complete")
+
     def report_link(order_id: str) -> str:
         return f"{public_url}/report/{order_id}?t={store.token_for(order_id)}"
 
