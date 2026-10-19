@@ -6,7 +6,7 @@ This is a screen, not the examiner's test: it finds marks worth a human look and
 from dataclasses import dataclass, field
 
 from .distinctiveness import COMMON_WORDS
-from .text import edit_similarity, phonetic_key, squash, words
+from .text import edit_similarity, parts, phonetic_key, squash, stem, words
 
 # Words that add little to a mark's identity, so containment of only these does not count.
 _WEAK_WORDS = {"the", "a", "an", "and", "of", "co", "pty", "ltd", "group", "australia", "au", "company"}
@@ -74,8 +74,9 @@ def compare(user_mark: str, cited_mark: str) -> MarkSimilarity:
         score = max(score, contained)
         reasons.append(f"'{shorter.upper()}' appears inside '{longer.upper()}'.")
 
-    common_words = set(words(user_mark)) & set(words(cited_mark))
-    elements = [(w, b, cited_mark, True) for w in words(user_mark)] + [(w, a, user_mark, False) for w in words(cited_mark)]
+    ours, theirs = _words_and_parts(user_mark), _words_and_parts(cited_mark)
+    common_words = {w for w in ours if stem(w) in {stem(x) for x in theirs}}
+    elements = [(w, b, cited_mark, True) for w in ours] + [(w, a, user_mark, False) for w in theirs]
     for word, other, other_text, _ in [] if whole_contained else elements:
         if len(word) >= 4 and word not in _WEAK_WORDS and word not in common_words and _word_inside(word, other_text):
             if word in COMMON_WORDS:
@@ -121,6 +122,12 @@ def _scattered(a: str, b: str) -> bool:
     return suffix < 0.5 * max(len(a), len(b))
 
 
+def _words_and_parts(mark: str) -> list[str]:
+    """The mark's words, then the parts of any written in camel case (EcoKnit, then ECO and KNIT)."""
+    whole = words(mark)
+    return whole + [p for p in parts(mark) if p not in whole]
+
+
 def _common_prefix(a: str, b: str) -> str:
     n = 0
     while n < min(len(a), len(b)) and a[n] == b[n]:
@@ -132,7 +139,7 @@ def _word_inside(word: str, text: str) -> bool:
     """WORD at the start of one of the other mark's words (METER in METERMATE, ECOKNIT in ECO KNITWEAR), or with a
     letter or two before it at the end of a word (IMETER); not buried inside an unrelated word (METER in PERIMETER,
     CEMETERY or THERMOMETER)."""
-    tokens = words(text)
+    tokens = parts(text)
     if word in tokens:
         return False  # a shared whole word is handled separately
     squashed = "".join(tokens)

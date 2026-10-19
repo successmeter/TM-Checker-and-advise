@@ -17,7 +17,7 @@ import httpx
 
 from ..ipa_auth import IpaToken, token_url_for
 from ..models import RegisterClass, RegisterMark
-from ..text import squash, words
+from ..text import parts, squash, words
 from ..goods_similarity import ALL_GOODS
 from .terms import RegisterTerm, terms_from_marks
 
@@ -190,7 +190,7 @@ def _advanced_queries(mark: str) -> list[tuple[str, str]]:
     """Whole mark exact, fuzzy and sound-alike; each distinctive word as a part of other marks; the same start."""
     whole = " ".join(words(mark)) or mark
     queries = [(whole, "EXACT"), (squash(mark), "FUZZY"), (whole, "PHONETIC")]
-    queries += [(w, "PART") for w in words(mark) if len(w) >= 4]
+    queries += [(w, "PART") for w in parts(mark) if len(w) >= 4]  # BizImprint: IMPRINT in other marks
     if len(squash(mark)) >= 4:
         queries.append((squash(mark)[:3], "PREFIX"))  # marks that start the same way: REVMAX -> REVLAB, REVMAN
     seen: list[tuple[str, str]] = []

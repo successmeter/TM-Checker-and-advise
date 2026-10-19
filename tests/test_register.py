@@ -283,3 +283,8 @@ def test_results_from_the_test_register_carry_a_warning():
     assert "TEST environment" in TestClient(app).post("/api/check", json=body).json()["register_warning"]
     register.base_url = "https://production.api.ipaustralia.gov.au/public/australian-trade-mark-search-api/v1"
     assert TestClient(app).post("/api/check", json=body).json()["register_warning"] is None
+
+
+def test_camel_case_parts_are_searched():
+    from tm_advisor.register.ipaustralia import _advanced_queries
+    assert ("imprint", "PART") in _advanced_queries("BizImprint")

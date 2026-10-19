@@ -56,3 +56,9 @@ def test_differences_in_two_places_are_not_similar():
 def test_one_changed_part_still_very_similar():
     assert compare("NAMELIGHT", "FARELIGHT").score >= 0.75
     assert compare("COLGATE", "KOLGATE").score >= 0.85
+
+
+def test_camel_case_name_compared_by_its_parts():
+    assert compare("BizImprint", "IMPRINTS").score >= 0.7
+    assert compare("BizImprint", "MY IMPRINT").score >= 0.7
+    assert compare("BizImprint", "BIZY").score < 0.5
