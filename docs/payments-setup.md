@@ -56,7 +56,7 @@ Optional: create a Product "Trade mark filing report" with a A$299 GST-inclusive
 ## 4. Email (Resend)
 
 1. Create a Resend account, add and verify your sending domain (DNS records), create an API key.
-2. `set RESEND_API_KEY=re_...` and `set TM_EMAIL_FROM=Trademark Advisor <reports@your-domain>`.
+2. `set RESEND_API_KEY=re_...` and `set TM_EMAIL_FROM=BizImprint <reports@your-domain>`.
 
 ## 5. Looking after orders
 

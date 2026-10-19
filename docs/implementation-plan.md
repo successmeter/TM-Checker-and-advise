@@ -1,4 +1,4 @@
-# TM Advisor: Implementation plan
+# BizImprint: Implementation plan
 
 **Design:** `docs/design.md`.
 

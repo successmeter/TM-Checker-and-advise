@@ -1,10 +1,10 @@
-# TM Advisor
+# BizImprint
 
 A brand filing check for Australian founders who want to file their own trade mark. It screens a proposed word
 mark against the register, the IP Australia goods & services picklist and common section 41 / section 44
 problems, explains the result in plain English, and says when to speak to a registered trade marks attorney.
 
-TM Advisor is software, not a law firm or a trade marks attorney, and does not give legal advice.
+BizImprint is software, not a law firm or a trade marks attorney, and does not give legal advice.
 
 - Design: [docs/design.md](docs/design.md)
 - Implementation plan: [docs/implementation-plan.md](docs/implementation-plan.md)
@@ -114,7 +114,7 @@ Optional: if the server isn't always running and you still want weekly updates, 
 Windows. Open **PowerShell** and paste as one line:
 
 ```powershell
-Register-ScheduledTask -TaskName "TM Advisor refresh" -Action (New-ScheduledTaskAction -Execute "py" -Argument "-m tm_advisor.refresh") -Trigger (New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At 3am) -Settings (New-ScheduledTaskSettingsSet -StartWhenAvailable)
+Register-ScheduledTask -TaskName "BizImprint refresh" -Action (New-ScheduledTaskAction -Execute "py" -Argument "-m tm_advisor.refresh") -Trigger (New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At 3am) -Settings (New-ScheduledTaskSettingsSet -StartWhenAvailable)
 ```
 
 ## Layout

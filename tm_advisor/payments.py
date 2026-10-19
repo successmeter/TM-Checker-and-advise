@@ -7,7 +7,7 @@ page. Settings (environment variables, never in code):
   STRIPE_SECRET_KEY       sk_test_... in test mode, sk_live_... when live
   STRIPE_WEBHOOK_SECRET   whsec_... for the /api/stripe/webhook endpoint
   STRIPE_PRICE_ID         optional: a Price for the report; without it the amount below is used
-  TM_PUBLIC_URL           the site's address, e.g. https://trademarkadvisor.com.au (for return links)
+  TM_PUBLIC_URL           the site's address, e.g. https://bizimprint.com.au (for return links)
   TM_REPORT_PRICE_CENTS   default 29900 (A$299, GST inclusive)
 """
 

@@ -67,7 +67,7 @@ class Filing(BaseModel):
 
 
 class ReportDoc(BaseModel):
-    brand: str = "Trademark Advisor"
+    brand: str = "BizImprint"
     seller: str = "Success Meter Pty Ltd"
     reference: str
     prepared_for: str = ""

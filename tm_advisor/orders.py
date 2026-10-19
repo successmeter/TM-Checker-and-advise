@@ -1,8 +1,8 @@
 """Look after paid reports from the command line (on the server).
 
   py -m tm_advisor.orders list                 recent orders and their status
-  py -m tm_advisor.orders link TA-XXXXXXXX     the customer's private report link
-  py -m tm_advisor.orders approve TA-XXXXXXXX  release a report held for review (TM_REVIEW_REPORTS=1) and email it
+  py -m tm_advisor.orders link BI-XXXXXXXX     the customer's private report link
+  py -m tm_advisor.orders approve BI-XXXXXXXX  release a report held for review (TM_REVIEW_REPORTS=1) and email it
 
 A report that failed is retried automatically each time the server starts (up to 5 attempts).
 """

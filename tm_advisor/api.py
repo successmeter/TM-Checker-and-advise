@@ -328,7 +328,7 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
         worker.resume()  # reports paid for before a restart
         yield
 
-    app = FastAPI(title="Trademark Advisor", description="Brand filing check for Australian trade mark applicants. Not legal advice.",
+    app = FastAPI(title="BizImprint", description="Brand filing check for Australian trade mark applicants. Not legal advice.",
                   lifespan=lifespan)
 
     @app.get("/", include_in_schema=False)
@@ -468,7 +468,7 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
         if not saved or not saved[1] or not Path(saved[1]).exists():
             raise HTTPException(404, "The PDF isn't ready yet.")
         return FileResponse(saved[1], media_type="application/pdf",
-                            filename=f"Trademark-Advisor-report-{order_id}.pdf")
+                            filename=f"BizImprint-report-{order_id}.pdf")
 
     @app.post("/api/orders/links")
     def resend_links(request: LinksRequest, http_request: Request) -> dict:

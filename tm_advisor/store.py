@@ -96,7 +96,7 @@ class Store:
         """A new pending order and its access token (for the report link)."""
         with self._lock:
             while True:
-                order_id = "TA-" + "".join(secrets.choice(_ALPHABET) for _ in range(8))
+                order_id = "BI-" + "".join(secrets.choice(_ALPHABET) for _ in range(8))
                 if not self._db.execute("SELECT 1 FROM orders WHERE id=?", (order_id,)).fetchone():
                     break
             self._db.execute(

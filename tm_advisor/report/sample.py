@@ -20,7 +20,7 @@ GOODS_NOTE = "Both cover class {c}. Their exact goods and services are compared 
 
 def sample_report() -> ReportDoc:
     return ReportDoc(
-        reference="TA-SAMPLE-0001", created="7 October 2026", sample=True,
+        reference="BI-SAMPLE-0001", created="7 October 2026", sample=True,
         prepared_for="Example Pty Ltd",
         register_searched="7 October 2026, 10:42 AEDT",
         sources=["Australian Trade Mark Search API (IP Australia), production register, searched 7 October 2026.",
@@ -50,7 +50,7 @@ def sample_report() -> ReportDoc:
             "The examiner's concern is the phrase, not an earlier trade mark. That is exactly the situation where a "
             "design helps: the design, not the words, makes the mark distinctive.",
             "If owning the words themselves matters to you, the alternative is a different name with an invented or "
-            "unusual element, filed as a word mark. Run it through Trademark Advisor before you commit.",
+            "unusual element, filed as a word mark. Run it through BizImprint before you commit.",
             "Adding a logo would not help if the problem were an earlier similar mark; the similar marks in section 4 "
             "are rated Medium and Low, so they don't change this recommendation.",
         ],

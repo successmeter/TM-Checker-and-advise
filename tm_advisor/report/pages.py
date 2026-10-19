@@ -20,6 +20,6 @@ def status_page(order_id: str, status: str, email: str) -> str:
 <style>body{{margin:0;font:16px/1.5 system-ui,"Segoe UI",Roboto,sans-serif;background:#f3f1f5;color:#1c1b1f}}
 main{{max-width:560px;margin:12vh auto;background:#fff;border-radius:12px;padding:28px 24px;box-shadow:0 1px 3px #0001}}
 h1{{font-size:22px;margin:0 0 8px}} .muted{{color:#5d5a63}}</style></head>
-<body><main><p class="muted">Trademark Advisor · Report {html.escape(order_id)}</p><h1>{html.escape(title)}</h1>
+<body><main><p class="muted">BizImprint · Report {html.escape(order_id)}</p><h1>{html.escape(title)}</h1>
 <p>{html.escape(detail)}</p><p class="muted">We'll also email the link to {html.escape(email)}. Keep that email: the
 link is private and is how you open your report again.</p></main></body></html>"""

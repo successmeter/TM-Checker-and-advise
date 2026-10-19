@@ -36,7 +36,7 @@ LIMITATIONS = [
     "indicative only and may be incomplete or inaccurate. For advice on your circumstances, consult a registered "
     "Australian trade marks attorney or lawyer.",
     "This report is produced by software. It is not a clearance search for "
-    "using the brand, and Trademark Advisor does not file applications for you.",
+    "using the brand, and BizImprint does not file applications for you.",
     "It is based on the register on the date above; marks filed later, or not yet published, are not included.",
     "Examiners decide each case on its facts, and other traders can oppose an application; no outcome is guaranteed.",
 ]

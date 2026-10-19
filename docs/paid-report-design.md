@@ -1,7 +1,7 @@
-# TM Advisor: Paid report design
+# BizImprint: Paid report design
 
 Status: decisions recorded (§11); nothing here is built yet. Legal points are not legal advice; see §10.
-Working business name: **Trademark Advisor** (to be registered). Payments are taken by **Success Meter Pty Ltd**
+Brand: **BizImprint** (chosen October 2026; business name to be registered). Payments are taken by **Success Meter Pty Ltd**
 through its Stripe account.
 
 ## 1. Goal
@@ -185,8 +185,8 @@ Not legal advice; these are the questions to put to an Australian IP lawyer or t
    report (a selling point), or positioning and wording as an information product, confirmed by the lawyer.
 2. **Australian Consumer Law:** claims about chances and outcomes; the refund policy and Headstart promise (§12)
    (consumer guarantees apply regardless).
-5. **Business name:** register "Trademark Advisor" with ASIC before trading under it. The name is descriptive and
-   "Advisor" may suggest professional advice; ask whether it's suitable given s156, and check it with the tool.
+5. **Business name:** register "BizImprint" with ASIC before trading under it, and consider filing it as a trade
+   mark (the tool lists IMPRINT and 4IMPRINT in class 42 as marks to look at closely).
 3. **Terms of service, refund policy, privacy policy** wording.
 4. **Professional indemnity insurance**, if the attorney-review model is used.
 
@@ -201,7 +201,8 @@ Go-live is blocked on this advice (plan task 4.12).
 | Refund policy | Agreed as in §12; final wording after legal advice. |
 | Hosting | Own small host (the Social Media Suite is on Laravel Cloud, PHP only): Oracle Always Free for staging, a ~A$7–10/month Sydney VPS for production (§6). |
 | Email | Resend. |
-| Names | Brand: Trademark Advisor (working name, to be registered). Stripe and invoices: Success Meter Pty Ltd. |
+| Names | Brand: BizImprint (business name to be registered). Stripe and invoices: Success Meter Pty Ltd. |
+| Price | A$299, GST inclusive (confirmed October 2026). |
 | Logo upload | Yes, for composite and logo marks, shown in the report. |
 
 ## 12. Refund policy (agreed; final wording after legal advice)

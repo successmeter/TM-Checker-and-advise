@@ -1,14 +1,14 @@
-# TM Advisor: Design
+# BizImprint: Design
 
 Status: **draft**, from a review of the founder's brainstorm (with Gemini) on 2026-10-04.
-Working name: **TM Advisor** (a "brand filing check", never an "attorney").
+Working name: **BizImprint** (a "brand filing check", never an "attorney").
 
 ## 1. Problem
 
 Australian founders pay a trade marks attorney $1,500 to $3,000+ to file a simple mark, mostly for three things:
 picking classes and goods/services wording, checking the register for conflicts, and replying to an
 examination report. IP Australia already gives away some of this (TM Checker, TM Headstart, the picklist,
-the Manual), but the pieces are scattered and written for examiners. TM Advisor puts them in one flow,
+the Manual), but the pieces are scattered and written for examiners. BizImprint puts them in one flow,
 explains the result in plain English, and tells the founder when the situation is serious enough to pay
 an attorney.
 
@@ -28,7 +28,7 @@ Corrected:
 | Exclusions ("all of the foregoing excluding sweaters") get you past s44 | s44 is about marks that are substantially identical or deceptively similar **and** goods that are the same, of the same description, or closely related. Excluding the exact cited goods while keeping "clothing" usually leaves goods of the same description, so the objection stays. | The engine says *which* of your terms create the overlap and whether dropping them could plausibly clear it. If the overlap is broad, it says so and escalates instead of producing a cosmetic exclusion string. |
 | Add picklist terms to fix a s41 (distinctiveness) problem | s41 is about the **mark** versus its goods. Adding goods does not make a descriptive mark distinctive. Narrowing helps only when the mark is descriptive of some goods and not others. | s41 output flags descriptive words and suggests changing the mark or getting evidence of use, not padding the spec. |
 | "87% probability of objection" | No data supports a calibrated probability. | Risk bands (Low / Medium / High) with the reasons that produced them. |
-| Risk is "Legal Practice Boards" | The sharper risk is the Trade Marks Act: only registered attorneys may hold themselves out as trade marks attorneys/agents (s156), and "trade marks work" (preparing applications or documents under the Act **on behalf of someone else, for gain**) is reserved. | The founder fills in and files their own application; TM Advisor informs, it never files or drafts *for* them. Get advice from an IP lawyer on the paid model **before charging** (see §7). |
+| Risk is "Legal Practice Boards" | The sharper risk is the Trade Marks Act: only registered attorneys may hold themselves out as trade marks attorneys/agents (s156), and "trade marks work" (preparing applications or documents under the Act **on behalf of someone else, for gain**) is reserved. | The founder fills in and files their own application; BizImprint informs, it never files or drafts *for* them. Get advice from an IP lawyer on the paid model **before charging** (see §7). |
 | Celery, HMAC webhooks to law firms, Stripe, 4 pricing tiers | Not needed to learn whether founders want this. | Deferred. MVP is one stateless service. |
 
 ## 3. Scope
@@ -125,7 +125,7 @@ injectable `httpx` transport.
 
 ## 7. Legal guardrails (not legal advice; confirm with an IP lawyer)
 - Never call the product or its output an attorney, agent, lawyer, legal advice or a clearance search.
-- The user chooses every term and files the application themselves. TM Advisor does not lodge, sign or submit.
+- The user chooses every term and files the application themselves. BizImprint does not lodge, sign or submit.
 - Before charging money, get a written view from an Australian IP lawyer on whether paid, tailored
   recommendations amount to "trade marks work ... for gain". A common safe structure is a partnership where a
   registered attorney supervises the paid tier.

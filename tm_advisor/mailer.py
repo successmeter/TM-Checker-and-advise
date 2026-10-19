@@ -1,7 +1,7 @@
 """Report emails through Resend (https://resend.com). Settings in environment variables:
 
   RESEND_API_KEY   re_...
-  TM_EMAIL_FROM    e.g. "Trademark Advisor <reports@your-domain>" (the domain must be verified in Resend)
+  TM_EMAIL_FROM    e.g. "BizImprint <reports@your-domain>" (the domain must be verified in Resend)
 
 Without an API key the email is written to the server log instead, so everything works in development.
 """
@@ -20,7 +20,7 @@ RESEND_URL = "https://api.resend.com/emails"
 @dataclass
 class Mailer:
     api_key: str = ""
-    sender: str = "Trademark Advisor <onboarding@resend.dev>"
+    sender: str = "BizImprint <onboarding@resend.dev>"
     http: httpx.Client | None = None
 
     @classmethod
@@ -49,10 +49,10 @@ class Mailer:
         items = "".join(f'<li><a href="{html.escape(url)}">{html.escape(label)}</a></li>' for label, url in links)
         single = len(links) == 1
         subject = f"Your trade mark report for {mark}" if single else "Your trade mark reports"
-        text = (f"Your Trademark Advisor report{'' if single else 's'}:\n\n{lines}\n\n"
+        text = (f"Your BizImprint report{'' if single else 's'}:\n\n{lines}\n\n"
                 "Keep this email: the link is private and is how you open your report again.\n\n"
                 "This report is general information produced by software, not legal advice.")
-        body = (f"<p>Your Trademark Advisor report{'' if single else 's'}:</p><ul>{items}</ul>"
+        body = (f"<p>Your BizImprint report{'' if single else 's'}:</p><ul>{items}</ul>"
                 "<p>Keep this email: the link is private and is how you open your report again.</p>"
                 '<p style="color:#666;font-size:12px">This report is general information produced by software, '
                 "not legal advice.</p>")

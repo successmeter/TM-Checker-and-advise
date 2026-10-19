@@ -1,4 +1,4 @@
-# Trademark Advisor: risk assessment
+# BizImprint: risk assessment
 
 Prepared 19 October 2026 from the product as built (branch `claude/nifty-heisenberg-9e7hkp`), the founder's
 ChatGPT research, and spot checks of that research. **Not legal advice**: this is the brief to take to an Australian
@@ -43,7 +43,7 @@ Likelihood and impact: H/M/L. "Today" says where the product stands now.
 |---|---|---|---|---|---|
 | R1 | A paid, personalised registrability recommendation is "trade marks work" done for another person for gain | Report says "File as a composite mark", rates objections "likely", gives a filing plan; A$299 | M–H | H | Legal opinion **before charging**. Options: (a) reword outputs as research and options, not instructions (§4); (b) have a registered attorney supervise or sign off the paid tier; (c) both. |
 | R2 | Drafting the goods and services specification "ready to paste" is preparing documents for a filing | Section 5 "Recommended wording, ready to paste" | M | M | Present it as *the customer's own selected terms, checked against the picklist*, not drafted by us. The customer already chooses every term; say so. |
-| R3 | Holding out as an attorney or adviser | Brand "Trademark Advisor"; "advise" in copy | M | H | Rename (the name is also descriptive and itself likely to draw a s41 objection). Never use "attorney", "agent", "legal advice", "clearance". |
+| R3 | Holding out as an attorney or adviser | "advise" in copy (brand was "Trademark Advisor") | M | H | Done: renamed to BizImprint. Never use "attorney", "agent", "legal advice", "clearance". |
 | R4 | Referral fees to attorneys | Not built | L | M | If a referral tier is added, structure fees with legal advice; get consent per report. |
 
 ### 3.2 Consumer law (Australian Consumer Law)
@@ -89,7 +89,7 @@ Likelihood and impact: H/M/L. "Today" says where the product stands now.
 | # | Risk | Today | L | I | Mitigation |
 |---|---|---|---|---|---|
 | B1 | Price vs free TM Checker and A$200 Headstart | A$299 | H | H | Test lower price points and a clear "why us" (§5). |
-| B2 | Business name not registered; descriptive brand | "Trademark Advisor" | H | M | Choose a distinctive brand and check it with the tool; register it with ASIC. |
+| B2 | Business name not registered | "BizImprint" chosen | H | M | Register it with ASIC; consider a trade mark application after reviewing IMPRINT and 4IMPRINT (class 42). |
 | B3 | Dependence on IP Australia API access | Production access granted | L | H | Keep the terms satisfied; cache sensibly; have a fallback message. |
 | B4 | Professional indemnity / liability | None | M | M | PI insurance quote; liability cap in terms (as far as the ACL allows). |
 
@@ -153,7 +153,7 @@ Still open: brand name, price, attorney-review tier, bot check, evaluation set, 
    amount to "trade marks work" (Trade Marks Act s157A) or legal practice under the Legal Profession Uniform Law? Does
    wording it as research and options (§4) change that? Would attorney supervision or sign-off resolve it?
 2. Is presenting the customer's own selected goods and services, checked against the picklist, "preparing documents"?
-3. Is the brand "Trademark Advisor" acceptable (s156 holding out; ACL)?
+3. Is the brand "BizImprint" and the site copy acceptable (s156 holding out; ACL)?
 4. Review the disclaimer, terms, refund policy (especially the TM Headstart promise) and privacy policy.
 5. Liability cap and professional indemnity insurance: what's appropriate?
 6. Attorney referral or partnership: how to structure fees and consent.

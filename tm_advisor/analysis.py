@@ -16,7 +16,7 @@ DISCLAIMERS = [
     "determination of whether a trade mark is registrable or infringes another person's rights. Results are "
     "indicative only and may be incomplete or inaccurate. For advice on your circumstances, consult a registered "
     "Australian trade marks attorney or lawyer.",
-    "Trademark Advisor is software, not a law firm or a trade marks attorney.",
+    "BizImprint is software, not a law firm or a trade marks attorney.",
     "Results are an automated screen of public IP Australia data. They can miss marks and cannot predict an "
     "examiner's decision. Registration is not guaranteed.",
     "You choose the wording of your application and file it yourself. Changing your goods and services changes "

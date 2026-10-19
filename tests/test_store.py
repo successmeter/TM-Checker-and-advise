@@ -6,7 +6,7 @@ APP = {"mark": "Success Meter", "mark_kind": "word", "classes": [{"class_number"
 def test_order_lifecycle_and_tokens(tmp_path):
     store = Store(tmp_path / "orders.sqlite")
     order, token = store.create_order(" Me@Example.com ", APP, 29900, "aud", industry="cafes", logo=b"png", logo_type="image/png")
-    assert order.id.startswith("TA-") and order.status == "pending" and order.email == "me@example.com"
+    assert order.id.startswith("BI-") and order.status == "pending" and order.email == "me@example.com"
     assert store.check_token(order.id, token) and not store.check_token(order.id, "wrong") and not store.check_token(order.id, "")
 
     store.set_session(order.id, "cs_1")
