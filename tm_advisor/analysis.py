@@ -153,24 +153,23 @@ def _option(cited: RegisterMark, overlaps: list[ClassOverlap]) -> str:
 
 
 def _base_option(cited: RegisterMark, overlaps: list[ClassOverlap]) -> str:
+    """What remains to check about this mark, stated neutrally (the research doesn't tell the customer what to do)."""
     if not cited.is_live:
-        return (f"Not live ({cited.status}), so it should not be cited against your application. The owner may "
-                "still be using the name, so check before you launch.")
+        return (f"Not live ({cited.status}): marks like this are generally not cited against new applications. "
+                "Whether the owner still uses the name isn't shown on the register.")
     same = [o for o in overlaps if o.level == GoodsLevel.SAME]
     if same and all(o.narrowing_helps for o in same):
         terms = sorted({t for o in same for t in o.overlapping_terms})
-        return ("If you don't actually sell " + ", ".join(terms) + ", leaving them out removes the direct overlap "
-                "with this mark. Related goods can still draw an objection.")
+        return ("The direct overlap is limited to " + ", ".join(terms) + ". Whether you offer these, and whether "
+                "related goods would still be linked, are open questions.")
     if same and all(m.basis == "shared_words" for o in same for m in o.matches):
-        return ("The link is shared wording in the specifications. Compare what their goods or services are for, who "
-                "uses them and how they are sold with your own: if they differ, the overlap may be weaker than the "
-                "wording suggests. A registered trade marks attorney can give a view on this.")
+        return ("The link is shared wording in the specifications. Whether the goods or services are actually similar "
+                "depends on their purpose, users and trade channels, which the register doesn't show.")
     if same:
-        return ("Leaving out terms is unlikely to remove this overlap. Options to weigh: a more distinctive mark, "
-                "or a registered trade marks attorney's view on arguments such as different trade channels or "
-                "honest concurrent use.")
-    return ("Your goods/services are related rather than the same. An examiner may still object; how close the "
-            "marks are matters most.")
+        return ("Their specification covers the same or broader wording in your class, so the overlap is on the "
+                "register itself. How alike the names are is the main open question.")
+    return ("The goods or services are in classes often treated as related, not the same. Whether an examiner "
+            "would treat them as closely related, and how alike the names are, are open questions.")
 
 
 def _escalation_reasons(conflicts: list[Conflict], wholly_descriptive: bool) -> list[str]:

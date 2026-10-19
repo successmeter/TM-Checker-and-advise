@@ -55,12 +55,12 @@ def test_report_follows_the_check_and_uses_claude_only_for_wording():
     explainer = FakeExplainer()
     doc = build_report(APP, report, explainer=explainer, **KW)
     assert explainer.efforts == ["high"]
-    assert doc.summary == "Written overview." and doc.top_actions == ["Do this first."]
-    assert doc.route.recommended == "composite" and doc.design_guidance
+    assert doc.summary == "Written overview." and "Do this first." in doc.uncertainties
+    assert doc.route is None and doc.design_guidance
     assert doc.overall_risk == report.overall_risk
     assert [m.number for m in doc.similar_marks] == [c.cited_number for c in report.conflicts]
     plus = next(m for m in doc.similar_marks if m.number == "2536546")
-    assert plus.what_to_do.startswith("It leads with SUCCESS.") and plus.owner == "Plus Co"
+    assert plus.what_to_do.startswith("It leads with SUCCESS.") and plus.owner == "Plus Co" and plus.open_questions
     assert doc.distinctiveness.likelihood == "likely" and doc.distinctiveness.meaning == "A measure of success."
     assert doc.filing.headstart_part1 == 400 and doc.filing.headstart_part2 == 260
     assert doc.prepared_for == "Example Pty Ltd"
@@ -70,7 +70,7 @@ def test_report_follows_the_check_and_uses_claude_only_for_wording():
 
 def test_report_is_complete_without_claude():
     doc = build_report(APP, checked(), explainer=FakeExplainer(fail=True), **KW)
-    assert "Option to consider first" in doc.summary and doc.top_actions
+    assert "Overall review priority" in doc.summary and doc.key_findings and doc.research_paths
     assert render_html(doc)
 
 
@@ -94,11 +94,14 @@ def test_narrow_goods_route_moves_overlapping_terms_out():
         assert any("Overlaps" in t.note for t in doc.specification[0].terms)
 
 
-def test_plain_next_steps_are_actions_not_the_route_reasons():
+def test_report_describes_formats_without_recommending_one():
     doc = build_report(APP, checked(), explainer=FakeExplainer(fail=True), **KW)
-    assert doc.top_actions != doc.route.reasons[:3]
-    assert doc.top_actions[0].startswith("Consider a composite mark")
-    assert any("section 5" in a for a in doc.top_actions)
+    assert [f.kind.split(" ")[0] for f in doc.format_notes] == ["Word", "Composite", "Logo"]
+    html = render_html(doc)
+    assert "No format is recommended" in html
+    for phrase in ("Option to consider first", "Options worth considering", "Things to consider", "you should",
+                   "we recommend"):
+        assert phrase not in html, phrase
 
 
 def test_marks_to_review_make_the_route_neutral_about_filing_format():
@@ -143,7 +146,8 @@ def test_citations_are_not_repeated_and_marks_have_one_what_to_do():
 
 
 FORBIDDEN = ["you should", "you must", "file as", "ready to paste", "safe to", "will be accepted", "no risk",
-             "don't need a lawyer", "guarantee that"]
+             "don't need a lawyer", "guarantee that", "option to consider first", "we recommend", "consider a word mark",
+             "consider a composite", "things to consider"]
 
 
 def test_report_reads_as_options_not_instructions():
@@ -153,7 +157,7 @@ def test_report_reads_as_options_not_instructions():
         text = render_html(doc).lower()
         for phrase in FORBIDDEN:
             assert phrase not in text, phrase
-    assert "what this doesn't mean" in render_html(build_report(APP, checked(), **KW)).lower()
+    assert "uncertainty:" in render_html(build_report(APP, checked(), **KW)).lower()
 
 
 BIZ_REGISTER = FixtureRegisterClient([
@@ -165,7 +169,7 @@ BIZ_APP = Application(mark="BizImprint", classes=[ClassSpec(class_number=42, ter
 def test_report_with_marks_to_review_is_neutral_and_points_to_professional_review():
     doc = build_report(BIZ_APP, check(BIZ_APP, BIZ_REGISTER, PICKLIST), **KW)
     html = render_html(doc)
-    assert doc.route.recommended == "review"
+    assert doc.route is None
     assert "Nothing in this report suggests you need one" not in html
     assert "professional review may be useful before committing to an application or adopting the brand" in html
     assert "in any style, font or logo" not in html
@@ -176,6 +180,7 @@ def test_goods_links_say_what_they_are_based_on():
     imprint = next(m for m in doc.similar_marks if m.words == "IMPRINT")
     assert imprint.goods_points and imprint.goods_points[0].startswith("Shared wording:")
     assert "Shared words alone don't make the services similar" in imprint.goods_points[0]
+    assert "compare what" not in imprint.goods_points[0]
 
 
 def test_findings_link_to_the_act_and_low_marks_go_to_the_appendix():

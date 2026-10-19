@@ -203,6 +203,7 @@ Go-live is blocked on this advice (plan task 4.12).
 | Email | Resend. |
 | Names | Brand: BizImprint (business name to be registered). Stripe and invoices: Success Meter Pty Ltd. |
 | Price | A$299, GST inclusive (confirmed October 2026). |
+| Report positioning | Research, not recommendations (October 2026): the report sets out the evidence, the relevant law, what remains uncertain and further research paths. It doesn't recommend a filing format, a name or any action; formats are described neutrally against the findings. |
 | Logo upload | Yes, for composite and logo marks, shown in the report. |
 
 ## 12. Refund policy (agreed; final wording after legal advice)

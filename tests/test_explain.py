@@ -86,7 +86,8 @@ def test_explain_sends_findings_and_excerpts_and_keeps_only_real_citations(repor
     user_text = body["messages"][0]["content"]
     assert "ECO KNITWEAR" in user_text
     assert f'<excerpt id="{good_id}"' in user_text
-    assert "Do not change, soften or upgrade any risk level" in body["system"]
+    assert "Do not change, soften or upgrade any review priority" in body["system"]
+    assert "never tell them what to file" in body["system"]
 
     assert [c.cited_number for c in explanation.conflicts] == ["2198432"]  # invented conflict dropped
     assert [c.id for c in explanation.conflicts[0].citations] == [good_id]  # made-up citation dropped

@@ -11,9 +11,11 @@ CHROMIUM = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
 def test_sample_report_has_every_section_and_escapes_text():
     report = sample_report()
     html = render_html(report)
-    for heading in ("1. Summary", "2. Options worth considering", "3. Distinctiveness (section 41)",
-                    "4. Similar marks (section 44)", "5. Your goods and services, as you selected them", "6. Designing your composite mark",
-                    "7. How to file", "8. When to get an attorney", "9. About this report"):
+    for heading in ("Summary of findings", "1. How the findings relate to each filing format",
+                    "2. Distinctiveness (section 41)", "3. Similar marks (section 44)",
+                    "4. Your goods and services, as you selected them", "What examiners look at in a design",
+                    "5. What this research can't tell you", "6. Further research paths", "7. How filing works",
+                    "8. About this report"):
         assert heading in html, heading
     assert "Sample report" in html
     assert "#2536546" in html and "search.ipaustralia.gov.au/trademarks/search/view/2536546" in html
@@ -24,9 +26,9 @@ def test_sample_report_has_every_section_and_escapes_text():
     assert "<script>alert(1)</script>" not in render_html(nasty)
 
 
-def test_sections_renumber_without_design_guidance():
+def test_design_notes_only_when_relevant():
     html = render_html(sample_report().model_copy(update={"design_guidance": [], "sample": False}))
-    assert "Designing your composite mark" not in html and "6. How to file" in html
+    assert "What examiners look at in a design" not in html and "7. How filing works" in html
     assert "Sample report" not in html
 
 

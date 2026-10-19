@@ -9,9 +9,10 @@ else is illustrative. The page carries a "Sample report" banner.
 import sys
 from pathlib import Path
 
-from ..models import Risk, Route
+from ..models import Risk
+from .build import ADVERSE_HEADSTART, DESIGN_GUIDANCE, LIMITATIONS
 from .render import render_html, render_pdf
-from .schema import DistinctivenessSection, Filing, ReportDoc, SimilarMark, SpecClass, SpecTerm
+from .schema import DistinctivenessSection, Filing, FormatNote, ReportDoc, SimilarMark, SpecClass, SpecTerm
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -28,31 +29,49 @@ def sample_report() -> ReportDoc:
                  "IP Australia Trade Marks Manual of Practice and Procedure, downloaded 1 October 2026."],
         mark="SUCCESS METER", mark_kind="word", classes=[35, 42],
         overall_risk=Risk.HIGH,
-        summary=("Read as a whole, SUCCESS METER is likely to be seen as describing what your services do (measure "
-                 "business success), a common reason word marks are refused. No earlier mark blocks you outright, but two marks that lead "
-                 "with SUCCESS in class 35 deserve a closer look. The option to consider first is a composite mark: "
-                 "a distinctive design together with the words. A more distinctive name is the other option."),
-        top_actions=[
-            "Consider a composite mark with a substantial, distinctive design element (section 6), or a more "
-            "distinctive word mark.",
-            "Check whether you offer website hosting and website design (section 5): if not, you may not need them.",
-            "TM Headstart gives you an examiner's view within about 5 business days, and you can amend before paying "
-            "Part 2.",
+        summary=("Read as a whole, SUCCESS METER may be seen as describing what the services do (measuring business "
+                 "success), which bears on section 41. Two earlier marks that lead with SUCCESS in class 35 were given "
+                 "a medium review priority. The main uncertainties are how an examiner reads the phrase as a whole, "
+                 "and what those earlier marks' services actually are."),
+        key_findings=[
+            "Distinctiveness (section 41): read as a whole, the mark is likely to be seen as describing your goods or "
+            "services (section 2).",
+            "Earlier marks (section 44): 2 of the 238 marks screened were given a medium review priority: SUCCESS+ "
+            "(2536546), SUCCESSCULTURE (2580382) (section 3).",
+            "Goods and services: every term is on IP Australia's picklist (section 4).",
         ],
-        route=Route(recommended="composite", headline="Option to consider first: a composite mark (logo plus words)",
-                    reasons=["Your words are likely to be seen as describing your services (section 41), which is a "
-                             "common reason word marks are refused.",
-                             "A composite mark with a substantial, distinctive design is the option that addresses "
-                             "this: the design can give the mark its distinctiveness.",
-                             "It protects the logo and words together, not the words on their own, so others may still "
-                             "use the words “success meter” descriptively."]),
-        route_detail=[
-            "The examiner's concern is the phrase, not an earlier trade mark. That is exactly the situation where a "
-            "design helps: the design, not the words, makes the mark distinctive.",
-            "If owning the words themselves matters to you, the alternative is a different name with an invented or "
-            "unusual element, filed as a word mark. Run it through BizImprint before you commit.",
-            "Adding a logo would not help if the problem were an earlier similar mark; the similar marks in section 4 "
-            "are rated Medium and Low, so they don't change this recommendation.",
+        format_notes=[
+            FormatNote(kind="Word mark", protects="The words themselves, independent of font or styling. Not a logo design.",
+                       findings="The distinctiveness finding applies directly: the words are assessed on their own. "
+                                "Your words would be compared with the 2 earlier marks in section 3."),
+            FormatNote(kind="Composite mark (design and words)", protects="One particular combination of design and words.",
+                       findings="Examiners consider whether a substantial, distinctive design gives the mark as a whole "
+                                "the distinctiveness the words lack; the words on their own stay unprotected. Against "
+                                "the 2 earlier marks in section 3, the words are often the main feature compared."),
+            FormatNote(kind="Logo mark", protects="The design only. Your name is not protected.",
+                       findings="This report compares words, not designs: IP Australia's image search covers similar logos."),
+        ],
+        uncertainties=[
+            "Review priorities are screening signals from an automated search, not predictions. Examiners assess each "
+            "application as a whole and on its own facts, and other traders can oppose.",
+            "The distinctiveness assessment is an automated reading of what the words mean for your goods and "
+            "services. It doesn't take account of any use you have made of the mark, which can be relevant.",
+            "Whether SUCCESS+ and SUCCESSCULTURE are used for business consultancy or analysis isn't shown in this "
+            "sample; their full records list their services.",
+            "The register doesn't show whether or how owners use their marks, and unregistered use by others isn't "
+            "covered by this search.",
+            "Logos and other designs were not compared; only words. Marks filed very recently may not be searchable yet.",
+        ],
+        research_paths=[
+            "The full register records of the marks in section 3 (linked), including every class, the full goods and "
+            "services, status history and owner.",
+            "Unregistered use of similar names: ASIC's business names register, ABN Lookup, domain names and a general "
+            "web search.",
+            "IP Australia's TM Headstart: an examiner's preliminary assessment of your application, usually within "
+            "about 5 business days, before a full application (fees in section 7).",
+            "A registered trade marks attorney or lawyer, for advice on your circumstances: because potentially "
+            "relevant earlier registrations were identified, professional review may be useful before committing to "
+            "an application or adopting the brand.",
         ],
         distinctiveness=DistinctivenessSection(
             likelihood="likely",
@@ -66,10 +85,11 @@ def sample_report() -> ReportDoc:
                             "benchmarking services for business management purposes", "software as a service [SaaS]"],
             word_flags=["SUCCESS: praises the outcome of the services (a word other traders use).",
                         "METER: describes measuring, which is what analysis and benchmarking services do."],
-            options=["File as a composite mark with a substantial, distinctive design (section 6).",
-                     "Change the name: add or substitute an invented or unusual word.",
-                     "If you have used SUCCESS METER for some time, gather evidence of that use (sales, advertising, "
-                     "customers) for the examiner."],
+            options=["Some applicants file a composite mark, where a substantial, distinctive design can give the "
+                     "mark as a whole its distinctiveness (section 1).",
+                     "Some add or substitute an invented or unusual word.",
+                     "Where a mark has been used for some time, evidence of that use (sales, advertising, customers) "
+                     "can be relevant."],
         ),
         marks_reviewed=238,
         similar_marks=[
@@ -78,34 +98,39 @@ def sample_report() -> ReportDoc:
                         why_similar=["Your mark starts with the whole of this mark (SUCCESS).",
                                      "Short marks that lead with the same word are compared closely."],
                         goods_overlap=GOODS_NOTE.format(c=35),
-                        what_to_do=("Check its class 35 services on the linked record. If they are business "
-                                    "consultancy or analysis, a distinctive design in a composite mark changes little "
-                                    "here; a more distinctive name is the option to weigh.")),
+                        what_to_do=("SUCCESS+ consists of the word your mark starts with. Its class 35 services "
+                                    "aren't shown in this sample; if they are business consultancy or analysis, the "
+                                    "overlap would be direct."),
+                        open_questions=["What are its class 35 services, and are they like yours in purpose and users?",
+                                        "Is the mark in use, and how? The register doesn't say."]),
             SimilarMark(number="2580382", words="SUCCESSCULTURE", status="Registered: Registered/protected",
                         classes=[35, 41], risk=Risk.MEDIUM,
                         why_similar=["Both marks begin with SUCCESS, which people tend to notice first."],
                         goods_overlap=GOODS_NOTE.format(c=35),
-                        what_to_do="The second word differs. Keeping your class 35 terms specific is worth considering."),
+                        what_to_do="Both marks begin with SUCCESS; the second words differ.",
+                        open_questions=["How much weight does the shared word SUCCESS carry, given it is a common, "
+                                        "praising word?",
+                                        "Is the mark in use, and how? The register doesn't say."]),
             SimilarMark(number="2451395", words="P PRACTICE SUCCESS", logo=True, status="Registered: Registered/protected",
                         classes=[35, 42], risk=Risk.LOW,
                         why_similar=["Shares the word SUCCESS, but the rest of the marks is different."],
                         goods_overlap=GOODS_NOTE.format(c="35 and 42"),
-                        what_to_do="Listed so you know it exists."),
+                        what_to_do=""),
             SimilarMark(number="2390609", words="ODD METER", status="Protected: Registered/protected", classes=[42],
                         risk=Risk.LOW,
                         why_similar=["Shares the word METER, but the rest of the marks is different."],
                         goods_overlap=GOODS_NOTE.format(c=42),
-                        what_to_do="Listed so you know it exists."),
+                        what_to_do=""),
             SimilarMark(number="2248191", words="AUDOO METER", status="Protected: Registered/protected", classes=[9, 42],
                         risk=Risk.LOW,
                         why_similar=["Shares the word METER, but the rest of the marks is different."],
                         goods_overlap=GOODS_NOTE.format(c=42),
-                        what_to_do="Listed so you know it exists."),
+                        what_to_do=""),
             SimilarMark(number="2505432", words="METERMATE", status="Registered: Registered/protected", classes=[9, 42],
                         risk=Risk.LOW,
                         why_similar=["METER begins this mark, but the rest is different."],
                         goods_overlap=GOODS_NOTE.format(c=42),
-                        what_to_do="Listed so you know it exists."),
+                        what_to_do=""),
         ],
         specification=[
             SpecClass(class_number=35, title="Advertising, business management and administration", terms=[
@@ -115,48 +140,32 @@ def sample_report() -> ReportDoc:
                 SpecTerm(text="benchmarking services for business management purposes"),
             ]),
             SpecClass(class_number=42, title="Scientific, technology and software services", terms=[
-                SpecTerm(text="software as a service [SaaS]", note="Covers your platform."),
+                SpecTerm(text="software as a service [SaaS]"),
             ], removed=[
                 SpecTerm(text="hosting of websites", note="Do you host websites for others? Unused terms add overlap "
                                                           "with other marks and can later be removed for non-use."),
                 SpecTerm(text="design and development of homepages and websites",
-                         note="Do you build websites for clients? If not, you may not need it."),
+                         note="Do you build websites for clients? Unused terms add overlap with other marks."),
             ]),
         ],
         specification_notes=[
-            "Only claim what you offer or genuinely intend to offer. Fewer, specific terms mean fewer conflicts.",
-            "If you narrow later, IP Australia's Trade Marks Manual (Part 27.3) explains how amendments and "
-            "limitations are treated.",
+            "An application claims goods and services the applicant uses or intends to use. Terms that are never used "
+            "can later be removed for non-use, and each term claimed is a term that can overlap other marks.",
+            "IP Australia's Trade Marks Manual (Part 27.3) explains how amendments and limitations are treated.",
         ],
-        design_guidance=[
-            "The design must be substantial and distinctive in its own right: a stylised font, colour or simple "
-            "shape around the words is usually not enough.",
-            "Make the design element prominent, not a small symbol beside large words.",
-            "Avoid images of what your services are about (charts, gauges, upward arrows); they add descriptive "
-            "meaning instead of distinctiveness.",
-            "Use the logo exactly as filed. The registration protects that combination.",
-        ],
+        design_guidance=DESIGN_GUIDANCE,
         filing=Filing(
             classes=2, headstart_part1=400, headstart_part2=260, standard=500, all_picklist=True,
-            steps=["Create an IP Australia online services account (portal.ipaustralia.gov.au).",
-                   "Start a TM Headstart request: choose the kind of mark (composite: upload your logo), enter the "
-                   "words in it, and paste your goods and services from section 5.",
-                   "Pay Part 1. The examiner's assessment usually arrives within about 5 business days.",
-                   "If the assessment is favourable, pay Part 2 to convert it into an application. That date is "
-                   "your filing date.",
-                   "Watch for the examination report and respond by its deadline."],
-            adverse_headstart=["You have 5 working days to amend the request (changing the mark itself needs a new "
-                               "representation and an extra fee).",
-                               "Or pay Part 2 and respond to the formal examination report within 15 months, with "
-                               "amendments, arguments or evidence of use.",
-                               "Or start again with a different mark."]),
+            steps=["Requests and applications are made online, through an IP Australia online services account "
+                   "(portal.ipaustralia.gov.au).",
+                   "A TM Headstart request for a word mark sets out the words exactly, and the goods and services "
+                   "(section 4).",
+                   "Once Part 1 is paid, an examiner's assessment usually arrives within about 5 business days.",
+                   "Paying Part 2 turns the request into an application; that date becomes the filing date.",
+                   "The application is then examined; an examination report, if issued, sets a deadline to respond."],
+            adverse_headstart=ADVERSE_HEADSTART),
         attorney_reasons=[],
-        limitations=[
-            "This report is general information produced by software, not legal advice. It is not a clearance search "
-            "for using the brand.",
-            "It is based on the register on the date above; marks filed later, or not yet published, are not included.",
-            "Examiners decide each case on its facts, and other traders can oppose; no outcome is guaranteed.",
-        ],
+        limitations=LIMITATIONS,
     )
 
 

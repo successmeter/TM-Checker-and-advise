@@ -1,8 +1,9 @@
 """Turn a completed check into the paid report (design: docs/paid-report-design.md §4).
 
-The check decides every risk level, conflict and route. Claude only writes the narrative (summary, next steps,
-what to do about each mark) from those findings, with Trade Marks Manual citations it was given; if Claude isn't
-available the report is still complete, with plainer wording.
+The report sets out evidence, the relevant law, what remains uncertain and further research paths. It doesn't
+recommend what to file. The check decides every review priority and conflict; Claude only writes the narrative
+(summary, what each finding means) from those findings, with the Trade Marks Manual excerpts it was given; if Claude
+isn't available the report is still complete, with plainer wording.
 """
 
 import logging
@@ -12,7 +13,8 @@ from ..explain import Explainer, Explanation, ExplanationUnavailable, retrieve
 from ..manual import ManualIndex
 from ..models import Application, ClassOverlap, Conflict, GoodsLevel, Report, Risk, TermMatch
 from ..picklist import ClassInfo
-from .schema import (Citation, DistinctivenessSection, Filing, ReportDoc, SimilarMark, SpecClass, SpecTerm)
+from .schema import (Citation, DistinctivenessSection, Filing, FormatNote, ReportDoc, SimilarMark, SpecClass,
+                     SpecTerm)
 
 log = logging.getLogger("uvicorn.error")
 
@@ -21,12 +23,12 @@ EXPLAIN_MARKS = 8
 REPORT_EFFORT = "high"
 
 DESIGN_GUIDANCE = [
-    "The design must be substantial and distinctive in its own right: a stylised font, colour or simple shape "
-    "around the words is usually not enough.",
-    "Make the design element prominent, not a small symbol beside large words.",
-    "Avoid pictures of what your goods or services are (a coffee cup for a cafe, a chart for analytics): they add "
-    "descriptive meaning instead of distinctiveness.",
-    "Use the logo exactly as filed. The registration protects that combination of design and words.",
+    "Examiners consider whether a design element is substantial and distinctive in its own right; a stylised font, "
+    "colour or simple shape around the words usually adds little.",
+    "A small symbol beside prominent words usually leaves the words as the main feature of the mark.",
+    "Pictures of the goods or services themselves (a coffee cup for a cafe, a chart for analytics) add descriptive "
+    "meaning rather than distinctiveness.",
+    "A registration covers the mark as filed: that combination of design and words.",
 ]
 
 LIMITATIONS = [
@@ -42,20 +44,18 @@ LIMITATIONS = [
 ]
 
 ADVERSE_HEADSTART = [
-    "You have 5 working days to amend the request (changing the mark itself needs a new representation and an "
-    "extra fee).",
-    "Or pay Part 2 and respond to the formal examination report within 15 months, with amendments, arguments or "
+    "5 working days to amend the request (changing the mark itself needs a new representation and an extra fee).",
+    "Paying Part 2 and responding to the formal examination report within 15 months, with amendments, arguments or "
     "evidence of use.",
-    "Or start again with a different mark.",
+    "Withdrawing, and starting again with a different mark.",
 ]
 
 KIND_STEP = {
-    "word": "Start a TM Headstart request: choose a word mark, type the words exactly, and paste your goods and "
-            "services from section 5.",
-    "composite": "Start a TM Headstart request: choose a mark with a design (upload your logo), enter the words in "
-                 "it, and paste your goods and services from section 5.",
-    "logo": "Start a TM Headstart request: choose a mark with a design (upload your logo), and paste your goods "
-            "and services from section 5.",
+    "word": "A TM Headstart request for a word mark sets out the words exactly, and the goods and services (section 4).",
+    "composite": "A TM Headstart request for a mark with a design includes an image of the mark, the words in it, and "
+                 "the goods and services (section 4).",
+    "logo": "A TM Headstart request for a mark with a design includes an image of the mark, and the goods and "
+            "services (section 4).",
 }
 
 
@@ -66,33 +66,138 @@ def build_report(application: Application, report: Report, *, classes: dict[int,
     explanation = _explain(report, explainer, manual)
     by_number = {c.cited_number: c.explanation for c in explanation.conflicts} if explanation else {}
     cited_by_number = {c.cited_number: c.citations for c in explanation.conflicts} if explanation else {}
-    route = report.route
-    assert route is not None, "the check sets a route"
 
     marks = [_similar(c, by_number.get(c.cited_number)).model_copy(
         update={"citations": _unique_citations(cited_by_number.get(c.cited_number, []))[:2]})
         for c in _relevant(report.conflicts)]
     attention = [m for m in marks if m.live and m.risk != Risk.LOW]
     summary = explanation.overview if explanation else _plain_summary(report, len(attention))
-    actions = explanation.next_steps if explanation and explanation.next_steps else _plain_actions(report, attention)
+    open_from_narrative = explanation.next_steps if explanation else []
 
     return ReportDoc(
         reference=reference, created=created, register_searched=register_searched, sources=sources, sample=sample,
         prepared_for=application.applicant, mark=application.mark, mark_kind=application.mark_kind,
         logo_image=logo_image, classes=[c.class_number for c in application.classes],
-        overall_risk=report.overall_risk, summary=summary, top_actions=actions[:5],
-        route=route, route_detail=_route_detail(report),
+        overall_risk=report.overall_risk, summary=summary,
+        key_findings=_key_findings(report, attention),
+        format_notes=_format_notes(report, application, attention),
+        uncertainties=_uncertainties(report, application, attention, open_from_narrative),
+        research_paths=_research_paths(report, application, attention),
         distinctiveness=_distinctiveness(report, explanation, manual),
         similar_marks=marks,
         similar_citations=_guidance(manual, SIMILAR_QUERY, [c for e in (explanation.conflicts if explanation else [])
-                                                           for c in e.citations]), marks_reviewed=report.marks_screened, own_marks_note=_own_note(report),
+                                                           for c in e.citations]),
+        marks_reviewed=report.marks_screened, own_marks_note=_own_note(report),
         specification=_specification(application, report, classes),
         specification_notes=_spec_notes(industry),
-        design_guidance=DESIGN_GUIDANCE if route.recommended == "composite" or application.mark_kind != "word" else [],
+        design_guidance=DESIGN_GUIDANCE if _descriptive(report) or application.mark_kind != "word" else [],
         filing=_filing(application, report),
         attorney_reasons=report.escalation_reasons,
         limitations=LIMITATIONS,
     )
+
+
+def _descriptive(report: Report) -> bool:
+    ai = report.ai_distinctiveness
+    return report.wholly_descriptive or bool(ai and ai.likelihood != "unlikely") or bool(report.distinctiveness)
+
+
+def _key_findings(report: Report, attention: list[SimilarMark]) -> list[str]:
+    ai = report.ai_distinctiveness
+    if ai and ai.likelihood != "unlikely":
+        distinct = (f"Distinctiveness (section 41): read as a whole, the mark {'is likely to' if ai.likelihood == 'likely' else 'may'} "
+                    "be seen as describing your goods or services (section 2).")
+    elif report.distinctiveness:
+        distinct = ("Distinctiveness (section 41): some words describe or praise your goods or services; others may "
+                    "carry the mark (section 2).")
+    else:
+        distinct = "Distinctiveness (section 41): no descriptive, praising or place-name meaning was identified (section 2)."
+    names = ", ".join(f"{m.words} ({m.number})" for m in attention[:3]) + (" and others" if len(attention) > 3 else "")
+    similar = (f"Earlier marks (section 44): {len(attention)} of the {report.marks_screened} marks screened "
+               f"{'were' if len(attention) != 1 else 'was'} given a medium or high review priority: {names} (section 3)."
+               if attention else f"Earlier marks (section 44): none of the {report.marks_screened} marks screened was "
+                                 "given a medium or high review priority (section 3).")
+    off = sum(1 for p in report.picklist if not p.on_picklist)
+    goods = ("Goods and services: every term is on IP Australia's picklist (section 4)." if not off else
+             f"Goods and services: {off} term{'s are' if off != 1 else ' is'} not on IP Australia's picklist (section 4).")
+    return [distinct, similar, goods]
+
+
+def _format_notes(report: Report, application: Application, attention: list[SimilarMark]) -> list[FormatNote]:
+    descriptive = _descriptive(report)
+    n = len(attention)
+    marks = f"the {n} earlier mark{'s' if n != 1 else ''} in section 3"
+    word = ("The distinctiveness finding applies directly: the words are assessed on their own. " if descriptive else "")
+    word += (f"Your words would be compared with {marks}." if n else "No earlier mark was given a medium or high review "
+             "priority for the words.")
+    composite = ("Examiners consider whether a substantial, distinctive design gives the mark as a whole the "
+                 "distinctiveness the words lack; the words on their own stay unprotected. " if descriptive else "")
+    composite += (f"Against {marks}, the words are often the main feature compared; how far a design changes the "
+                  "overall impression depends on the design and on those marks." if n else
+                  "The registration would cover only that combination of design and words.")
+    return [
+        FormatNote(kind="Word mark", protects="The words themselves, independent of font or styling. Not a logo design.",
+                   findings=word),
+        FormatNote(kind="Composite mark (design and words)", protects="One particular combination of design and words.",
+                   findings=composite),
+        FormatNote(kind="Logo mark", protects="The design only. Your name is not protected.",
+                   findings="This report compares words, not designs: IP Australia's image search covers similar logos."),
+    ]
+
+
+def _bases(report: Report) -> set[str]:
+    return {m.basis for c in report.conflicts if c.live and c.risk != Risk.LOW for o in c.overlaps for m in o.matches}
+
+
+def _uncertainties(report: Report, application: Application, attention: list[SimilarMark],
+                   from_narrative: list[str]) -> list[str]:
+    out = ["Review priorities are screening signals from an automated search, not predictions. Examiners assess each "
+           "application as a whole and on its own facts, and other traders can oppose."]
+    bases = _bases(report)
+    if "shared_words" in bases:
+        out.append("Some links between goods and services rest on shared wording in the specifications. Whether the "
+                   "goods or services are actually similar depends on their purpose, users and trade channels, which "
+                   "the register wording doesn't show.")
+    if "related_class" in bases:
+        out.append("Some links are between different classes that are often treated as related; whether they are "
+                   "closely related here is decided case by case.")
+    if any(_pending(m.status) for m in attention):
+        out.append("Some earlier marks are not yet registered: they may still be amended, opposed or withdrawn.")
+    ai = report.ai_distinctiveness
+    if ai and ai.likelihood != "unlikely":
+        out.append("The distinctiveness assessment is an automated reading of what the words mean for your goods and "
+                   "services. It doesn't take account of any use you have made of the mark, which can be relevant.")
+    out.append("The register doesn't show whether or how owners use their marks, and unregistered use by others isn't "
+               "covered by this search.")
+    out.append("Logos and other designs were not compared; only words. Marks filed very recently may not be searchable yet.")
+    for q in from_narrative:
+        if q not in out:
+            out.append(q)
+    return out[:8]
+
+
+def _pending(status: str) -> bool:
+    s = status.lower()
+    return not (s.startswith("registered") or s.startswith("protected")) and "never" not in s and "removed" not in s
+
+
+def _research_paths(report: Report, application: Application, attention: list[SimilarMark]) -> list[str]:
+    paths = []
+    if attention:
+        paths.append("The full register records of the marks in section 3 (linked), including every class, the full "
+                     "goods and services, status history and owner.")
+    paths.append("Unregistered use of similar names: ASIC's business names register, ABN Lookup, domain names and a "
+                 "general web search.")
+    if application.mark_kind != "word" or any(m.logo for m in attention):
+        paths.append("IP Australia's trade mark image search, for similar logos and designs.")
+    paths.append("IP Australia's TM Headstart: an examiner's preliminary assessment of your application, usually "
+                 "within about 5 business days, before a full application (fees in section 6).")
+    attorney = "A registered trade marks attorney or lawyer, for advice on your circumstances"
+    if attention or report.escalation_reasons:
+        attorney += (": because potentially relevant earlier registrations were identified, professional review may "
+                     "be useful before committing to an application or adopting the brand")
+    paths.append(attorney + ".")
+    return paths
 
 
 def _explain(report: Report, explainer: Explainer | None, manual: ManualIndex | None) -> Explanation | None:
@@ -132,7 +237,32 @@ def _similar(c: Conflict, explained: str | None) -> SimilarMark:
                        classes=sorted({o.cited_class for o in c.overlaps}), live=c.live, risk=c.risk,
                        why_similar=c.mark_reasons, goods_overlap=overlap or "No overlapping goods or services.",
                        goods_points=[p for o in c.overlaps for p in _goods_points(o)],
-                       what_to_do=explained or c.option)
+                       what_to_do=explained or "", open_questions=_open_questions(c))
+
+
+def _open_questions(c: Conflict) -> list[str]:
+    bases = {m.basis for o in c.overlaps for m in o.matches}
+    out = []
+    if not c.live:
+        out.append("No longer in force: marks like this are generally not cited against new applications, but the "
+                   "owner may still be using the name.")
+    if "shared_words" in bases:
+        out.append("Are their goods or services actually like yours in purpose, users and trade channels? The "
+                   "specifications share wording only.")
+    if bases & {"identical", "broad_heading"}:
+        out.append("Their specification uses the same or broader wording, so the goods or services overlap on the "
+                   "register itself.")
+    if "related_class" in bases:
+        out.append("Different classes: would consumers expect these goods and services to come from the same business?")
+    if c.live and _pending(c.cited_status):
+        out.append("Not yet registered: it may still be amended, opposed or withdrawn.")
+    if "renewal" in c.cited_status.lower():
+        out.append("Renewal is due or overdue: the registration may lapse if it isn't renewed.")
+    if c.cited_logo:
+        out.append("It includes a design, which this report doesn't compare: only the words were compared.")
+    if c.live:
+        out.append("Is the mark in use, and how? The register doesn't say.")
+    return out[:4]
 
 
 def _short(term: str, n: int = 110) -> str:
@@ -149,7 +279,7 @@ def _match_text(m: TermMatch, o: ClassOverlap) -> str:
     if m.basis == "shared_words":
         shared = ", ".join(f"“{w}”" for w in m.shared_words)
         return (f"Shared wording: your {ours} and their {theirs} both use {shared}. Shared words alone don't make the "
-                "services similar: compare what each is for, who uses it and how it is sold.")
+                "services similar; that depends on what each is for, who uses it and how it is sold.")
     return (f"Related classes: your class {o.user_class} {ours} and their class {o.cited_class} {theirs}. "
             f"{o.note.split(' Their goods')[0]}")
 
@@ -175,9 +305,8 @@ def _own_note(report: Report) -> str:
 
 
 def _plain_summary(report: Report, attention: int) -> str:
-    parts = [f"Overall review priority: {report.overall_risk.value}."]
-    if report.route:
-        parts.append(f"{report.route.headline}.")
+    parts = [f"Overall review priority: {report.overall_risk.value}. This is a guide to where to look first, not a "
+             "prediction."]
     ai = report.ai_distinctiveness
     if ai and ai.likelihood != "unlikely":
         parts.append(f"The mark as a whole is {'likely' if ai.likelihood == 'likely' else 'possibly'} going to be "
@@ -187,55 +316,6 @@ def _plain_summary(report: Report, attention: int) -> str:
     parts.append(f"{attention} similar mark{'s' if attention != 1 else ''} on the register deserve{'s' if attention == 1 else ''} "
                  "a closer look." if attention else "No similar mark on the register was flagged for a closer look.")
     return " ".join(parts)
-
-
-def _plain_actions(report: Report, attention: list[SimilarMark]) -> list[str]:
-    route = report.route
-    first = {"composite": "Consider a composite mark with a substantial, distinctive design element (sections 2 and 6).",
-             "new_name": "Consider whether a different name would suit you, and check any new name before deciding "
-                         "(sections 2 and 4).",
-             "narrow_goods": "Consider whether you need the goods or services that overlap earlier marks (section 5).",
-             "logo": "Consider searching IP Australia's image search for similar logos.",
-             "word": "Consider a word mark: it is the broadest kind of protection for a name (section 2).",
-             "review": "Review the earlier marks in section 4 before choosing between a word and a composite "
-                       "application (section 2)."}[route.recommended]
-    actions = [first]
-    if attention and route.recommended in ("word", "composite", "review"):
-        actions.append(f"Review the {len(attention)} similar mark{'s' if len(attention) > 1 else ''} given a medium or "
-                       "high review priority in section 4, and the points to consider for each.")
-    actions.append("Check each of your goods and services in section 5: do you offer it, and does it overlap a mark in "
-                   "section 4?")
-    actions.append("TM Headstart gives you an IP Australia examiner's view within about 5 business days, before you "
-                   "commit to a full application (see How to file).")
-    return actions
-
-
-def _route_detail(report: Report) -> list[str]:
-    route = report.route
-    if route is None:
-        return []
-    if route.recommended == "composite":
-        detail = ["The main concern found is that your words describe your goods or services. That is the situation "
-                  "where a design can help: the design, not the words, makes the mark distinctive.",
-                  "If owning the words themselves matters to you, another option is a different name with an invented "
-                  "or unusual element, as a word mark."]
-        closer = [c for c in report.conflicts if c.live and c.risk == Risk.MEDIUM]
-        if closer:
-            names = ", ".join(c.cited_words for c in closer[:3])
-            detail.insert(1, f"Separately, {len(closer)} similar mark{'s' if len(closer) > 1 else ''} need"
-                             f"{'s' if len(closer) == 1 else ''} a closer look ({names}, section 4). A design doesn't "
-                             "change that: examiners compare the words.")
-        return detail
-    if route.recommended == "review":
-        return ["The earlier marks in section 4 share part of your name. Before choosing a filing format, look at what "
-                "each one covers: its goods and services, who it is sold to and how. Section 4 sets out the overlap we "
-                "found and its basis.",
-                "If you would rather settle this before filing, a registered trade marks attorney can review these "
-                "marks against your plans (see When to get an attorney)."]
-    if route.recommended in ("new_name", "narrow_goods"):
-        return ["The concern is an earlier similar mark (section 44). Adding a logo would not help: examiners compare "
-                "the main feature of each mark, which is usually the words."]
-    return []
 
 
 SIMILAR_QUERY = "section 44 substantially identical deceptively similar trade marks similar goods closely related services"
@@ -270,9 +350,10 @@ def _distinctiveness(report: Report, explanation: Explanation | None,
                  else "Some words in the mark describe or praise your goods or services; the rest may carry the mark."
                  if flags else "No descriptive, praising or place-name words were found.")
     options = [] if likelihood == "unlikely" else [
-        "Add or substitute an invented or unusual word.",
-        "File as a composite mark with a substantial, distinctive design.",
-        "If you have used the mark for some time, gather evidence of that use."]
+        "Some applicants add or substitute an invented or unusual word.",
+        "Some file a composite mark, where a substantial, distinctive design can give the mark as a whole its "
+        "distinctiveness (section 1).",
+        "Where a mark has been used for some time, evidence of that use can be relevant."]
     return DistinctivenessSection(likelihood=likelihood, reasoning=reasoning, word_flags=flags, options=options,
                                   citations=citations)
 
@@ -311,13 +392,13 @@ def _specification(application: Application, report: Report, classes: dict[int, 
 
 
 def _spec_notes(industry: str) -> list[str]:
-    notes = ["Only claim what you offer or genuinely intend to offer. Fewer, specific terms mean fewer conflicts, and "
-             "terms you never use can later be removed for non-use."]
+    notes = ["An application claims goods and services the applicant uses or intends to use. Terms that are never used "
+             "can later be removed for non-use, and each term claimed is a term that can overlap other marks."]
     area = industry.strip().removeprefix("for ").removeprefix("the ").strip()
     if area:
         notes.append(f"Your industry or customers: “{industry.strip()}”. Where another mark's goods are for a "
-                     f"different purpose, a limitation such as “…; all for use in {area}” may remove the overlap "
-                     "(Trade Marks Manual, Part 27.3). It doesn't help against a mark that covers the broad term.")
+                     f"different purpose, the Trade Marks Manual (Part 27.3) describes limitations such as “…; all for "
+                     f"use in {area}”, which can affect an overlap. They don't affect a mark that covers the broad term.")
     return notes
 
 
@@ -326,12 +407,13 @@ def _filing(application: Application, report: Report) -> Filing:
     all_picklist = report.picklist_only
     return Filing(classes=n, headstart_part1=200 * n, headstart_part2=130 * n, standard=(250 if all_picklist else 400) * n,
                   all_picklist=all_picklist,
-                  steps=["Create an IP Australia online services account (portal.ipaustralia.gov.au).",
+                  steps=["Requests and applications are made online, through an IP Australia online services account "
+                         "(portal.ipaustralia.gov.au).",
                          KIND_STEP[application.mark_kind],
-                         "Pay Part 1. The examiner's assessment usually arrives within about 5 business days.",
-                         "If the assessment is favourable, pay Part 2 to convert it into an application. That date "
-                         "is your filing date.",
-                         "Watch for the examination report and respond by its deadline."],
+                         "Once Part 1 is paid, an examiner's assessment usually arrives within about 5 business days.",
+                         "Paying Part 2 turns the request into an application; that date becomes the filing date.",
+                         "The application is then examined; an examination report, if issued, sets a deadline to "
+                         "respond."],
                   adverse_headstart=ADVERSE_HEADSTART)
 
 

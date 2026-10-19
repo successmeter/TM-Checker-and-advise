@@ -41,6 +41,8 @@
   .risk.Low, .risk.unlikely { color: var(--low); background: var(--low-bg); }
   .box { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin: 10px 0; break-inside: avoid; }
   h2.appendix { break-before: page; }
+  table.formats { break-inside: avoid; }
+  h2, h3 { break-after: avoid; }
   .guidance { border-left: 3px solid var(--brand); background: var(--soft); padding: 8px 12px; margin: 12px 0; break-inside: avoid; }
   .guidance ul { margin: 4px 0 0; padding-left: 18px; }
   .route { border: 2px solid var(--brand); background: var(--brand-soft); }
@@ -99,51 +101,55 @@
   </div>
   {% endmacro %}
 
-  <h2>1. Summary</h2>
+  {% set n_design = 1 if r.design_guidance else 0 %}
+  <h2>Summary of findings</h2>
   <p>{{ r.summary }}</p>
   <div class="box route">
-    <div class="label">{{ "Before you choose" if r.route.recommended == "review" else "Option to consider first" }}</div>
-    <h3>{{ r.route.headline }}</h3>
-    <ul>{% for x in r.route.reasons %}<li>{{ x }}</li>{% endfor %}</ul>
+    <div class="label">What the research found</div>
+    <ul>{% for k in r.key_findings %}<li>{{ k }}</li>{% endfor %}</ul>
   </div>
-  <h3>Things to consider</h3>
-  <ol class="actions">{% for a in r.top_actions %}<li>{{ a }}</li>{% endfor %}</ol>
+  <p class="small muted">This report sets out evidence from the register, the relevant law, what remains uncertain and the research paths available. It doesn't tell you what to file: that decision, and any advice on it, is yours or your adviser's.</p>
 
   <h3>In this report</h3>
   <ol class="toc">
-    <li>Summary</li><li>Options worth considering</li><li>Distinctiveness (section 41)</li><li>Similar marks (section 44)</li>
-    <li>Your goods and services</li>{% if r.design_guidance %}<li>Designing your composite mark</li>{% endif %}
-    <li>How to file</li><li>When to get an attorney</li><li>About this report</li>{% if others %}<li class="muted">Appendix: lower-priority marks</li>{% endif %}
+    <li>How the findings relate to each filing format</li><li>Distinctiveness (section 41)</li><li>Similar marks (section 44)</li>
+    <li>Your goods and services</li><li>What this research can't tell you</li><li>Further research paths</li>
+    <li>How filing works</li><li>About this report</li>{% if others %}<li class="muted">Appendix: lower-priority marks</li>{% endif %}
   </ol>
 
-  <h2>2. Options worth considering</h2>
-  <p><strong>{{ r.route.headline }}.</strong></p>
-  {% for p in r.route_detail %}<p>{{ p }}</p>{% endfor %}
-  <table class="facts">
-    <tr><th>Word mark</th><td>Protects the words themselves, independent of any particular font or styling (it doesn't protect a logo design). The broadest protection for a name, but the words must be distinctive and not already taken for similar goods or services.</td></tr>
-    <tr><th>Composite mark</th><td>Protects a design and words together. A substantial, distinctive design can carry descriptive words; it does not get around an earlier similar mark, and others may still use the words on their own.</td></tr>
-    <tr><th>Logo mark</th><td>Protects the picture only. Your name is not protected.</td></tr>
+  <h2>1. How the findings relate to each filing format</h2>
+  <p>Each kind of application protects something different. This table sets out what each protects and how this report's findings bear on it. No format is recommended.</p>
+  <table class="facts formats">
+    <tr><th style="width:24%">Format</th><th style="width:30%">What it protects</th><th>How the findings bear on it</th></tr>
+    {% for f in r.format_notes %}<tr><td><strong>{{ f.kind }}</strong></td><td>{{ f.protects }}</td><td>{{ f.findings }}</td></tr>{% endfor %}
   </table>
+  {% if r.design_guidance %}
+  <h3>What examiners look at in a design</h3>
+  <ul>{% for g in r.design_guidance %}<li>{{ g }}</li>{% endfor %}</ul>
+  {% endif %}
 
-  <h2>3. Distinctiveness (section 41)</h2>
+  <h2>2. Distinctiveness (section 41)</h2>
   {% set d = r.distinctiveness %}
   <p><span class="risk {{ d.likelihood }}">{{ {"likely": "Likely to be raised as an issue", "possible": "May be raised as an issue", "unlikely": "Not expected to be raised as an issue"}[d.likelihood] }}</span></p>
-  <p class="muted small">The test IP Australia's examiners apply: does the trade mark, as a whole, have an ordinary meaning for your goods or services that other traders would want to use honestly?</p>
-  <p class="small muted"><strong>What this doesn't mean:</strong> this is an automated assessment, not the examiner's decision or a legal opinion on whether your mark can be registered.</p>
+  <h3>The law</h3>
+  <p class="small">An application can be rejected if the trade mark is not capable of distinguishing your goods or services from other traders'. Examiners ask whether the mark, as a whole, has an ordinary meaning for those goods or services that other traders would want to use honestly. Evidence that the mark already distinguishes your business through use can be taken into account.</p>
+  <h3>What we found</h3>
   {% if d.meaning %}<p><strong>What “{{ r.mark }}” means in your trade:</strong> {{ d.meaning }}</p>{% endif %}
   <p>{{ d.reasoning }}</p>
   {% if d.affected_terms %}<p><strong>Goods and services this applies to:</strong> {{ d.affected_terms | join("; ") }}.</p>{% endif %}
   {% if d.word_flags %}<p><strong>Individual words:</strong></p><ul>{% for w in d.word_flags %}<li>{{ w }}</li>{% endfor %}</ul>{% endif %}
-  {% if d.options %}<h3>Your options</h3><ul>{% for o in d.options %}<li>{{ o }}</li>{% endfor %}</ul>{% endif %}
+  {% if d.options %}<h3>Approaches applicants take, for your evaluation</h3><ul>{% for o in d.options %}<li>{{ o }}</li>{% endfor %}</ul>{% endif %}
+  <p class="small muted"><strong>Uncertainty:</strong> this is an automated reading of what the words mean for your goods and services, not the examiner's decision or a legal opinion.</p>
   {{ guidance("41", "Trade marks not capable of distinguishing the goods or services", d.citations) }}
 
-  <h2>4. Similar marks (section 44)</h2>
+  <h2>3. Similar marks (section 44)</h2>
+  <h3>The law</h3>
+  <p class="small">An application can be rejected if the trade mark is substantially identical with, or deceptively similar to, an earlier mark (registered or pending) for similar goods, closely related services, or the same kind of goods or services. Examiners compare the marks as a whole, as a consumer with imperfect recollection would see and hear them. Some situations, such as honest concurrent use or the earlier owner's consent, can be taken into account.</p>
+  <h3>What we found</h3>
   <p>We screened {{ r.marks_reviewed }} marks on the register in your classes and the classes IP Australia treats as related.
-     {% if attention %}{{ attention | length }} deserve{{ "s" if attention | length == 1 }} a closer look, highest review priority first.
-     {% else %}None was flagged for a closer look.{% endif %}</p>
-  <p class="small muted"><strong>How the names are compared:</strong> “letter match” is the share of letters that line up when one name is turned into the other with the fewest changes (two 10-letter names that differ in 3 letters are a 70% match). We also look at shared words, shared beginnings and names that sound alike. These are screening signals, not the legal test: an examiner compares the marks as a whole, as a consumer with imperfect recollection would see and hear them.</p>
-  <p class="small muted"><strong>How the goods and services are compared:</strong> each link below says what it is based on: identical wording, a broad term that can cover yours, shared words, or classes that are commonly treated as related. Shared wording is a reason to look, not a finding that the goods or services are similar.</p>
-  <p class="small muted"><strong>What review priority means:</strong> how closely we suggest you look at each mark, based on how alike the marks are and how their goods and services relate. It doesn't decide whether your mark can be registered or used, or whether either mark infringes the other.</p>
+     {% if attention %}{{ attention | length }} {{ "was" if attention | length == 1 else "were" }} given a medium or high review priority, highest first.
+     {% else %}None was given a medium or high review priority.{% endif %}</p>
+  <p class="small muted"><strong>How we compared them:</strong> names by letter match (the share of letters that line up when one name is turned into the other with the fewest changes; two 10-letter names that differ in 3 letters are a 70% match), shared words, shared beginnings and sound. Goods and services by identical wording, broad terms, shared words, or classes commonly treated as related. These are screening signals, not the legal test. A review priority says how closely we suggest you look at a mark; it doesn't decide whether your mark can be registered or used, or whether either mark infringes the other.</p>
   {% if r.own_marks_note %}<p class="small muted">{{ r.own_marks_note }}</p>{% endif %}
   {% for m in attention %}
   <div class="box">
@@ -153,11 +159,13 @@
         <p><strong>{{ m.words }}</strong> <span class="risk {{ m.risk.value }}">Review priority: {{ m.risk.value }}</span>
            <span class="tag">{{ "Logo/composite" if m.logo else "Word mark" }}</span></p>
         <p class="small muted"><a href="https://search.ipaustralia.gov.au/trademarks/search/view/{{ m.number }}">#{{ m.number }}</a> · {{ m.status }}{% if m.owner %} · {{ m.owner }}{% endif %} · Classes {{ m.classes | join(", ") }}</p>
-        <p class="small"><strong>Why it's similar:</strong> {{ m.why_similar | join(" ") }}</p>
-        {% if m.goods_points %}<p class="small"><strong>Goods and services:</strong></p>
+        <p class="small"><strong>Evidence: the names.</strong> {{ m.why_similar | join(" ") }}</p>
+        {% if m.goods_points %}<p class="small"><strong>Evidence: goods and services.</strong></p>
         <ul class="small">{% for g in m.goods_points %}<li>{{ g }}</li>{% endfor %}</ul>
-        {% else %}<p class="small"><strong>Goods and services:</strong> {{ m.goods_overlap }}</p>{% endif %}
-        <p class="small"><strong>Points to consider:</strong> {{ m.what_to_do }}</p>
+        {% else %}<p class="small"><strong>Evidence: goods and services.</strong> {{ m.goods_overlap }}</p>{% endif %}
+        {% if m.what_to_do %}<p class="small"><strong>What it means:</strong> {{ m.what_to_do }}</p>{% endif %}
+        {% if m.open_questions %}<p class="small"><strong>Open questions:</strong></p>
+        <ul class="small">{% for q in m.open_questions %}<li>{{ q }}</li>{% endfor %}</ul>{% endif %}
         {% for c in m.citations %}<p class="cite">Trade Marks Manual: <a href="{{ c.url }}">{{ c.title }}{% if c.heading %} › {{ c.heading }}{% endif %}</a></p>{% endfor %}
       </div>
     </div>
@@ -166,10 +174,10 @@
   {{ guidance("44", "Identical and similar trade marks", r.similar_citations) }}
   {% if others %}<p class="small">{{ others | length }} other mark{{ "s" if others | length > 1 }} came up with a low review priority (they share only part of the name, or are no longer in force). They are listed in the appendix.</p>{% endif %}
 
-  <h2>5. Your goods and services, as you selected them</h2>
+  <h2>4. Your goods and services, as you selected them</h2>
   <p>These are the terms you chose, checked against IP Australia's picklist.
      {% if r.filing.all_picklist %}Every term is on the picklist, so the lower application fee applies.{% endif %}
-     For each one, consider: do you offer it, or genuinely intend to? Does it overlap a mark in section 4?</p>
+     Questions worth asking of each: do you offer it, or genuinely intend to? Does it link to a mark in section 3?</p>
   {% for c in r.specification %}
   <h3>Class {{ c.class_number }}: {{ c.title }}</h3>
   <table class="facts spec">
@@ -180,28 +188,28 @@
   {% endfor %}
   {% for n in r.specification_notes %}<p class="small">{{ n }}</p>{% endfor %}
 
-  {% if r.design_guidance %}
-  <h2>6. Designing your composite mark</h2>
-  <ul>{% for g in r.design_guidance %}<li>{{ g }}</li>{% endfor %}</ul>
-  {% endif %}
+  <h2>5. What this research can't tell you</h2>
+  <ul>{% for u in r.uncertainties %}<li>{{ u }}</li>{% endfor %}</ul>
 
-  <h2>{{ 7 if r.design_guidance else 6 }}. How to file</h2>
+  <h2>6. Further research paths</h2>
+  <p>Research you may choose to do, depending on what matters to you. None is required by this report.</p>
+  <ul>{% for x in r.research_paths %}<li>{{ x }}</li>{% endfor %}</ul>
+  {% if r.attorney_reasons %}<p class="small"><strong>Findings a professional would usually look at closely:</strong></p>
+  <ul class="small">{% for a in r.attorney_reasons %}<li>{{ a }}</li>{% endfor %}</ul>{% endif %}
+
+  <h2>7. How filing works</h2>
+  <p class="small">IP Australia's processes and fees, for reference.</p>
   <table class="facts">
-    <tr><th>TM Headstart</th><td>A${{ r.filing.headstart_part1 }} now (Part 1), then A${{ r.filing.headstart_part2 }} to proceed (Part 2): A${{ r.filing.headstart_part1 + r.filing.headstart_part2 }} in total for {{ r.filing.classes }} class{{ "es" if r.filing.classes > 1 }}.</td></tr>
+    <tr><th>TM Headstart</th><td>A${{ r.filing.headstart_part1 }} for the assessment (Part 1), then A${{ r.filing.headstart_part2 }} to proceed (Part 2): A${{ r.filing.headstart_part1 + r.filing.headstart_part2 }} in total for {{ r.filing.classes }} class{{ "es" if r.filing.classes > 1 }}.</td></tr>
     <tr><th>Standard application</th><td>A${{ r.filing.standard }} for {{ r.filing.classes }} class{{ "es" if r.filing.classes > 1 }}.</td></tr>
   </table>
-  <ol>{% for s in r.filing.steps %}<li>{{ s }}</li>{% endfor %}</ol>
-  <h3>If the Headstart assessment is adverse</h3>
-  <ul>{% for s in r.filing.adverse_headstart %}<li>{{ s }}</li>{% endfor %}</ul>
+  <p class="small"><strong>The TM Headstart process:</strong></p>
+  <ol class="small">{% for s in r.filing.steps %}<li>{{ s }}</li>{% endfor %}</ol>
+  <p class="small"><strong>If a Headstart assessment is adverse, IP Australia's process allows:</strong></p>
+  <ul class="small">{% for s in r.filing.adverse_headstart %}<li>{{ s }}</li>{% endfor %}</ul>
   <p class="small muted">Fees as published by IP Australia when this report was produced; check current fees before you pay.</p>
 
-  <h2>{{ 8 if r.design_guidance else 7 }}. When to get an attorney</h2>
-  {% if r.attorney_reasons %}<ul>{% for a in r.attorney_reasons %}<li>{{ a }}</li>{% endfor %}</ul>
-  {% elif attention %}<p>Because potentially relevant earlier registrations were identified (section 4), professional review may be useful before committing to an application or adopting the brand. A registered trade marks attorney can assess these marks against your plans.</p>
-  <p>Also consider one if you receive an objection you can't resolve, an opposition, or a demand from another trader.</p>
-  {% else %}<p>No earlier mark was given a medium or high review priority. A registered trade marks attorney can still review your plans before you file, and is worth considering if you receive an objection you can't resolve, an opposition, or a demand from another trader.</p>{% endif %}
-
-  <h2>{{ 9 if r.design_guidance else 8 }}. About this report</h2>
+  <h2>8. About this report</h2>
   <ul class="small">
     {% for s in r.sources %}<li>{{ s }}</li>{% endfor %}
     {% for l in r.limitations %}<li>{{ l }}</li>{% endfor %}

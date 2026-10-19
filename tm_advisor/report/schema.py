@@ -42,7 +42,8 @@ class SimilarMark(BaseModel):
     goods_overlap: str                 # plain-English summary of the overlapping goods/services
     goods_points: list[str] = []       # each link between your terms and theirs, with its basis
     citations: list[Citation] = []     # Trade Marks Manual sections the explanation relied on
-    what_to_do: str
+    what_to_do: str = ""               # the narrative's explanation of this mark, if written
+    open_questions: list[str] = []     # what the register can't settle about this mark
 
 
 class SpecTerm(BaseModel):
@@ -68,6 +69,13 @@ class Filing(BaseModel):
     adverse_headstart: list[str]       # what to do if the Headstart assessment is adverse
 
 
+class FormatNote(BaseModel):
+    """What a filing format protects, and how this report's findings bear on it (no format is recommended)."""
+    kind: str
+    protects: str
+    findings: str
+
+
 class ReportDoc(BaseModel):
     brand: str = "BizImprint"
     tagline: str = "Trademark Conflict Intelligence for Australian businesses"
@@ -86,9 +94,13 @@ class ReportDoc(BaseModel):
 
     overall_risk: Risk
     summary: str
-    top_actions: list[str]
-    route: Route
-    route_detail: list[str] = []       # extra paragraphs explaining the route for this mark
+    key_findings: list[str] = []       # the evidence in brief, one line per area
+    format_notes: list[FormatNote] = []
+    uncertainties: list[str] = []      # what this research can't establish
+    research_paths: list[str] = []     # further research the customer may choose to do
+    top_actions: list[str] = []        # (older reports)
+    route: Route | None = None         # (older reports)
+    route_detail: list[str] = []       # (older reports)
 
     distinctiveness: DistinctivenessSection
     similar_marks: list[SimilarMark]

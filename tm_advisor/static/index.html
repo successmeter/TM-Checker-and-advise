@@ -596,8 +596,6 @@ function renderCheck(r) {
   const parts = [`<h2>Result for ${esc(r.mark)} <span class="risk ${r.overall_risk}">Review priority: ${r.overall_risk}</span></h2>`];
   if (r.own_marks && r.own_marks.length) parts.push(`<p class="hint">Left out as your own: ${r.own_marks.map(n => markLink(n, false).split("<span")[0]).join(", ")}.</p>`);
   if (r.register_warning) parts.push(`<div class="note warnbox"><strong>Test data.</strong> ${esc(r.register_warning)}</div>`);
-  if (r.route) parts.push(`<div class="route ${r.route.recommended}"><div class="hint">${r.route.recommended === "review" ? "Before you choose" : "Option to consider first"}</div>
-    <h3>${esc(r.route.headline)}</h3><ul>${r.route.reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`);
   if (r.escalate) parts.push(`<div class="escalate"><strong>We suggest speaking to a registered trade marks attorney before filing.</strong><ul>${r.escalation_reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`);
 
   const flags = r.distinctiveness;
@@ -632,7 +630,7 @@ function renderCheck(r) {
         <div class="hint">${markLink(c.cited_number, c.cited_logo)} · ${esc(c.cited_status)}${c.cited_owner ? " · " + esc(c.cited_owner) : ""}</div>
         <ul>${c.mark_reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
         ${c.overlaps.map(o => `<p class="hint">Your class ${o.user_class} vs their class ${o.cited_class}: ${o.matches && o.matches.length ? o.matches.slice(0, 2).map(matchText).join(" ") : esc(o.note)}</p>`).join("")}
-        <p><strong>Option:</strong> ${esc(c.option)}</p>
+        <p class="hint"><strong>To check:</strong> ${esc(c.option)}</p>
       </div>`;
   const top = r.conflicts.filter(c => c.risk !== "Low");
   const low = r.conflicts.filter(c => c.risk === "Low");

@@ -386,14 +386,14 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
 
     def offer(report: Report) -> Offer:
         similar = sum(1 for c in report.conflicts if c.live and c.risk != Risk.LOW)
-        covers = ["A plain-English explanation of these results, grounded in IP Australia's Trade Marks Manual",
-                  "The options worth considering for your mark (word mark, composite mark, logo mark, a different "
-                  "name or narrower goods), and the reasons",
+        covers = ["A plain-English explanation of these results, with the relevant law and links to IP Australia's "
+                  "Trade Marks Manual",
+                  "How the findings relate to word, composite and logo applications (no format is recommended)",
                   "What your mark means as a whole for your goods and services",
-                  f"The {similar} similar mark{'s' if similar != 1 else ''} worth a closer look: why each matters and "
-                  "what you could do" if similar else "Every similar mark we screened, and why none stands out",
-                  "Your goods and services checked against the picklist, with the ones that overlap other marks",
-                  "How TM Headstart and standard applications work, with fees for your classes",
+                  f"The {similar} similar mark{'s' if similar != 1 else ''} worth a closer look: the evidence for each "
+                  "and the open questions" if similar else "Every similar mark we screened, and the evidence for each",
+                  "What this research can't tell you, and the further research paths available",
+                  "How IP Australia's TM Headstart and standard applications work, with fees for your classes",
                   "A dated PDF to keep, emailed to you"]
         return Offer(report_covers=covers, price_cents=price, currency="aud",
                      payments_enabled=bypass_payment or (payments is not None and not on_test_register()))
