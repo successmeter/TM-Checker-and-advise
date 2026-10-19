@@ -12,6 +12,7 @@ import sys
 import httpx
 
 from ..ipa_auth import has_credentials
+from ..mark_similarity import compare
 from .ipaustralia import PRODUCTION_BASE, IpAustraliaRegisterClient
 
 
@@ -35,10 +36,12 @@ def main() -> None:
     except httpx.HTTPError as e:
         sys.exit(f"Could not reach IP Australia: {type(e).__name__}: {e}")
     print(f"Search method: {'advanced search' if client._advanced_available else 'quick search (advanced not enabled)'}")
-    print(f"{len(marks)} marks found.")
-    for m in marks:
+    print(f"{len(marks)} marks found, most similar name first (score 0.5 or more is listed if the goods overlap).")
+    scored = sorted(((compare(mark, m.words), m) for m in marks), key=lambda x: -x[0].score)
+    for sim, m in scored:
         classes = ",".join(str(c.class_number) for c in m.classes)
-        print(f"  {m.number:>8}  {m.words[:40]:<40}  {'LIVE' if m.is_live else 'dead'}  {m.status[:40]}  classes {classes}")
+        print(f"  {sim.score:4.2f}  {m.number:>8}  {m.words[:30]:<30}  {'LIVE' if m.is_live else 'dead'}  "
+              f"{m.status[:30]:<30}  classes {classes}")
 
 
 if __name__ == "__main__":
