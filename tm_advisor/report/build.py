@@ -10,7 +10,7 @@ from collections.abc import Callable
 
 from ..explain import Explainer, Explanation, ExplanationUnavailable, retrieve
 from ..manual import ManualIndex
-from ..models import Application, Conflict, GoodsLevel, Report, Risk
+from ..models import Application, ClassOverlap, Conflict, GoodsLevel, Report, Risk, TermMatch
 from ..picklist import ClassInfo
 from .schema import (Citation, DistinctivenessSection, Filing, ReportDoc, SimilarMark, SpecClass, SpecTerm)
 
@@ -65,10 +65,13 @@ def build_report(application: Application, report: Report, *, classes: dict[int,
                  sample: bool = False) -> ReportDoc:
     explanation = _explain(report, explainer, manual)
     by_number = {c.cited_number: c.explanation for c in explanation.conflicts} if explanation else {}
+    cited_by_number = {c.cited_number: c.citations for c in explanation.conflicts} if explanation else {}
     route = report.route
     assert route is not None, "the check sets a route"
 
-    marks = [_similar(c, by_number.get(c.cited_number)) for c in _relevant(report.conflicts)]
+    marks = [_similar(c, by_number.get(c.cited_number)).model_copy(
+        update={"citations": _unique_citations(cited_by_number.get(c.cited_number, []))[:2]})
+        for c in _relevant(report.conflicts)]
     attention = [m for m in marks if m.live and m.risk != Risk.LOW]
     summary = explanation.overview if explanation else _plain_summary(report, len(attention))
     actions = explanation.next_steps if explanation and explanation.next_steps else _plain_actions(report, attention)
@@ -79,8 +82,10 @@ def build_report(application: Application, report: Report, *, classes: dict[int,
         logo_image=logo_image, classes=[c.class_number for c in application.classes],
         overall_risk=report.overall_risk, summary=summary, top_actions=actions[:5],
         route=route, route_detail=_route_detail(report),
-        distinctiveness=_distinctiveness(report, explanation),
-        similar_marks=marks, marks_reviewed=report.marks_screened, own_marks_note=_own_note(report),
+        distinctiveness=_distinctiveness(report, explanation, manual),
+        similar_marks=marks,
+        similar_citations=_guidance(manual, SIMILAR_QUERY, [c for e in (explanation.conflicts if explanation else [])
+                                                           for c in e.citations]), marks_reviewed=report.marks_screened, own_marks_note=_own_note(report),
         specification=_specification(application, report, classes),
         specification_notes=_spec_notes(industry),
         design_guidance=DESIGN_GUIDANCE if route.recommended == "composite" or application.mark_kind != "word" else [],
@@ -126,7 +131,36 @@ def _similar(c: Conflict, explained: str | None) -> SimilarMark:
                        image=c.cited_image, status=c.cited_status, owner=c.cited_owner,
                        classes=sorted({o.cited_class for o in c.overlaps}), live=c.live, risk=c.risk,
                        why_similar=c.mark_reasons, goods_overlap=overlap or "No overlapping goods or services.",
+                       goods_points=[p for o in c.overlaps for p in _goods_points(o)],
                        what_to_do=explained or c.option)
+
+
+def _short(term: str, n: int = 110) -> str:
+    return term if len(term) <= n else term[:n].rsplit(" ", 1)[0] + "…"
+
+
+def _match_text(m: TermMatch, o: ClassOverlap) -> str:
+    ours, theirs = f"“{_short(m.user_term)}”", f"“{_short(m.cited_term)}”"
+    if m.basis == "identical":
+        return f"Identical wording: your {ours} also appears in their class {o.cited_class} specification."
+    if m.basis == "broad_heading":
+        return (f"Broad term: their class {o.cited_class} specification includes {theirs}, which can cover your "
+                f"{ours}." if m.cited_term != m.user_term else f"Broad term: {ours}.")
+    if m.basis == "shared_words":
+        shared = ", ".join(f"“{w}”" for w in m.shared_words)
+        return (f"Shared wording: your {ours} and their {theirs} both use {shared}. Shared words alone don't make the "
+                "services similar: compare what each is for, who uses it and how it is sold.")
+    return (f"Related classes: your class {o.user_class} {ours} and their class {o.cited_class} {theirs}. "
+            f"{o.note.split(' Their goods')[0]}")
+
+
+def _goods_points(o: ClassOverlap) -> list[str]:
+    if not o.matches:
+        return [f"Class {o.cited_class}: {o.note}"]
+    points = [_match_text(m, o) for m in o.matches[:3]]
+    if len(o.matches) > 3:
+        points.append(f"…and {len(o.matches) - 3} more of your class {o.user_class} terms.")
+    return points
 
 
 def _own_note(report: Report) -> str:
@@ -162,9 +196,11 @@ def _plain_actions(report: Report, attention: list[SimilarMark]) -> list[str]:
                          "(sections 2 and 4).",
              "narrow_goods": "Consider whether you need the goods or services that overlap earlier marks (section 5).",
              "logo": "Consider searching IP Australia's image search for similar logos.",
-             "word": "Consider a word mark: it is the broadest kind of protection (section 2)."}[route.recommended]
+             "word": "Consider a word mark: it is the broadest kind of protection for a name (section 2).",
+             "review": "Review the earlier marks in section 4 before choosing between a word and a composite "
+                       "application (section 2)."}[route.recommended]
     actions = [first]
-    if attention and route.recommended in ("word", "composite"):
+    if attention and route.recommended in ("word", "composite", "review"):
         actions.append(f"Review the {len(attention)} similar mark{'s' if len(attention) > 1 else ''} given a medium or "
                        "high review priority in section 4, and the points to consider for each.")
     actions.append("Check each of your goods and services in section 5: do you offer it, and does it overlap a mark in "
@@ -190,16 +226,39 @@ def _route_detail(report: Report) -> list[str]:
                              f"{'s' if len(closer) == 1 else ''} a closer look ({names}, section 4). A design doesn't "
                              "change that: examiners compare the words.")
         return detail
+    if route.recommended == "review":
+        return ["The earlier marks in section 4 share part of your name. Before choosing a filing format, look at what "
+                "each one covers: its goods and services, who it is sold to and how. Section 4 sets out the overlap we "
+                "found and its basis.",
+                "If you would rather settle this before filing, a registered trade marks attorney can review these "
+                "marks against your plans (see When to get an attorney)."]
     if route.recommended in ("new_name", "narrow_goods"):
         return ["The concern is an earlier similar mark (section 44). Adding a logo would not help: examiners compare "
                 "the main feature of each mark, which is usually the words."]
     return []
 
 
-def _distinctiveness(report: Report, explanation: Explanation | None) -> DistinctivenessSection:
+SIMILAR_QUERY = "section 44 substantially identical deceptively similar trade marks similar goods closely related services"
+DISTINCT_QUERY = "section 41 trade mark capable of distinguishing inherently adapted ordinary signification descriptive"
+
+
+def _guidance(manual: ManualIndex | None, query: str, cited: list, limit: int = 3) -> list[Citation]:
+    """Trade Marks Manual sections for a finding: those the explanation cited, then the closest matches to the
+    legal test, so every finding links to IP Australia's own guidance even without the AI narrative."""
+    found = list(cited)
+    if manual is not None:
+        try:
+            found += manual.search(query, limit)
+        except Exception as e:  # an old or damaged index: the report still works without it
+            log.warning("Manual search failed: %s", e)
+    return _unique_citations(found)[:limit]
+
+
+def _distinctiveness(report: Report, explanation: Explanation | None,
+                     manual: ManualIndex | None = None) -> DistinctivenessSection:
     flags = [f"{f.word.upper()}: {f.reason}" for f in report.distinctiveness]
-    citations = _unique_citations(explanation.distinctiveness.citations
-                                  if explanation and explanation.distinctiveness else [])
+    citations = _guidance(manual, DISTINCT_QUERY, explanation.distinctiveness.citations
+                          if explanation and explanation.distinctiveness else [])
     ai = report.ai_distinctiveness
     if ai:
         return DistinctivenessSection(likelihood=ai.likelihood, meaning=ai.meaning, reasoning=ai.reasoning,

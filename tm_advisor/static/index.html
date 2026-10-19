@@ -176,7 +176,7 @@
       <p class="lead">What is your trade mark?</p>
       <div class="kinds" role="radiogroup" aria-label="Kind of trade mark">
         <button type="button" class="kind" data-kind="word" role="radio">
-          <div class="icon">abc</div><strong>Word mark</strong><span class="hint">Words only. Protects the words in any style or logo: the broadest protection.</span>
+          <div class="icon">abc</div><strong>Word mark</strong><span class="hint">Words only. Protects the words themselves, in any font or styling: the broadest protection for a name.</span>
         </button>
         <button type="button" class="kind" data-kind="logo" role="radio">
           <div class="icon">◈</div><strong>Logo mark</strong><span class="hint">A design with no words. Protects the picture only.</span>
@@ -527,6 +527,14 @@ document.addEventListener("click", e => {
   $(".chev", b).textContent = body.hidden ? "⌄" : "⌃";
 });
 
+function matchText(m) {
+  const cut = t => t.length > 90 ? t.slice(0, 90).replace(/\s+\S*$/, "") + "…" : t;
+  const ours = `“${esc(cut(m.user_term))}”`, theirs = `“${esc(cut(m.cited_term))}”`;
+  if (m.basis === "identical") return `<strong>Identical wording:</strong> ${ours}.`;
+  if (m.basis === "broad_heading") return `<strong>Broad term:</strong> their ${theirs} can cover your ${ours}.`;
+  if (m.basis === "shared_words") return `<strong>Shared wording</strong> (${m.shared_words.map(w => "“" + esc(w) + "”").join(", ")}): your ${ours} and their ${theirs}. Shared words alone don't make them similar.`;
+  return `<strong>Related classes:</strong> your ${ours} and their ${theirs}.`;
+}
 function markPicture(url, words) {
   return url ? `<img class="pic" src="${esc(url)}" alt="${esc(words || "Logo")}" loading="lazy" onerror="this.remove()">` : "";
 }
@@ -588,7 +596,7 @@ function renderCheck(r) {
   const parts = [`<h2>Result for ${esc(r.mark)} <span class="risk ${r.overall_risk}">Review priority: ${r.overall_risk}</span></h2>`];
   if (r.own_marks && r.own_marks.length) parts.push(`<p class="hint">Left out as your own: ${r.own_marks.map(n => markLink(n, false).split("<span")[0]).join(", ")}.</p>`);
   if (r.register_warning) parts.push(`<div class="note warnbox"><strong>Test data.</strong> ${esc(r.register_warning)}</div>`);
-  if (r.route) parts.push(`<div class="route ${r.route.recommended}"><div class="hint">Option to consider first</div>
+  if (r.route) parts.push(`<div class="route ${r.route.recommended}"><div class="hint">${r.route.recommended === "review" ? "Before you choose" : "Option to consider first"}</div>
     <h3>${esc(r.route.headline)}</h3><ul>${r.route.reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`);
   if (r.escalate) parts.push(`<div class="escalate"><strong>We suggest speaking to a registered trade marks attorney before filing.</strong><ul>${r.escalation_reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`);
 
@@ -623,7 +631,7 @@ function renderCheck(r) {
       <div class="mark">${markPicture(c.cited_image, c.cited_words)}<span class="words">${esc(c.cited_words || "(no words)")}</span> <span class="risk ${c.risk}">${c.risk}</span>
         <div class="hint">${markLink(c.cited_number, c.cited_logo)} · ${esc(c.cited_status)}${c.cited_owner ? " · " + esc(c.cited_owner) : ""}</div>
         <ul>${c.mark_reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
-        ${c.overlaps.map(o => `<p class="hint">Your class ${o.user_class} vs their class ${o.cited_class}: ${esc(o.note)}${o.overlapping_terms.length ? ` Overlapping: <strong>${o.overlapping_terms.map(esc).join(", ")}</strong>.` : ""}</p>`).join("")}
+        ${c.overlaps.map(o => `<p class="hint">Your class ${o.user_class} vs their class ${o.cited_class}: ${o.matches && o.matches.length ? o.matches.slice(0, 2).map(matchText).join(" ") : esc(o.note)}</p>`).join("")}
         <p><strong>Option:</strong> ${esc(c.option)}</p>
       </div>`;
   const top = r.conflicts.filter(c => c.risk !== "Low");

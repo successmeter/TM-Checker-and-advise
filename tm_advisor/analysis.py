@@ -161,6 +161,10 @@ def _base_option(cited: RegisterMark, overlaps: list[ClassOverlap]) -> str:
         terms = sorted({t for o in same for t in o.overlapping_terms})
         return ("If you don't actually sell " + ", ".join(terms) + ", leaving them out removes the direct overlap "
                 "with this mark. Related goods can still draw an objection.")
+    if same and all(m.basis == "shared_words" for o in same for m in o.matches):
+        return ("The link is shared wording in the specifications. Compare what their goods or services are for, who "
+                "uses them and how they are sold with your own: if they differ, the overlap may be weaker than the "
+                "wording suggests. A registered trade marks attorney can give a view on this.")
     if same:
         return ("Leaving out terms is unlikely to remove this overlap. Options to weigh: a more distinctive mark, "
                 "or a registered trade marks attorney's view on arguments such as different trade channels or "
@@ -199,6 +203,10 @@ def with_ai_distinctiveness(report: Report, ai: AiDistinctiveness) -> Report:
     updated = report.model_copy(update={"ai_distinctiveness": ai, "overall_risk": overall,
                                         "escalate": bool(reasons), "escalation_reasons": reasons})
     return updated.model_copy(update={"route": recommend_route(updated)})
+
+
+WORD_SCOPE = ("A word mark protects the words themselves, independent of any particular font or styling. It doesn't "
+              "protect a logo design.")
 
 
 def recommend_route(report: Report) -> Route:
@@ -249,13 +257,20 @@ def recommend_route(report: Report) -> Route:
                      reasons=reasons)
     closer = [c for c in report.conflicts if c.live and c.risk == Risk.MEDIUM]
     if closer:
-        names = ", ".join(c.cited_words for c in closer[:3]) + (" and others" if len(closer) > 3 else "")
-        first = (f"{len(closer)} similar mark{'s' if len(closer) > 1 else ''} deserve{'s' if len(closer) == 1 else ''} "
-                 f"a closer look ({names}). A logo is unlikely to change that: examiners compare the words.")
-    else:
-        first = "No significant problem was identified with the words in the searches performed."
-    reasons = [first,
-               "A word mark protects the words in any style, font or logo, so it is the broadest protection.",
+        names = ", ".join(f"{c.cited_words} ({c.cited_number})" for c in closer[:3]) + (" and others" if len(closer) > 3 else "")
+        reasons = [f"{len(closer)} earlier mark{'s' if len(closer) > 1 else ''} share{'s' if len(closer) == 1 else ''} "
+                   f"part of your name and cover related goods or services: {names}. They warrant review before "
+                   "you choose a filing format.",
+                   "Word and composite applications offer different scopes of protection. " + WORD_SCOPE
+                   + " A composite mark protects one particular combination of design and words.",
+                   "Whether a design changes how your mark compares with these earlier marks depends on the design "
+                   "and on the marks themselves; the words are often the main point of comparison."]
+        if possibly_descriptive:
+            reasons.append("Some words may also be seen as descriptive, which a distinctive design can help with.")
+        return Route(recommended="review", headline="Review the earlier marks before choosing a filing format",
+                     reasons=reasons)
+    reasons = ["No significant problem was identified with the words in the searches performed.",
+               WORD_SCOPE + " It is the broadest kind of protection for a name.",
                "A composite mark can be registered later if you want to protect a design too."]
     if possibly_descriptive:
         reasons.insert(1, "Some words may be seen as descriptive. If a word mark draws an objection, a composite "

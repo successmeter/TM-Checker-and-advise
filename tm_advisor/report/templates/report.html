@@ -40,6 +40,9 @@
   .risk.Medium, .risk.possible { color: var(--med); background: var(--med-bg); }
   .risk.Low, .risk.unlikely { color: var(--low); background: var(--low-bg); }
   .box { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin: 10px 0; break-inside: avoid; }
+  h2.appendix { break-before: page; }
+  .guidance { border-left: 3px solid var(--brand); background: var(--soft); padding: 8px 12px; margin: 12px 0; break-inside: avoid; }
+  .guidance ul { margin: 4px 0 0; padding-left: 18px; }
   .route { border: 2px solid var(--brand); background: var(--brand-soft); }
   .route .label { font-size: 9pt; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
   .route h3 { margin: 2px 0 6px; font-size: 13pt; }
@@ -84,10 +87,22 @@
     <tr><th>Overall review priority</th><td><span class="risk {{ r.overall_risk.value }}">{{ r.overall_risk.value }}</span></td></tr>
   </table>
 
+  {% set attention = r.similar_marks | selectattr("live") | rejectattr("risk.value", "equalto", "Low") | list %}
+  {% set others = r.similar_marks | reject("in", attention) | list %}
+  {% macro guidance(section, title, citations) %}
+  <div class="guidance small">
+    <strong>Relevant IP Australia guidance</strong>
+    <ul>
+      <li>Provision: <a href="https://www.austlii.edu.au/au/legis/cth/consol_act/tma1995121/s{{ section }}.html">Trade Marks Act 1995, section {{ section }}</a> ({{ title }})</li>
+      {% for c in citations %}<li>Trade Marks Manual: <a href="{{ c.url }}">{{ c.title }}{% if c.heading %} › {{ c.heading }}{% endif %}</a>{% if c.published %} (published {{ c.published }}){% endif %}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endmacro %}
+
   <h2>1. Summary</h2>
   <p>{{ r.summary }}</p>
   <div class="box route">
-    <div class="label">Option to consider first</div>
+    <div class="label">{{ "Before you choose" if r.route.recommended == "review" else "Option to consider first" }}</div>
     <h3>{{ r.route.headline }}</h3>
     <ul>{% for x in r.route.reasons %}<li>{{ x }}</li>{% endfor %}</ul>
   </div>
@@ -98,14 +113,14 @@
   <ol class="toc">
     <li>Summary</li><li>Options worth considering</li><li>Distinctiveness (section 41)</li><li>Similar marks (section 44)</li>
     <li>Your goods and services</li>{% if r.design_guidance %}<li>Designing your composite mark</li>{% endif %}
-    <li>How to file</li><li>When to get an attorney</li><li>About this report</li>
+    <li>How to file</li><li>When to get an attorney</li><li>About this report</li>{% if others %}<li class="muted">Appendix: lower-priority marks</li>{% endif %}
   </ol>
 
   <h2>2. Options worth considering</h2>
   <p><strong>{{ r.route.headline }}.</strong></p>
   {% for p in r.route_detail %}<p>{{ p }}</p>{% endfor %}
   <table class="facts">
-    <tr><th>Word mark</th><td>Protects the words in any style, font or logo. The broadest protection, but the words themselves must be distinctive and not already taken for similar goods or services.</td></tr>
+    <tr><th>Word mark</th><td>Protects the words themselves, independent of any particular font or styling (it doesn't protect a logo design). The broadest protection for a name, but the words must be distinctive and not already taken for similar goods or services.</td></tr>
     <tr><th>Composite mark</th><td>Protects a design and words together. A substantial, distinctive design can carry descriptive words; it does not get around an earlier similar mark, and others may still use the words on their own.</td></tr>
     <tr><th>Logo mark</th><td>Protects the picture only. Your name is not protected.</td></tr>
   </table>
@@ -120,14 +135,14 @@
   {% if d.affected_terms %}<p><strong>Goods and services this applies to:</strong> {{ d.affected_terms | join("; ") }}.</p>{% endif %}
   {% if d.word_flags %}<p><strong>Individual words:</strong></p><ul>{% for w in d.word_flags %}<li>{{ w }}</li>{% endfor %}</ul>{% endif %}
   {% if d.options %}<h3>Your options</h3><ul>{% for o in d.options %}<li>{{ o }}</li>{% endfor %}</ul>{% endif %}
-  {% for c in d.citations %}<p class="cite">Trade Marks Manual: <a href="{{ c.url }}">{{ c.title }}{% if c.heading %} › {{ c.heading }}{% endif %}</a>{% if c.published %} (published {{ c.published }}){% endif %}</p>{% endfor %}
+  {{ guidance("41", "Trade marks not capable of distinguishing the goods or services", d.citations) }}
 
   <h2>4. Similar marks (section 44)</h2>
-  {% set attention = r.similar_marks | selectattr("live") | rejectattr("risk.value", "equalto", "Low") | list %}
-  {% set others = r.similar_marks | reject("in", attention) | list %}
   <p>We screened {{ r.marks_reviewed }} marks on the register in your classes and the classes IP Australia treats as related.
      {% if attention %}{{ attention | length }} deserve{{ "s" if attention | length == 1 }} a closer look, highest review priority first.
      {% else %}None was flagged for a closer look.{% endif %}</p>
+  <p class="small muted"><strong>How the names are compared:</strong> “letter match” is the share of letters that line up when one name is turned into the other with the fewest changes (two 10-letter names that differ in 3 letters are a 70% match). We also look at shared words, shared beginnings and names that sound alike. These are screening signals, not the legal test: an examiner compares the marks as a whole, as a consumer with imperfect recollection would see and hear them.</p>
+  <p class="small muted"><strong>How the goods and services are compared:</strong> each link below says what it is based on: identical wording, a broad term that can cover yours, shared words, or classes that are commonly treated as related. Shared wording is a reason to look, not a finding that the goods or services are similar.</p>
   <p class="small muted"><strong>What review priority means:</strong> how closely we suggest you look at each mark, based on how alike the marks are and how their goods and services relate. It doesn't decide whether your mark can be registered or used, or whether either mark infringes the other.</p>
   {% if r.own_marks_note %}<p class="small muted">{{ r.own_marks_note }}</p>{% endif %}
   {% for m in attention %}
@@ -139,22 +154,17 @@
            <span class="tag">{{ "Logo/composite" if m.logo else "Word mark" }}</span></p>
         <p class="small muted"><a href="https://search.ipaustralia.gov.au/trademarks/search/view/{{ m.number }}">#{{ m.number }}</a> · {{ m.status }}{% if m.owner %} · {{ m.owner }}{% endif %} · Classes {{ m.classes | join(", ") }}</p>
         <p class="small"><strong>Why it's similar:</strong> {{ m.why_similar | join(" ") }}</p>
-        <p class="small"><strong>Goods and services:</strong> {{ m.goods_overlap }}</p>
+        {% if m.goods_points %}<p class="small"><strong>Goods and services:</strong></p>
+        <ul class="small">{% for g in m.goods_points %}<li>{{ g }}</li>{% endfor %}</ul>
+        {% else %}<p class="small"><strong>Goods and services:</strong> {{ m.goods_overlap }}</p>{% endif %}
         <p class="small"><strong>Points to consider:</strong> {{ m.what_to_do }}</p>
+        {% for c in m.citations %}<p class="cite">Trade Marks Manual: <a href="{{ c.url }}">{{ c.title }}{% if c.heading %} › {{ c.heading }}{% endif %}</a></p>{% endfor %}
       </div>
     </div>
   </div>
   {% endfor %}
-  {% if others %}
-  <h3>Also on the register: low review priority</h3>
-  <p class="small muted">Similar in some way, but given a low review priority (or no longer in force). Listed so you know they exist.</p>
-  <table class="facts small">
-    <tr><th style="width:auto">Mark</th><th style="width:auto">Number · status</th><th style="width:auto">Why it came up</th></tr>
-    {% for m in others[:25] %}<tr><td><strong>{{ m.words }}</strong></td>
-      <td><a href="https://search.ipaustralia.gov.au/trademarks/search/view/{{ m.number }}">#{{ m.number }}</a> · {{ m.status }}</td>
-      <td>{{ m.why_similar[-1] if m.why_similar else "" }}</td></tr>{% endfor %}
-  </table>
-  {% endif %}
+  {{ guidance("44", "Identical and similar trade marks", r.similar_citations) }}
+  {% if others %}<p class="small">{{ others | length }} other mark{{ "s" if others | length > 1 }} came up with a low review priority (they share only part of the name, or are no longer in force). They are listed in the appendix.</p>{% endif %}
 
   <h2>5. Your goods and services, as you selected them</h2>
   <p>These are the terms you chose, checked against IP Australia's picklist.
@@ -187,7 +197,9 @@
 
   <h2>{{ 8 if r.design_guidance else 7 }}. When to get an attorney</h2>
   {% if r.attorney_reasons %}<ul>{% for a in r.attorney_reasons %}<li>{{ a }}</li>{% endfor %}</ul>
-  {% else %}<p>Nothing in this report suggests you need one to file. Consider a registered trade marks attorney if you receive an objection you can't resolve, an opposition, or a demand from another trader.</p>{% endif %}
+  {% elif attention %}<p>Because potentially relevant earlier registrations were identified (section 4), professional review may be useful before committing to an application or adopting the brand. A registered trade marks attorney can assess these marks against your plans.</p>
+  <p>Also consider one if you receive an objection you can't resolve, an opposition, or a demand from another trader.</p>
+  {% else %}<p>No earlier mark was given a medium or high review priority. A registered trade marks attorney can still review your plans before you file, and is worth considering if you receive an objection you can't resolve, an opposition, or a demand from another trader.</p>{% endif %}
 
   <h2>{{ 9 if r.design_guidance else 8 }}. About this report</h2>
   <ul class="small">
@@ -195,6 +207,18 @@
     {% for l in r.limitations %}<li>{{ l }}</li>{% endfor %}
   </ul>
   <p class="small muted">{{ r.brand }} is a service of {{ r.seller }}. Report {{ r.reference }}, produced {{ r.created }}.</p>
+  {% if others %}
+  <h2 class="appendix">Appendix: lower-priority marks</h2>
+  <p class="small muted">Similar in some way, but given a low review priority (or no longer in force). Listed so you know they exist.</p>
+  <table class="facts small">
+    <tr><th style="width:auto">Mark</th><th style="width:auto">Number · status</th><th style="width:auto">Why it came up</th></tr>
+    {% for m in others[:25] %}<tr><td><strong>{{ m.words | truncate(40) }}</strong></td>
+      <td><a href="https://search.ipaustralia.gov.au/trademarks/search/view/{{ m.number }}">#{{ m.number }}</a> · {{ m.status }}</td>
+      <td>{{ m.why_similar[-1] if m.why_similar else "" }}</td></tr>{% endfor %}
+  </table>
+  {% if others | length > 25 %}<p class="small muted">And {{ others | length - 25 }} more. The full list is in your results on the website.</p>{% endif %}
+  {% endif %}
+
 </div>
 </body>
 </html>

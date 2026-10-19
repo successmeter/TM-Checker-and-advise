@@ -7,8 +7,8 @@ and a short curated list of class pairs examiners commonly treat as related. It 
 
 from dataclasses import dataclass
 
-from .models import ClassOverlap, GoodsLevel
-from .text import stems
+from .models import ClassOverlap, GoodsLevel, TermMatch
+from .text import normalise, stem, stems, words
 
 _FILLER = {
     "and", "of", "for", "in", "the", "to", "relation", "a", "being", "namely", "service", "featuring",
@@ -69,6 +69,11 @@ _RELATED = [
 ]
 
 
+def _words(term: str) -> list[str]:
+    """The term's words as written (SaaS, not the stem saa), lower case."""
+    return words(term)
+
+
 def _content(term: str) -> set[str]:
     return stems(term) - _FILLER
 
@@ -109,42 +114,61 @@ def relate(user_class: int, user_terms: list[str], cited_class: int, cited_terms
             note = pair.note
             if cited_terms and pair.sides.get(cited_class):
                 note += " Their goods/services include: " + "; ".join(cited_match[:3]) + "."
+            matches = [TermMatch(user_term=u, cited_term=c, basis="related_class")
+                       for u in user_match[:3] for c in cited_match[:1]]
             return ClassOverlap(user_class=user_class, cited_class=cited_class, level=GoodsLevel.RELATED,
-                                overlapping_terms=user_match, narrowing_helps=False, note=note)
+                                overlapping_terms=user_match, narrowing_helps=False, note=note, matches=matches)
 
     return ClassOverlap(user_class=user_class, cited_class=cited_class, level=GoodsLevel.NONE,
                         overlapping_terms=[], narrowing_helps=False, note="Different classes with no known close relationship.")
 
 
 def _same_class(class_number: int, user_terms: list[str], cited_terms: list[str]) -> ClassOverlap:
-    cited_broad = any(_is_broad(class_number, t) for t in cited_terms)
-    cited_words = set().union(*(_content(t) for t in cited_terms)) if cited_terms else set()
+    broad_cited = [t for t in cited_terms if _is_broad(class_number, t)]
+    cited_content = [(t, _content(t)) for t in cited_terms]
+    identical = {normalise(t): t for t in cited_terms}
 
     overlapping: list[str] = []
     broad_user_terms: list[str] = []
+    matches: list[TermMatch] = []
     for term in user_terms:
-        if _is_broad(class_number, term):
+        if normalise(term) in identical:
+            matches.append(TermMatch(user_term=term, cited_term=identical[normalise(term)], basis="identical"))
+        elif _is_broad(class_number, term):
             broad_user_terms.append(term)
-            overlapping.append(term)
-        elif cited_broad or _content(term) & cited_words:
-            overlapping.append(term)
+            matches.append(TermMatch(user_term=term, cited_term=cited_terms[0] if cited_terms else ALL_GOODS,
+                                     basis="broad_heading"))
+        elif broad_cited:
+            matches.append(TermMatch(user_term=term, cited_term=broad_cited[0], basis="broad_heading"))
+        else:
+            words = _content(term)
+            best = max(cited_content, key=lambda tc: len(words & tc[1]), default=None)
+            if not best or not words & best[1]:
+                continue
+            common = words & best[1]
+            shown = list(dict.fromkeys(w for w in _words(term) if stem(w) in common and len(w) > 2))
+            matches.append(TermMatch(user_term=term, cited_term=best[0], basis="shared_words",
+                                     shared_words=shown or sorted(common)))
+        overlapping.append(term)
 
     if not overlapping:
         return ClassOverlap(user_class=class_number, cited_class=class_number, level=GoodsLevel.RELATED,
                             overlapping_terms=[], narrowing_helps=False,
-                            note="Same class but no shared wording. The examiner may still find the goods related.")
+                            note="Same class but no shared wording. Whether the goods or services are related depends "
+                                 "on what each covers.")
 
+    cited_broad = bool(broad_cited)
     if cited_broad:
-        note = "The cited mark covers a broad heading in this class, so leaving out terms is unlikely to avoid the overlap."
+        note = "Their specification includes a broad term for this class, so leaving out terms is unlikely to avoid the overlap."
         helps = False
     elif len(overlapping) == len(user_terms):
-        note = "Every one of your terms in this class overlaps the cited goods/services."
+        note = "Each of your terms in this class shares wording with their specification."
         helps = False
     else:
-        note = "Some of your terms overlap the cited goods/services."
+        note = "Some of your terms share wording with their specification."
         helps = True
     if broad_user_terms and not cited_broad:
         note += (" Broad headings (" + ", ".join(broad_user_terms) + ") include the cited goods; "
                  "a narrower list of what you actually sell may help.")
     return ClassOverlap(user_class=class_number, cited_class=class_number, level=GoodsLevel.SAME,
-                        overlapping_terms=overlapping, narrowing_helps=helps, note=note)
+                        overlapping_terms=overlapping, narrowing_helps=helps, note=note, matches=matches)

@@ -40,6 +40,8 @@ class SimilarMark(BaseModel):
     risk: Risk
     why_similar: list[str]
     goods_overlap: str                 # plain-English summary of the overlapping goods/services
+    goods_points: list[str] = []       # each link between your terms and theirs, with its basis
+    citations: list[Citation] = []     # Trade Marks Manual sections the explanation relied on
     what_to_do: str
 
 
@@ -90,6 +92,7 @@ class ReportDoc(BaseModel):
 
     distinctiveness: DistinctivenessSection
     similar_marks: list[SimilarMark]
+    similar_citations: list[Citation] = []   # Trade Marks Manual guidance on section 44
     marks_reviewed: int                # how many register results were screened
     own_marks_note: str = ""           # the applicant's own marks that were left out
     specification: list[SpecClass]

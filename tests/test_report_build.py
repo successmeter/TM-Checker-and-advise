@@ -101,13 +101,14 @@ def test_plain_next_steps_are_actions_not_the_route_reasons():
     assert any("section 5" in a for a in doc.top_actions)
 
 
-def test_word_route_mentions_marks_that_need_a_closer_look():
+def test_marks_to_review_make_the_route_neutral_about_filing_format():
     register = FixtureRegisterClient([mark("1", "RE/MAX", 35, ["business consultancy"])])
     app = Application(mark="Revmax", classes=[ClassSpec(class_number=35, terms=["business consultancy"])])
     report = check(app, register, PICKLIST)
     assert [c.risk for c in report.conflicts] == [Risk.MEDIUM]
-    assert report.route.recommended == "word"
-    assert "closer look" in report.route.reasons[0] and "RE/MAX" in report.route.reasons[0]
+    assert report.route.recommended == "review"
+    assert "RE/MAX" in report.route.reasons[0] and "before you choose a filing format" in report.route.reasons[0]
+    assert not any("any style" in r or "logo" in r and "protects the words in" in r for r in report.route.reasons)
 
 
 def test_claude_sees_only_the_marks_that_need_attention():
@@ -124,7 +125,7 @@ def test_claude_sees_only_the_marks_that_need_attention():
     build_report(APP, report, explainer=Recorder(), **KW)
     assert len(seen[0].conflicts) <= 8 and all(c.risk != Risk.LOW for c in seen[0].conflicts)
     html = render_html(build_report(APP, report, **KW))
-    assert "Also on the register: low review priority" in html
+    assert "Appendix: lower-priority marks" in html
 
 
 def test_citations_are_not_repeated_and_marks_have_one_what_to_do():
@@ -153,3 +154,33 @@ def test_report_reads_as_options_not_instructions():
         for phrase in FORBIDDEN:
             assert phrase not in text, phrase
     assert "what this doesn't mean" in render_html(build_report(APP, checked(), **KW)).lower()
+
+
+BIZ_REGISTER = FixtureRegisterClient([
+    mark("1939908", "IMPRINT", 42, ["Software as a service (SaaS) featuring software for controlling connected devices"]),
+    mark("2574", "BIZY", 42, ["Providing temporary use of non-downloadable collaboration software"])])
+BIZ_APP = Application(mark="BizImprint", classes=[ClassSpec(class_number=42, terms=["software as a service [SaaS]"])])
+
+
+def test_report_with_marks_to_review_is_neutral_and_points_to_professional_review():
+    doc = build_report(BIZ_APP, check(BIZ_APP, BIZ_REGISTER, PICKLIST), **KW)
+    html = render_html(doc)
+    assert doc.route.recommended == "review"
+    assert "Nothing in this report suggests you need one" not in html
+    assert "professional review may be useful before committing to an application or adopting the brand" in html
+    assert "in any style, font or logo" not in html
+
+
+def test_goods_links_say_what_they_are_based_on():
+    doc = build_report(BIZ_APP, check(BIZ_APP, BIZ_REGISTER, PICKLIST), **KW)
+    imprint = next(m for m in doc.similar_marks if m.words == "IMPRINT")
+    assert imprint.goods_points and imprint.goods_points[0].startswith("Shared wording:")
+    assert "Shared words alone don't make the services similar" in imprint.goods_points[0]
+
+
+def test_findings_link_to_the_act_and_low_marks_go_to_the_appendix():
+    html = render_html(build_report(BIZ_APP, check(BIZ_APP, BIZ_REGISTER, PICKLIST), **KW))
+    assert "Relevant IP Australia guidance" in html and "Trade Marks Act 1995, section 44" in html
+    assert "section 41" in html
+    assert html.index("About this report</h2>") < html.index("Appendix: lower-priority marks</h2>")
+    assert "BIZY" in html[html.index("Appendix: lower-priority marks</h2>"):]

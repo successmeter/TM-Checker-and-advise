@@ -88,6 +88,14 @@ class GoodsLevel(str, Enum):
     NONE = "none"
 
 
+class TermMatch(BaseModel):
+    """One of the user's terms against one of the cited mark's, and why they were linked."""
+    user_term: str
+    cited_term: str
+    basis: Literal["identical", "broad_heading", "shared_words", "related_class"]
+    shared_words: list[str] = []
+
+
 class ClassOverlap(BaseModel):
     user_class: int
     cited_class: int
@@ -95,6 +103,7 @@ class ClassOverlap(BaseModel):
     overlapping_terms: list[str]
     narrowing_helps: bool
     note: str
+    matches: list[TermMatch] = []
 
 
 class Conflict(BaseModel):
@@ -136,7 +145,7 @@ class AiDistinctiveness(BaseModel):
 
 class Route(BaseModel):
     """Which kind of application to make, judged from the kind of problem found."""
-    recommended: Literal["word", "composite", "new_name", "narrow_goods", "logo"]
+    recommended: Literal["word", "composite", "new_name", "narrow_goods", "logo", "review"]
     headline: str
     reasons: list[str]
 
