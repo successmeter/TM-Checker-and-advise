@@ -113,6 +113,13 @@
   .pill { border-radius: 999px; padding: 3px 12px; font-size: .85rem; font-weight: 600; white-space: nowrap; }
   .pill.warn { background: var(--warn); color: #3b1d00; }
   .pill.ok { background: var(--low-bg); color: var(--low); }
+  .low-marks { margin-top: 14px; }
+  .working { display: flex; gap: 14px; align-items: center; padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--brand-soft); margin-top: 12px; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -2px; }
+  .spinner.big { width: 28px; height: 28px; border-width: 3px; color: var(--brand); flex: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.5s; } }
+  .low-marks summary { cursor: pointer; font-weight: 600; padding: 6px 0; }
   .marks { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 10px; }
   .mark { border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
   .mark .pic { display: block; max-width: 100%; max-height: 120px; margin: 0 auto 10px; background: #fff; border-radius: 4px; }
@@ -469,8 +476,23 @@ $("#run").disabled = true;
 $("#consent").onchange = e => { $("#run").disabled = !e.target.checked; };
 $("#run").onclick = async () => {
   $("#check-error").textContent = "";
-  $("#run").disabled = true;
-  $("#check-result").innerHTML = '<p class="hint">Checking the register and what your mark means for your goods and services… this can take up to half a minute.</p>';
+  const run = $("#run"), label = run.textContent;
+  run.disabled = true;
+  run.innerHTML = '<span class="spinner" aria-hidden="true"></span> Checking…';
+  $("#check-result").innerHTML = `<div class="working" role="status" aria-live="polite">
+    <span class="spinner big" aria-hidden="true"></span>
+    <div><strong id="work-step">Searching the IP Australia register…</strong>
+      <div class="hint">Running for <span id="work-secs">0</span> seconds. This usually takes 10 to 40 seconds.</div></div></div>`;
+  $("#check-result").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  const steps = ["Searching the IP Australia register…", "Comparing similar names…", "Comparing goods and services…",
+                 "Checking what your words mean for your goods and services…", "Putting the results together…"];
+  const started = Date.now();
+  const timer = setInterval(() => {
+    const secs = Math.round((Date.now() - started) / 1000);
+    const secsEl = $("#work-secs"), stepEl = $("#work-step");
+    if (secsEl) secsEl.textContent = secs;
+    if (stepEl) stepEl.textContent = secs > 60 ? "Still working: the register is slow to answer right now…" : steps[Math.min(Math.floor(secs / 6), steps.length - 1)];
+  }, 1000);
   try {
     const response = await fetch("/api/check", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(application()) });
     const data = await response.json().catch(() => ({ detail: `The check failed on the server (error ${response.status}). The window running the server shows the details.` }));
@@ -483,7 +505,9 @@ $("#run").onclick = async () => {
     $("#check-result").innerHTML = "";
     $("#check-error").textContent = err.message;
   } finally {
-    $("#run").disabled = !$("#consent").checked;
+    clearInterval(timer);
+    run.textContent = label;
+    run.disabled = !$("#consent").checked;
   }
 };
 
@@ -609,16 +633,24 @@ function renderCheck(r) {
 
   const live = r.conflicts.filter(c => c.live && c.risk !== "Low");
   const area = state.industry.trim().replace(/^for (the )?/i, "");
-  parts.push(accordion("similar", "Similarity", live.length, (r.conflicts.length ? `
-    <strong>What to do</strong>
-    <p>We found ${r.conflicts.length} mark${r.conflicts.length > 1 ? "s" : ""} that may be similar to yours. Check whether they are similar in the way they look, sound, and in their goods or services.</p>
-    <div class="marks">${r.conflicts.map(c => `
+  const markCard = c => `
       <div class="mark">${markPicture(c.cited_image, c.cited_words)}<span class="words">${esc(c.cited_words || "(no words)")}</span> <span class="risk ${c.risk}">${c.risk}</span>
         <div class="hint">${markLink(c.cited_number, c.cited_logo)} · ${esc(c.cited_status)}${c.cited_owner ? " · " + esc(c.cited_owner) : ""}</div>
         <ul>${c.mark_reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
         ${c.overlaps.map(o => `<p class="hint">Your class ${o.user_class} vs their class ${o.cited_class}: ${esc(o.note)}${o.overlapping_terms.length ? ` Overlapping: <strong>${o.overlapping_terms.map(esc).join(", ")}</strong>.` : ""}</p>`).join("")}
         <p><strong>Option:</strong> ${esc(c.option)}</p>
-      </div>`).join("")}</div>
+      </div>`;
+  const top = r.conflicts.filter(c => c.risk !== "Low");
+  const low = r.conflicts.filter(c => c.risk === "Low");
+  parts.push(accordion("similar", "Similarity", live.length, (r.conflicts.length ? `
+    <strong>What to do</strong>
+    <p>We found ${r.conflicts.length} mark${r.conflicts.length > 1 ? "s" : ""} that may be similar to yours${top.length ? `, ${top.length} worth a closer look` : ""}. Check whether they are similar in the way they look, sound, and in their goods or services.</p>
+    ${top.length ? `<div class="marks">${top.map(markCard).join("")}</div>` : ""}
+    ${low.length ? `<details class="low-marks"${top.length ? "" : " open"}>
+      <summary>${top.length ? "Show " : ""}${low.length} lower-priority mark${low.length > 1 ? "s" : ""}</summary>
+      <p class="hint">These share only part of the name (for example the first few letters or a common word), or are no longer live. Listed so you know they exist.</p>
+      <div class="marks">${low.map(markCard).join("")}</div>
+    </details>` : ""}
     ${area ? `<p class="note">Your industry or customers: “${esc(state.industry)}”. When the other mark's goods are for a different purpose, limiting yours (for example “…; all for use in ${esc(area)}”) may remove the overlap (Trade Marks Manual, Part 27.3). It won't help when the other mark covers the broad term itself.</p>` : ""}`
     : "<p>No similar marks found for your classes. This is a screen, not a full search: also run IP Australia's free TM Checker.</p>"), live.length > 0));
 
