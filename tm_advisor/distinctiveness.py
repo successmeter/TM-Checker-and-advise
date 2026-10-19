@@ -16,7 +16,7 @@ _LAUDATORY = {
 _DESCRIPTIVE = {
     "eco", "green", "organic", "vegan", "local", "aussie", "australian", "online", "digital", "global", "kids",
     "baby", "home", "health", "healthy", "fit", "fitness", "tech", "solutions", "services", "store", "shop",
-    "co", "group", "hub", "app", "cloud", "web", "plus", "max", "mini",
+    "co", "group", "hub", "app", "cloud", "web", "plus", "max", "mini", "trade", "brand", "business",
 }
 _GEOGRAPHIC = {
     "australia", "sydney", "melbourne", "brisbane", "perth", "adelaide", "hobart", "darwin", "canberra",
