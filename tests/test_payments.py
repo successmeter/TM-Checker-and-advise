@@ -27,6 +27,12 @@ def event(kind: str, obj: dict) -> dict:
 class FakeSessions:
     def __init__(self):
         self.params = None
+        self.status = "unpaid"  # what retrieve() reports
+
+    def retrieve(self, session_id, params=None, options=None):
+        order_id = (self.params or {}).get("client_reference_id")
+        return {"id": session_id, "payment_status": self.status, "payment_intent": "pi_1",
+                "client_reference_id": order_id, "metadata": {"order_id": order_id}}
 
     def create(self, params=None, options=None):
         self.params = params

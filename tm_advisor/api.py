@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import secrets
+import time
 from typing import Literal
 from contextlib import asynccontextmanager
 from datetime import date, datetime
@@ -459,6 +460,11 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
     @app.get("/report/{order_id}", response_class=HTMLResponse, include_in_schema=False)
     def report_page(order_id: str, t: str = "") -> str:
         order = _authorised(order_id, t)
+        if order.status == "pending" and payments is not None and order.stripe_session and _due(order_id):
+            # No webhook yet: ask Stripe directly (at most every few seconds per order).
+            if payments.check_session(order_id, order.stripe_session, store):
+                worker.submit(order_id)
+                order = store.get(order_id)
         if order.status in ("ready", "refunded") and (saved := store.report(order_id)):
             return render_html(ReportDoc.model_validate(saved[0]), download_url=f"/report/{order_id}/pdf?t={t}")
         return status_page(order_id, order.status, order.email)
@@ -481,6 +487,15 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
             mailer.report_ready(orders[0].email, orders[0].application.get("mark", ""),
                                 [(f"Report {o.id}: {o.application.get('mark', '')}", report_link(o.id)) for o in orders])
         return {"message": "If there are reports for that email address, we've sent the links."}
+
+    last_stripe_check: dict[str, float] = {}
+
+    def _due(order_id: str, every: float = 5.0) -> bool:
+        now = time.monotonic()
+        if now - last_stripe_check.get(order_id, 0.0) < every:
+            return False
+        last_stripe_check[order_id] = now
+        return True
 
     def _authorised(order_id: str, token: str):
         if not store.check_token(order_id, token):

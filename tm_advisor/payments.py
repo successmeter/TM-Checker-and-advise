@@ -75,6 +75,28 @@ class Payments:
         })
         return session["id"], session["url"]
 
+    def check_session(self, order_id: str, session_id: str, store: Store) -> bool:
+        """Ask Stripe whether an order's Checkout Session has been paid, and mark it paid if so.
+
+        A fallback for when the webhook is late or never arrives (it is also what a customer waiting on the report
+        page triggers). Returns True if the order has just been marked paid.
+        """
+        try:
+            session = self._client().v1.checkout.sessions.retrieve(session_id)
+            data = json.loads(str(session)) if not isinstance(session, dict) else session
+        except Exception as e:  # Stripe unreachable: the webhook or the next look will catch it
+            log.warning("Couldn't check Stripe session %s: %s", session_id, e)
+            return False
+        if data.get("payment_status") != "paid":
+            return False
+        if ((data.get("metadata") or {}).get("order_id") or data.get("client_reference_id")) != order_id:
+            log.warning("Stripe session %s doesn't belong to order %s", session_id, order_id)
+            return False
+        if store.mark_paid(order_id, data.get("payment_intent")):
+            log.info("Order %s paid (confirmed with Stripe directly)", order_id)
+            return True
+        return False
+
     def handle_webhook(self, payload: bytes, signature: str | None, store: Store) -> str | None:
         """Verify and apply a webhook event. Returns the order id if the order has just been paid.
 

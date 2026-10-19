@@ -137,3 +137,19 @@ def test_no_paid_reports_from_the_test_register():
         assert r.status_code == 503 and "test register" in r.json()["detail"]
     finally:
         del REGISTER.base_url
+
+
+def test_report_page_confirms_payment_with_stripe_when_no_webhook_arrives():
+    client, store, mailer, pay = setup()
+    order_id = client.post("/api/orders", json={"email": "me@example.com", "terms": True, "application": APP}).json()["order_id"]
+    page = f"/report/{order_id}?t={store.token_for(order_id)}"
+    pay.client.sessions.status = "paid"  # paid on Stripe, but the webhook never comes
+    client.get(page)
+    assert wait_for(store, order_id, "ready")
+
+
+def test_report_page_does_not_mark_unpaid_orders_paid():
+    client, store, mailer, pay = setup()
+    order_id = client.post("/api/orders", json={"email": "me@example.com", "terms": True, "application": APP}).json()["order_id"]
+    assert "Confirming your payment" in client.get(f"/report/{order_id}?t={store.token_for(order_id)}").text
+    assert store.get(order_id).status == "pending"
