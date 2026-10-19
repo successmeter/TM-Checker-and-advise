@@ -42,7 +42,14 @@ def compare(user_mark: str, cited_mark: str) -> MarkSimilarity:
     reasons: list[str] = []
 
     looks = edit_similarity(a, b)
-    if looks >= 0.75:
+    if looks >= 0.6 and _scattered(a, b):
+        # Differences in more than one place (NAME-LIGHT / GAME-FIGHT) change how the marks look and sound far
+        # more than one changed letter or syllable does, even with the same share of letters in common.
+        score = max(score, 0.6)
+        reasons.append(f"Some letters in common ({round(looks * 100)}% letter match), but the marks differ at "
+                       "more than one point, including the start.")
+        looks = 0.0
+    elif looks >= 0.75:
         score = max(score, looks)
         reasons.append(f"Spelled very similarly ({round(looks * 100)}% letter match).")
     elif looks >= 0.6 and min(len(a), len(b)) >= 4:
@@ -103,6 +110,18 @@ def compare(user_mark: str, cited_mark: str) -> MarkSimilarity:
             reasons.append("Shares the word(s): " + ", ".join(sorted(w.upper() for w in shared)) + ".")
 
     return MarkSimilarity(round(score, 2), reasons)
+
+
+def _scattered(a: str, b: str) -> bool:
+    """Whether the letters that differ fall in more than one place, starting at the beginning.
+
+    The unchanged start and end of the marks are measured; if together they cover less than 60% of the longer
+    mark, and the marks start differently, the changes are spread through the mark rather than in one spot.
+    """
+    if a[0] == b[0]:
+        return False
+    suffix = len(_common_prefix(a[::-1], b[::-1]))
+    return suffix < 0.6 * max(len(a), len(b))
 
 
 def _common_prefix(a: str, b: str) -> str:
