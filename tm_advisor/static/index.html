@@ -500,7 +500,7 @@ $("#run").onclick = async () => {
     if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Please check your trade mark and goods and services.");
     lastReport = data;
     renderCheck(data);
-    $("#explain-box").hidden = !!data.concerns;  // explanations are part of the paid report
+    $("#explain-box").hidden = !!data.offer;  // with an offer, the explanation is part of the paid report
     $("#explanation").innerHTML = "";
   } catch (err) {
     $("#check-result").innerHTML = "";
@@ -533,27 +533,15 @@ function markPicture(url, words) {
 function markLink(number, logo) {
   return `<a href="https://search.ipaustralia.gov.au/trademarks/search/view/${encodeURIComponent(number)}" target="_blank" rel="noopener">#${esc(number)}</a><span class="mkind">${logo ? "Logo mark" : "Word mark"}</span>`;
 }
-function renderFree(r) {
-  const label = { likely: "Likely to be raised as an issue", possible: "May be raised as an issue", none: "No significant issue identified" };
-  const dz = r.concerns.distinctiveness, sm = r.concerns.similar_marks, wd = r.concerns.wording;
-  const tile = (title, bad, text) => `<div class="tile ${bad ? "bad" : "ok"}"><div class="hint">${title}</div><strong>${text}</strong></div>`;
-  const price = (r.price_cents / 100).toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
+function offerHtml(o, mark) {
+  const price = (o.price_cents / 100).toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
   const designKind = state.kind !== "word";
-  const parts = [`<h2>Result for ${esc(r.mark)} <span class="risk ${r.overall_risk}">Review priority: ${r.overall_risk}</span></h2>
-    <p class="hint">An automated screen of the register and your goods and services. It doesn't decide whether your mark can be registered or used.</p>`];
-  if (r.own_marks && r.own_marks.length) parts.push(`<p class="hint">Left out as your own: ${r.own_marks.map(n => "#" + esc(n)).join(", ")}.</p>`);
-  if (r.register_warning) parts.push(`<div class="note warnbox"><strong>Test data.</strong> ${esc(r.register_warning)}</div>`);
-  parts.push(`<div class="tiles">
-    ${tile("Distinctiveness", dz !== "none", label[dz])}
-    ${tile("Similar marks", sm > 0, sm ? `${sm} worth a closer look` : "None flagged for a closer look")}
-    ${tile("Goods and services wording", wd > 0, wd ? `${wd} term${wd === 1 ? "" : "s"} not on the picklist` : "All on the picklist")}
-  </div>`);
-  parts.push(`<div class="offer">
-    <h2>Your trade mark research report — ${price}</h2>
-    <p>A detailed research report on <strong>${esc(r.mark)}</strong> and your goods and services:</p>
-    <ul>${r.report_covers.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
+  return `<div class="offer">
+    <h2>Explanation and research report — ${price}</h2>
+    <p>Your results above are free. The report adds, for <strong>${esc(mark)}</strong> and your goods and services:</p>
+    <ul>${o.report_covers.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
     <p><a href="/report/sample" target="_blank" rel="noopener">See a sample report ↗</a></p>
-    ${r.payments_enabled ? `
+    ${o.payments_enabled ? `
     <label class="field" for="order-applicant">Who will own the trade mark? (your name or company)</label>
     <input type="text" id="order-applicant" maxlength="200" autocomplete="organization" placeholder="e.g. Example Pty Ltd" value="${esc(state.applicant || "")}">
     <p class="hint">Shown on the report. Marks you already own, such as an earlier TM Headstart request, are left out of the similar-marks check.</p>
@@ -563,13 +551,11 @@ function renderFree(r) {
     <input type="file" id="order-logo" accept="image/png,image/jpeg,image/svg+xml">` : ""}
     <label class="consent"><input type="checkbox" id="order-terms">
       <span>I agree to the <a href="/terms" target="_blank" rel="noopener">terms and refund policy</a>, and understand the report is automated research, not legal advice or a decision on whether my mark can be registered.</span></label>
-    <button type="button" id="order">Get my report — ${price}</button>
+    <button type="button" id="order">Get my explanation and report — ${price}</button>
     <p id="order-error" class="error" role="alert"></p>
-    <p class="hint">Secure payment by Stripe. Refund within 14 days if you haven't lodged; see the refund policy for the TM Headstart promise.</p>`
+    <p class="hint">Secure payment by Stripe. Your report opens on this site straight after payment and is emailed to you. Refund within 14 days if you haven't lodged; see the refund policy for the TM Headstart promise.</p>`
     : `<p class="hint">Reports will be available soon.</p>`}
-  </div>`);
-  $("#check-result").innerHTML = parts.join("");
-  if (r.payments_enabled) $("#order").onclick = () => placeOrder();
+  </div>`;
 }
 
 function readFile(file) {
@@ -599,7 +585,6 @@ async function placeOrder() {
 }
 
 function renderCheck(r) {
-  if (r.concerns) return renderFree(r);
   const parts = [`<h2>Result for ${esc(r.mark)} <span class="risk ${r.overall_risk}">Review priority: ${r.overall_risk}</span></h2>`];
   if (r.own_marks && r.own_marks.length) parts.push(`<p class="hint">Left out as your own: ${r.own_marks.map(n => markLink(n, false).split("<span")[0]).join(", ")}.</p>`);
   if (r.register_warning) parts.push(`<div class="note warnbox"><strong>Test data.</strong> ${esc(r.register_warning)}</div>`);
@@ -663,7 +648,9 @@ function renderCheck(r) {
     : "<p>All your terms are on the picklist.</p>", off.length > 0));
 
   if (r.notes.length) parts.push(`<div class="note">${r.notes.map(n => `<p>${esc(n)}</p>`).join("")}</div>`);
+  if (r.offer) parts.push(offerHtml(r.offer, r.mark));
   $("#check-result").innerHTML = parts.join("");
+  if (r.offer && r.offer.payments_enabled) $("#order").onclick = () => placeOrder();
 }
 
 $("#explain").onclick = async () => {

@@ -43,24 +43,18 @@ class CheckRequest(Application):
     consent: bool = False
 
 
-class Concerns(BaseModel):
-    distinctiveness: Literal["none", "possible", "likely"]
-    similar_marks: int        # live similar marks rated Medium or High
-    wording: int              # terms not on the picklist
-
-
-class FreeCheck(BaseModel):
-    """What the free check shows: the overall risk and where the concerns are. The rest is the paid report."""
-    mark: str
-    mark_kind: str
-    overall_risk: Risk
-    concerns: Concerns
+class Offer(BaseModel):
+    """The paid report, offered under the free results: what it adds, its price, and whether it can be bought."""
     report_covers: list[str]
-    own_marks: list[str] = []
-    register_warning: str | None = None
     price_cents: int
     currency: str
     payments_enabled: bool
+
+
+class CheckResult(Report):
+    """The free check: every result, without the option to consider first, plus the offer of the paid report
+    (its explanation, options and PDF). With full results on (local testing), the route is kept and there is no offer."""
+    offer: Offer | None = None
 
 
 def _valid_email(value: str) -> str:
@@ -344,13 +338,15 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
         return DISCLAIMERS
 
     @app.post("/api/check", response_model=None)
-    def run_check(request: CheckRequest) -> Report | FreeCheck:
+    def run_check(request: CheckRequest) -> CheckResult:
         if not request.consent:
             raise HTTPException(422, "Please confirm you understand this is not legal advice before running a check.")
         application = Application(mark=request.mark, classes=request.classes, mark_kind=request.mark_kind,
                                   applicant=request.applicant)
         report = full_check(application)
-        return report if full_results else free_summary(report)
+        if full_results:
+            return CheckResult(**report.model_dump())
+        return CheckResult(**report.model_dump(exclude={"route"}), offer=offer(report))
 
     def full_check(application: Application) -> Report:
         try:
@@ -374,26 +370,19 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
             return report.model_copy(update={"ai_distinctiveness_unavailable": str(e)})
         return with_ai_distinctiveness(report, ai)
 
-    def free_summary(report: Report) -> FreeCheck:
-        ai = report.ai_distinctiveness
-        distinct = (ai.likelihood if ai and ai.likelihood != "unlikely" else "none" if ai else
-                    "likely" if report.wholly_descriptive else "possible" if report.distinctiveness else "none")
+    def offer(report: Report) -> Offer:
         similar = sum(1 for c in report.conflicts if c.live and c.risk != Risk.LOW)
-        wording = sum(1 for p in report.picklist if not p.on_picklist)
-        covers = ["The options worth considering for your mark (word mark, composite mark, logo mark, a different "
+        covers = ["A plain-English explanation of these results, grounded in IP Australia's Trade Marks Manual",
+                  "The options worth considering for your mark (word mark, composite mark, logo mark, a different "
                   "name or narrower goods), and the reasons",
-                  "What your mark means as a whole for your goods and services, and your options" if distinct != "none"
-                  else "Confirmation that your mark is distinctive, and what it protects",
-                  f"The {similar} similar mark{'s' if similar != 1 else ''} that need attention: why each matters and "
-                  "what to do" if similar else "Every similar mark we screened, and why none needs action",
+                  "What your mark means as a whole for your goods and services",
+                  f"The {similar} similar mark{'s' if similar != 1 else ''} worth a closer look: why each matters and "
+                  "what you could do" if similar else "Every similar mark we screened, and why none stands out",
                   "Your goods and services checked against the picklist, with the ones that overlap other marks",
                   "How TM Headstart and standard applications work, with fees for your classes",
-                  "A dated PDF to keep"]
-        return FreeCheck(mark=report.mark, mark_kind=report.mark_kind, overall_risk=report.overall_risk,
-                         concerns=Concerns(distinctiveness=distinct, similar_marks=similar, wording=wording),
-                         report_covers=covers, own_marks=report.own_marks, register_warning=report.register_warning,
-                         price_cents=price, currency="aud",
-                         payments_enabled=bypass_payment or (payments is not None and not on_test_register()))
+                  "A dated PDF to keep, emailed to you"]
+        return Offer(report_covers=covers, price_cents=price, currency="aud",
+                     payments_enabled=bypass_payment or (payments is not None and not on_test_register()))
 
     def make_report(application: Application, order_id: str, logo: str | None, industry: str) -> ReportDoc:
         when = local_now()

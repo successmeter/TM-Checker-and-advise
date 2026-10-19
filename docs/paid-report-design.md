@@ -196,7 +196,7 @@ Go-live is blocked on this advice (plan task 4.12).
 
 | Question | Decision |
 |---|---|
-| Free vs paid | Free check: overall risk and which areas raised concerns. Recommended route and everything else: paid. |
+| Free vs paid | Free check: every result (similar marks, distinctiveness, wording; changed October 2026). Paid: the plain-English explanation, the option to consider first, and the report and PDF. |
 | Attorney review | Not offered at launch. |
 | Refund policy | Agreed as in §12; final wording after legal advice. |
 | Hosting | Own small host (the Social Media Suite is on Laravel Cloud, PHP only): Oracle Always Free for staging, a ~A$7–10/month Sydney VPS for production (§6). |

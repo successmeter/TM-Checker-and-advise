@@ -51,13 +51,13 @@ def wait_for(store, order_id, status, seconds=10):
     return False
 
 
-def test_free_check_shows_only_risk_and_where_the_concerns_are():
+def test_free_check_shows_the_results_and_offers_the_explanation_and_report():
     client, *_ = setup()
     data = client.post("/api/check", json={**APP, "consent": True}).json()
-    assert set(data) >= {"overall_risk", "concerns", "report_covers", "price_cents"}
-    assert "conflicts" not in data and "route" not in data and "distinctiveness" not in data
-    assert data["price_cents"] == 29900 and data["payments_enabled"]
-    assert data["concerns"]["similar_marks"] >= 1
+    assert data["conflicts"] and "overall_risk" in data and "distinctiveness" in data
+    assert data["route"] is None  # the option to consider first is in the paid report
+    assert data["offer"]["price_cents"] == 29900 and data["offer"]["payments_enabled"]
+    assert any("explanation" in c for c in data["offer"]["report_covers"])
     assert client.post("/api/explain", json={**APP, "consent": True}).status_code == 404  # part of the paid report
 
 
@@ -118,7 +118,7 @@ def test_review_hold_and_no_payments_configured():
 
     client, *_ = setup(payments=False)
     assert client.post("/api/orders", json={"email": "a@b.co", "terms": True, "application": APP}).status_code == 503
-    assert client.post("/api/check", json={**APP, "consent": True}).json()["payments_enabled"] is False
+    assert client.post("/api/check", json={**APP, "consent": True}).json()["offer"]["payments_enabled"] is False
 
 
 def test_sample_report_page():
@@ -132,7 +132,7 @@ def test_no_paid_reports_from_the_test_register():
     client.app  # noqa: B018
     REGISTER.base_url = "https://test.api.ipaustralia.gov.au/public/australian-trade-mark-search-api/v1"
     try:
-        assert client.post("/api/check", json={**APP, "consent": True}).json()["payments_enabled"] is False
+        assert client.post("/api/check", json={**APP, "consent": True}).json()["offer"]["payments_enabled"] is False
         r = client.post("/api/orders", json={"email": "a@b.co", "terms": True, "application": APP})
         assert r.status_code == 503 and "test register" in r.json()["detail"]
     finally:
