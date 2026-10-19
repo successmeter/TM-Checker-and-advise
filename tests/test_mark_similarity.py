@@ -62,3 +62,9 @@ def test_camel_case_name_compared_by_its_parts():
     assert compare("BizImprint", "IMPRINTS").score >= 0.7
     assert compare("BizImprint", "MY IMPRINT").score >= 0.7
     assert compare("BizImprint", "BIZY").same_start_only
+
+
+def test_same_start_found_after_an_initial():
+    for other in ("B BIZPAY", "BI BIZINVOICER"):
+        assert compare("BizImprint", other).same_start_only, other
+    assert compare("BizImprint", "FITBIZ").score < 0.5
