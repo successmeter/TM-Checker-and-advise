@@ -26,6 +26,11 @@ def _minor_part(shared_letters: int, ours: str, theirs: str) -> bool:
 class MarkSimilarity:
     score: float
     reasons: list[str] = field(default_factory=list)
+    same_start_only: bool = False  # only the first letters match: listed when the class is the same
+
+
+# The score for marks whose only resemblance is the same first three or more letters (BIZY / BIZIMPRINT).
+SAME_START = 0.5
 
 
 def compare(user_mark: str, cited_mark: str) -> MarkSimilarity:
@@ -107,6 +112,9 @@ def compare(user_mark: str, cited_mark: str) -> MarkSimilarity:
             score = max(score, 0.7)
             reasons.append("Shares the word(s): " + ", ".join(sorted(w.upper() for w in shared)) + ".")
 
+    if not reasons and len(prefix) >= 3:
+        return MarkSimilarity(SAME_START, [f"Starts with the same letters ('{prefix.upper()}'), but the rest of the "
+                                           "marks is different."], same_start_only=True)
     return MarkSimilarity(round(score, 2), reasons)
 
 

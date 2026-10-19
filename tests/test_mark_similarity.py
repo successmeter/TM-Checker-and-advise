@@ -61,4 +61,4 @@ def test_one_changed_part_still_very_similar():
 def test_camel_case_name_compared_by_its_parts():
     assert compare("BizImprint", "IMPRINTS").score >= 0.7
     assert compare("BizImprint", "MY IMPRINT").score >= 0.7
-    assert compare("BizImprint", "BIZY").score < 0.5
+    assert compare("BizImprint", "BIZY").same_start_only

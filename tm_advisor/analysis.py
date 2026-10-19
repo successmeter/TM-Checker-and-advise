@@ -112,6 +112,8 @@ def _conflict(application: Application, cited: RegisterMark) -> Conflict | None:
                 overlaps.append(overlap)
     if not overlaps:  # unrelated goods and services: not a conflict
         return None
+    if similarity.same_start_only and not any(o.user_class == o.cited_class for o in overlaps):
+        return None  # a shared start alone counts only in the same class
 
     has_same = any(o.level == GoodsLevel.SAME for o in overlaps)
     if not cited.is_live:

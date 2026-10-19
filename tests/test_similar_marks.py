@@ -18,7 +18,8 @@ def mark(number, words, cls, terms, group="REGISTERED", **kw):
 def test_two_letters_apart_or_same_start_counts_as_similar_but_low():
     for other in ("NEOMAX", "REOMAT", "RevMed", "RevLab", "Revstar"):
         assert 0.5 <= compare("Revmax", other).score < 0.7, other
-    for other in ("Revolution", "Bondi", "Max"):
+    assert compare("Revmax", "Revolution").same_start_only  # listed only in the same class
+    for other in ("Bondi", "Max"):
         assert compare("Revmax", other).score < 0.5, other
 
 
@@ -108,3 +109,14 @@ def test_identical_mark_owned_by_a_company_named_after_it_is_assumed_to_be_yours
     assert [c.cited_number for c in report.conflicts] == ["1"]  # a different owner is still a conflict
     named = check(app.model_copy(update={"applicant": "Other Co"}), register, Picklist.load(DATA / "picklist_sample.json"))
     assert named.own_marks_assumed == [] and len(named.conflicts) == 2  # a name given: nothing assumed
+
+
+def test_same_start_only_is_listed_in_the_same_class_but_not_a_related_one():
+    register = FixtureRegisterClient([
+        mark("1", "BIZY", 42, ["Providing temporary use of non-downloadable collaboration software"]),
+        mark("2", "BIZOOM", 9, ["Downloadable computer software"]),
+    ])
+    report = check(Application(mark="BizImprint", classes=[ClassSpec(class_number=42, terms=["software as a service [SaaS]"])]),
+                   register, Picklist.load(DATA / "picklist_sample.json"))
+    assert [c.cited_words for c in report.conflicts] == ["BIZY"]
+    assert report.conflicts[0].risk == Risk.LOW
