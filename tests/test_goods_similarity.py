@@ -62,3 +62,10 @@ def test_class_9_software_related_to_saas_and_names_their_goods():
 
 def test_related_pair_needs_software_on_the_users_side_too():
     assert relate(42, ["Engineering services"], 9, ["Computer software"]).level == GoodsLevel.NONE
+
+
+def test_class_35_food_retail_not_related_to_saas():
+    result = relate(42, ["software as a service [SaaS]"], 35,
+                    ["Retail and wholesale services including retail and wholesale of food products",
+                     "Online retail store services"])
+    assert result.level == GoodsLevel.NONE

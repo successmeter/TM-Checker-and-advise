@@ -40,8 +40,7 @@ class _RelatedPair:
 _SOFTWARE_GOODS = frozenset({"software", "computer", "app", "application", "downloadable", "program", "programme",
                              "firmware", "database", "platform", "saa", "game", "e", "ebook"})
 _SOFTWARE_SERVICES = frozenset({"software", "computer", "saa", "paa", "iaa", "platform", "program", "programming",
-                                "app", "application", "website", "web", "cloud", "database", "data", "hosting",
-                                "it", "technology", "online"})
+                                "app", "application", "website", "web", "cloud", "database", "hosting", "it"})
 _CLOTHING = frozenset({"clothing", "apparel", "footwear", "headwear", "fashion", "garment"})
 
 _RELATED = [
@@ -63,8 +62,8 @@ _RELATED = [
                                       41: frozenset({"education", "educational", "training", "fitness", "game",
                                                      "entertainment", "learning"})},
                  "Downloadable content or apps (class 9) can relate to the matching education or entertainment services (class 41)."),
-    _RelatedPair(frozenset({35, 42}), {35: frozenset({"software", "computer", "platform", "online", "data", "database",
-                                                      "marketplace", "e", "ecommerce", "website", "web"}),
+    _RelatedPair(frozenset({35, 42}), {35: frozenset({"software", "computer", "platform", "database", "marketplace",
+                                                      "website", "saa"}),
                                        42: _SOFTWARE_SERVICES},
                  "Online business platforms can sit across class 35 and class 42."),
 ]

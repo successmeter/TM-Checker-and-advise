@@ -104,7 +104,9 @@ def test_advanced_search_returns_full_records_without_extra_lookups():
     assert sorted(kinds) == sorted([("podicure plus", "EXACT"), ("podicureplus", "FUZZY"),
                                     ("podicure plus", "PHONETIC"), ("podicure", "PART"), ("plus", "PART"),
                                     ("pod", "PREFIX")])
-    assert all(b["rows"][0]["query"]["classNumber"] == {"text": "44", "type": "ASSOCIATED"} for b in bodies)
+    for b in bodies:  # a shared start only counts in the class itself, so that search uses the single class
+        kind = b["rows"][0]["query"]["word"]["type"]
+        assert b["rows"][0]["query"]["classNumber"] == {"text": "44", "type": "SINGLE" if kind == "PREFIX" else "ASSOCIATED"}
     assert {"classNumber"} <= set(_props("TrademarkApiAdvancedSearch"))
     assert "ASSOCIATED" in DEFS["TrademarkApiClass"]["properties"]["type"]["enum"]
 
@@ -288,3 +290,24 @@ def test_results_from_the_test_register_carry_a_warning():
 def test_camel_case_parts_are_searched():
     from tm_advisor.register.ipaustralia import _advanced_queries
     assert ("imprint", "PART") in _advanced_queries("BizImprint")
+
+
+def test_same_start_search_reads_further_pages_when_a_page_is_full():
+    pages = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/token"):
+            return httpx.Response(200, json={"access_token": "tok", "expires_in": 3600})
+        body = json.loads(request.content)
+        if body["rows"][0]["query"]["word"]["type"] != "PREFIX":
+            return httpx.Response(200, json={"trademarks": []})
+        pages.append(body["pageNumber"])
+        full = body["pageNumber"] < 2
+        records = [{"number": f"{body['pageNumber']}{i:03}", "words": f"BIZ{i}"} for i in range(100 if full else 3)]
+        return httpx.Response(200, json={"trademarks": records})
+
+    client = IpAustraliaRegisterClient("id", "secret", "https://auth.example/token", base_url="https://api.example/v1",
+                                       transport=httpx.MockTransport(handler))
+    marks = client.search("BizImprint", [42])
+    assert pages == [0, 1, 2]
+    assert len(marks) == 203

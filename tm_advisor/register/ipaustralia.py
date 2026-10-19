@@ -27,6 +27,10 @@ PRODUCTION_BASE = "https://production.api.ipaustralia.gov.au/public/australian-t
 TEST_BASE = "https://test.api.ipaustralia.gov.au/public/australian-trade-mark-search-api/v1"
 
 
+# Pages of marks fetched for the same-start search in each class (100 marks a page).
+PREFIX_PAGES = 5
+
+
 class IpAustraliaRegisterClient:
     def __init__(self, client_id: str, client_secret: str, token_url: str, base_url: str = PRODUCTION_BASE,
                  transport: httpx.BaseTransport | None = None, max_results: int = 40, page_size: int = 100):
@@ -85,6 +89,8 @@ class IpAustraliaRegisterClient:
 
     def _try_page(self, text: str, kind: str, class_number: int | None) -> list[dict] | Exception:
         try:
+            if kind == "PREFIX":
+                return self._same_start_pages(text, class_number)
             return self._advanced_page(text, kind, class_number)
         except httpx.HTTPStatusError as e:
             if e.response.status_code in (403, 404, 405, 501):
@@ -93,23 +99,37 @@ class IpAustraliaRegisterClient:
         except httpx.HTTPError as e:
             return e
 
-    def _advanced_page(self, text: str, kind: str, class_number: int | None, attempt: int = 0) -> list[dict]:
+    def _advanced_page(self, text: str, kind: str, class_number: int | None, attempt: int = 0, page: int = 0,
+                       class_type: str | None = None) -> list[dict]:
         query: dict = {"word": {"text": text, "type": kind}, "statuses": ["PENDING_REGISTERED"]}
-        if class_number is not None and self._class_type:
-            query["classNumber"] = {"text": str(class_number), "type": self._class_type}
-        body = {"rows": [{"op": "AND", "query": query}], "pageNumber": 0, "pageSize": self.page_size}
+        class_type = class_type or self._class_type
+        if class_number is not None and class_type:
+            query["classNumber"] = {"text": str(class_number), "type": class_type}
+        body = {"rows": [{"op": "AND", "query": query}], "pageNumber": page, "pageSize": self.page_size}
         response = self._http.post(f"{self.base_url}/page/advanced", json=body, headers=self._headers())
         if response.status_code == 400 and "classNumber" in query:
             # Class filter refused: try the class on its own, then no class filter at all.
-            self._class_type = "SINGLE" if self._class_type == "ASSOCIATED" else None
+            self._class_type = "SINGLE" if class_type == "ASSOCIATED" else None
             log.warning("IP Australia refused the class filter (%s); retrying with %s", response.text[:200],
                         self._class_type or "no class filter")
-            return self._advanced_page(text, kind, class_number, attempt)
+            return self._advanced_page(text, kind, class_number, attempt, page)
         if response.status_code == 429 and attempt < 3:  # too many requests: wait and try again
             time.sleep(min(float(response.headers.get("retry-after") or 1 + attempt), 5))
-            return self._advanced_page(text, kind, class_number, attempt + 1)
+            return self._advanced_page(text, kind, class_number, attempt + 1, page, class_type)
         response.raise_for_status()
         return response.json().get("trademarks") or []
+
+    def _same_start_pages(self, text: str, class_number: int | None) -> list[dict]:
+        """Marks starting with the same letters, in the class itself (a shared start only counts in the same
+        class), over several pages: a common start such as BIZ has more marks than fit on one."""
+        records: list[dict] = []
+        for page in range(PREFIX_PAGES):
+            batch = self._advanced_page(text, "PREFIX", class_number, page=page,
+                                        class_type="SINGLE" if self._class_type else None)
+            records += batch
+            if len(batch) < self.page_size:
+                break
+        return records
 
     def goods_terms(self, query: str, limit: int = 60, marks: int = 100) -> list[RegisterTerm]:
         """Accepted goods & services wording from registered marks whose specification contains the query."""
