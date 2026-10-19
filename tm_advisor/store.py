@@ -85,7 +85,7 @@ class Store:
             Path(path).parent.mkdir(parents=True, exist_ok=True)
         self._db = sqlite3.connect(str(path), check_same_thread=False)
         self._db.row_factory = sqlite3.Row
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()  # one connection shared by threads: every query holds it
         with self._lock:
             self._db.executescript(_SCHEMA)
             self._db.execute("PRAGMA journal_mode=WAL") if path != ":memory:" else None
@@ -108,11 +108,11 @@ class Store:
         return self.get(order_id), self.token_for(order_id)
 
     def get(self, order_id: str) -> Order | None:
-        row = self._db.execute("SELECT * FROM orders WHERE id=?", (order_id,)).fetchone()
+        row = self._one("SELECT * FROM orders WHERE id=?", (order_id,))
         return _order(row) if row else None
 
     def by_session(self, session_id: str) -> Order | None:
-        row = self._db.execute("SELECT * FROM orders WHERE stripe_session=?", (session_id,)).fetchone()
+        row = self._one("SELECT * FROM orders WHERE stripe_session=?", (session_id,))
         return _order(row) if row else None
 
     def token_for(self, order_id: str) -> str:
@@ -123,8 +123,8 @@ class Store:
         return bool(token) and self.get(order_id) is not None and hmac.compare_digest(self.token_for(order_id), token)
 
     def orders_for_email(self, email: str) -> list[Order]:
-        rows = self._db.execute("SELECT * FROM orders WHERE email=? AND status<>'pending' ORDER BY created_at DESC",
-                                (email.strip().lower(),)).fetchall()
+        rows = self._all("SELECT * FROM orders WHERE email=? AND status<>'pending' ORDER BY created_at DESC",
+                         (email.strip().lower(),))
         return [_order(r) for r in rows]
 
     def set_session(self, order_id: str, session_id: str) -> None:
@@ -168,8 +168,8 @@ class Store:
 
     def unfinished(self) -> list[str]:
         """Paid orders without a report (e.g. after a restart), oldest first."""
-        rows = self._db.execute("SELECT id FROM orders WHERE status IN ('paid','generating','failed') AND attempts < 5 "
-                                "ORDER BY paid_at").fetchall()
+        rows = self._all("SELECT id FROM orders WHERE status IN ('paid','generating','failed') AND attempts < 5 "
+                         "ORDER BY paid_at")
         return [r["id"] for r in rows]
 
     # reports ----------------------------------------------------------------------------------------------------
@@ -186,8 +186,20 @@ class Store:
             self._db.commit()
 
     def report(self, order_id: str) -> tuple[dict, str | None] | None:
-        row = self._db.execute("SELECT doc, pdf_path FROM reports WHERE order_id=?", (order_id,)).fetchone()
+        row = self._one("SELECT doc, pdf_path FROM reports WHERE order_id=?", (order_id,))
         return (json.loads(row["doc"]), row["pdf_path"]) if row else None
+
+    def recent(self, limit: int = 50) -> list[sqlite3.Row]:
+        return self._all("SELECT id, status, email, created_at, error FROM orders ORDER BY created_at DESC LIMIT ?",
+                         (limit,))
+
+    def _one(self, sql: str, args: tuple = ()) -> sqlite3.Row | None:
+        with self._lock:
+            return self._db.execute(sql, args).fetchone()
+
+    def _all(self, sql: str, args: tuple = ()) -> list[sqlite3.Row]:
+        with self._lock:
+            return self._db.execute(sql, args).fetchall()
 
     def _update(self, order_id: str, **fields) -> None:
         cols = ", ".join(f"{k}=?" for k in fields)

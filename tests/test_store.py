@@ -40,3 +40,26 @@ def test_failures_retry_and_review_hold():
     store.save_report(order.id, {}, None, hold_for_review=True)
     assert store.get(order.id).status == "review" and store.approve(order.id) and store.get(order.id).status == "ready"
     assert store.orders_for_email("a@b.co")[0].status == "ready"
+
+
+def test_reads_and_writes_from_several_threads_never_lose_an_order(tmp_path):
+    import threading
+    store = Store(tmp_path / "o.sqlite")
+    order, _ = store.create_order("me@example.com", {"mark": "X"}, 29900, "aud")
+    missing = []
+
+    def read():
+        for _ in range(300):
+            if store.get(order.id) is None:
+                missing.append(1)
+
+    def write():
+        for i in range(300):
+            store.set_session(order.id, f"cs_{i}")
+
+    threads = [threading.Thread(target=read) for _ in range(4)] + [threading.Thread(target=write) for _ in range(2)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert not missing

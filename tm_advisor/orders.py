@@ -22,8 +22,7 @@ def main() -> None:
     link = lambda oid: f"{public}/report/{oid}?t={store.token_for(oid)}"  # noqa: E731
     command, *args = sys.argv[1:] or ["help"]
     if command == "list":
-        rows = store._db.execute("SELECT id, status, email, created_at, error FROM orders "
-                                 "ORDER BY created_at DESC LIMIT 50").fetchall()
+        rows = store.recent()
         for r in rows:
             print(f"{r['id']}  {r['status']:<10} {r['email']:<32} {r['created_at']}  {r['error'] or ''}")
         if not rows:
