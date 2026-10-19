@@ -68,6 +68,7 @@ class Filing(BaseModel):
 
 class ReportDoc(BaseModel):
     brand: str = "BizImprint"
+    tagline: str = "Trademark Conflict Intelligence for Australian businesses"
     seller: str = "Success Meter Pty Ltd"
     reference: str
     prepared_for: str = ""

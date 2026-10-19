@@ -68,7 +68,7 @@
 {% if download_url %}<div class="toolbar"><span>{{ r.brand }} · Report {{ r.reference }}</span><a href="{{ download_url }}">Download PDF</a></div>{% endif %}
 <div class="page">
 
-  <div class="brandbar"><strong>{{ r.brand }}</strong><span class="muted small">Report {{ r.reference }} · {{ r.created }}</span></div>
+  <div class="brandbar"><span><strong>{{ r.brand }}</strong> <span class="muted small">{{ r.tagline }}</span></span><span class="muted small">Report {{ r.reference }} · {{ r.created }}</span></div>
   {% if r.sample %}<div class="sample">Sample report. It shows what a paid report contains; the details are illustrative and are not a report on this mark.</div>{% endif %}
 
   <h1>Trade mark research report</h1>
