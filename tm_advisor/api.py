@@ -314,8 +314,9 @@ def create_app(register: RegisterClient | None = None, picklist: Picklist | None
     elif bypass_payment:
         log.info("Payments: skipped (TM_DEV_FREE_REPORTS=1): reports are made without paying.")
     elif payments is None:
-        log.warning("Payments: OFF. STRIPE_SECRET_KEY isn't set in this window, so the order form says 'Reports will be "
-                    "available soon'. Set it with setx, then open a NEW Command Prompt window.")
+        log.warning("Payments: OFF. STRIPE_SECRET_KEY isn't set, so the order form says 'Reports will be available soon'. "
+                    "On Windows: setx it, then open a NEW Command Prompt window. On the server: add it to "
+                    "/etc/bizimprint.env and restart.")
     elif on_test_register():
         log.warning("Payments: OFF. The IP Australia TEST register is in use (IPA_BASE_URL); paid reports need production.")
     else:
