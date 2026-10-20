@@ -167,3 +167,13 @@ Still open: brand name, price, attorney-review tier, bot check, evaluation set, 
 - The Loft Legal, fees: https://theloft.legal/fees
 - Trade Marks Act 1995 (compilation, 2019): https://www.legislation.gov.au/C2004A04969/2019-02-24/2019-02-24/text/original/epub/OEBPS/document_1/document_1.html
 - IP Australia API terms (portal copy): https://anypoint.mulesoft.com/exchange/portals/ip-australia-3/pages/Terms%20%26%20Conditions/
+
+## Report quality controls (October 2026)
+
+| # | Control | Why | Status |
+|---|---|---|---|
+| 1 | Exact Manual citations | Users can verify the reasoning | Narrative may cite only excerpts it was given (made-up ids dropped). Each finding has a "Relevant IP Australia guidance" box: the Act section plus the closest Manual sections from the local index. Citations are at page/heading level, not paragraph. |
+| 2 | AI output validation | Prevents unsupported conclusions | `report/validate.py`: every narrative passage is checked for advice or promises, review priorities that differ from the check, trade mark numbers not in the findings. Failing passages are dropped and the tool's own wording is used; the reason is logged. Also applied to the distinctiveness assessment. |
+| 3 | Goods/services comparison | Reduces false conflict warnings | Each link states its basis (identical, broad term, shared words, related classes) and quotes their wording; related classes need the cited mark's own goods to fit. Decision: a same-class link on shared common words (e.g. "software") stays a same-goods link, so ratings such as IMPRINT stay Medium; the uncertainty is stated. |
+| 4 | Consistency checking | Prevents contradictory statements | No recommendation route in the report; key findings, uncertainties and research paths come from one place; the validator drops a summary that says no marks were flagged when some were, or names a different overall priority. |
+| 5 | Legal-boundary controls | Reduces the risk of presenting personalised legal advice | Research-only structure ("No format is recommended"), banned-phrase checks at runtime and in tests, disclaimers, consent before a check, terms. Lawyer review pending. |

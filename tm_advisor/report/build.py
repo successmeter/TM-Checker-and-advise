@@ -15,6 +15,7 @@ from ..models import Application, ClassOverlap, Conflict, GoodsLevel, Report, Ri
 from ..picklist import ClassInfo
 from .schema import (Citation, DistinctivenessSection, Filing, FormatNote, ReportDoc, SimilarMark, SpecClass,
                      SpecTerm)
+from .validate import checked, problems
 
 log = logging.getLogger("uvicorn.error")
 
@@ -63,7 +64,7 @@ def build_report(application: Application, report: Report, *, classes: dict[int,
                  created: str, register_searched: str, sources: list[str], explainer: Explainer | None = None,
                  manual: ManualIndex | None = None, logo_image: str | None = None, industry: str = "",
                  sample: bool = False) -> ReportDoc:
-    explanation = _explain(report, explainer, manual)
+    explanation = checked(_explain(report, explainer, manual), report)
     by_number = {c.cited_number: c.explanation for c in explanation.conflicts} if explanation else {}
     cited_by_number = {c.cited_number: c.citations for c in explanation.conflicts} if explanation else {}
 
@@ -71,7 +72,7 @@ def build_report(application: Application, report: Report, *, classes: dict[int,
         update={"citations": _unique_citations(cited_by_number.get(c.cited_number, []))[:2]})
         for c in _relevant(report.conflicts)]
     attention = [m for m in marks if m.live and m.risk != Risk.LOW]
-    summary = explanation.overview if explanation else _plain_summary(report, len(attention))
+    summary = explanation.overview if explanation and explanation.overview else _plain_summary(report, len(attention))
     open_from_narrative = explanation.next_steps if explanation else []
 
     return ReportDoc(
@@ -341,9 +342,12 @@ def _distinctiveness(report: Report, explanation: Explanation | None,
                           if explanation and explanation.distinctiveness else [])
     ai = report.ai_distinctiveness
     if ai:
-        return DistinctivenessSection(likelihood=ai.likelihood, meaning=ai.meaning, reasoning=ai.reasoning,
-                                      affected_terms=ai.affected_terms, word_flags=flags, options=ai.options,
-                                      citations=citations)
+        reasoning = ai.reasoning if not problems(ai.reasoning, report) else (
+            "Read as a whole, the mark " + {"likely": "is likely to", "possible": "may", "unlikely": "is not expected to"}[
+                ai.likelihood] + " be seen as describing your goods or services.")
+        return DistinctivenessSection(likelihood=ai.likelihood, meaning=ai.meaning, reasoning=reasoning,
+                                      affected_terms=ai.affected_terms, word_flags=flags,
+                                      options=[o for o in ai.options if not problems(o, report)], citations=citations)
     likelihood = "likely" if report.wholly_descriptive else "possible" if flags else "unlikely"
     reasoning = (explanation.distinctiveness.explanation if explanation and explanation.distinctiveness else
                  "Every word in the mark describes or praises your goods or services." if report.wholly_descriptive
