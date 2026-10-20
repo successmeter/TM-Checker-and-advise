@@ -1,0 +1,115 @@
+"""What a paid report contains (design: docs/paid-report-design.md §4).
+
+The report is built once, when the order is paid, and frozen: everything the customer sees comes from this
+object, dated with the time the register was searched.
+"""
+
+from typing import Literal
+
+from pydantic import BaseModel
+
+from ..models import MarkKind, Risk, Route
+
+
+class Citation(BaseModel):
+    title: str
+    heading: str = ""
+    url: str
+    published: str = ""
+
+
+class DistinctivenessSection(BaseModel):
+    likelihood: Literal["likely", "possible", "unlikely"]
+    meaning: str = ""
+    reasoning: str
+    affected_terms: list[str] = []
+    word_flags: list[str] = []          # individual words that describe or praise, with why
+    options: list[str] = []
+    citations: list[Citation] = []
+
+
+class SimilarMark(BaseModel):
+    number: str
+    words: str
+    logo: bool = False
+    image: str | None = None
+    status: str
+    owner: str | None = None
+    classes: list[int]
+    live: bool = True
+    risk: Risk
+    why_similar: list[str]
+    goods_overlap: str                 # plain-English summary of the overlapping goods/services
+    goods_points: list[str] = []       # each link between your terms and theirs, with its basis
+    citations: list[Citation] = []     # Trade Marks Manual sections the explanation relied on
+    what_to_do: str = ""               # the narrative's explanation of this mark, if written
+    open_questions: list[str] = []     # what the register can't settle about this mark
+
+
+class SpecTerm(BaseModel):
+    text: str
+    on_picklist: bool = True
+    note: str = ""
+
+
+class SpecClass(BaseModel):
+    class_number: int
+    title: str
+    terms: list[SpecTerm]
+    removed: list[SpecTerm] = []       # terms we suggest leaving out or narrowing, with why in `note`
+
+
+class Filing(BaseModel):
+    classes: int
+    headstart_part1: int               # A$, total for all classes
+    headstart_part2: int
+    standard: int
+    all_picklist: bool
+    steps: list[str]
+    adverse_headstart: list[str]       # what to do if the Headstart assessment is adverse
+
+
+class FormatNote(BaseModel):
+    """What a filing format protects, and how this report's findings bear on it (no format is recommended)."""
+    kind: str
+    protects: str
+    findings: str
+
+
+class ReportDoc(BaseModel):
+    brand: str = "BizImprint"
+    tagline: str = "Trademark Conflict Intelligence for Australian businesses"
+    seller: str = "Success Meter Pty Ltd"
+    reference: str
+    prepared_for: str = ""
+    created: str                       # date the report was produced, e.g. "7 October 2026"
+    register_searched: str             # date and time of the register search
+    sources: list[str]                 # data sources with their dates
+    sample: bool = False
+
+    mark: str
+    mark_kind: MarkKind
+    logo_image: str | None = None      # data: URI of the customer's uploaded logo
+    classes: list[int]
+
+    overall_risk: Risk
+    summary: str
+    key_findings: list[str] = []       # the evidence in brief, one line per area
+    format_notes: list[FormatNote] = []
+    uncertainties: list[str] = []      # what this research can't establish
+    research_paths: list[str] = []     # further research the customer may choose to do
+    top_actions: list[str] = []        # (older reports)
+    route: Route | None = None         # (older reports)
+    route_detail: list[str] = []       # (older reports)
+
+    distinctiveness: DistinctivenessSection
+    similar_marks: list[SimilarMark]
+    similar_citations: list[Citation] = []   # Trade Marks Manual guidance on section 44
+    marks_reviewed: int                # how many register results were screened
+    own_marks_note: str = ""           # the applicant's own marks that were left out
+    specification: list[SpecClass]
+    specification_notes: list[str] = []
+    design_guidance: list[str] = []    # for composite and logo marks
+    filing: Filing
+    attorney_reasons: list[str] = []
+    limitations: list[str]

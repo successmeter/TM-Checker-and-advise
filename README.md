@@ -1,19 +1,22 @@
-# TM Advisor
+# BizImprint
 
 A brand filing check for Australian founders who want to file their own trade mark. It screens a proposed word
 mark against the register, the IP Australia goods & services picklist and common section 41 / section 44
 problems, explains the result in plain English, and says when to speak to a registered trade marks attorney.
 
-TM Advisor is software, not a law firm or a trade marks attorney, and does not give legal advice.
+BizImprint is software, not a law firm or a trade marks attorney, and does not give legal advice.
 
 - Design: [docs/design.md](docs/design.md)
 - Implementation plan: [docs/implementation-plan.md](docs/implementation-plan.md)
 
 ## Status
 
-Phase 1 (MVP) works end to end against a **fixture register** of invented marks and a **sample picklist**.
-The IP Australia client is written and unit-tested, but its request filters and response mapping still have to be
-checked against a real response once API access is approved (see `tm_advisor/register/ipaustralia.py`).
+- **Phase 1 (checks)** works end to end against a **fixture register** of invented marks and a **sample picklist**.
+- **Phase 2 (explanations)**: "Explain in plain English" sends the findings plus matching Trade Marks Manual
+  passages to Claude and shows the answer with links to the Manual. It needs an Anthropic API key and a local
+  Manual index (below); without them the checks still work and the page says explanations aren't set up.
+- The IP Australia register and picklist clients are written and unit-tested against simulated responses. Their
+  field mapping has to be checked against real responses once API access is approved.
 
 ## Run it
 
@@ -38,6 +41,26 @@ uvicorn tm_advisor.api:app --reload
 
 Open http://127.0.0.1:8000 for the page, or http://127.0.0.1:8000/docs for the API.
 
+### Turn on plain-English explanations
+
+1. Get an API key at https://console.anthropic.com and set it before starting the server:
+   - PowerShell: `$env:ANTHROPIC_API_KEY = "sk-ant-..."`
+   - macOS / Linux: `export ANTHROPIC_API_KEY=sk-ant-...`
+2. Download and index the Trade Marks Manual (once; re-run when the Manual changes). It fetches about one page
+   per second and obeys IP Australia's robots.txt, so the first run takes a while:
+
+   ```
+   python -m tm_advisor.manual crawl
+   ```
+
+   Pages go to `data/manual/pages.jsonl` and the search index to `data/manual/manual.sqlite`. Running `crawl` again
+   does nothing once the Manual is downloaded; to pick up Manual updates use `crawl --refresh` (the old copy is kept
+   until the new download finishes). To re-index without downloading: `python -m tm_advisor.manual index`.
+
+Each explanation is one Claude call (Claude Opus 5.5 by default, with Anthropic's automatic fallback model if a
+request is declined). Claude only explains the findings: it can't change a risk level, and citations to Manual
+passages that weren't retrieved are dropped.
+
 ## Configuration
 
 | Variable | Default | Meaning |
@@ -46,15 +69,53 @@ Open http://127.0.0.1:8000 for the page, or http://127.0.0.1:8000/docs for the A
 | `TM_REGISTER_FIXTURE` | `data/register_fixture.json` | Fixture register file |
 | `TM_PICKLIST` | `data/picklist.json` if present, else `data/picklist_sample.json` | Picklist file |
 | `IPA_CLIENT_ID`, `IPA_CLIENT_SECRET` | | From the IP Australia API portal |
-| `IPA_TOKEN_URL` | | OAuth2 token endpoint shown on the portal |
+| `IPA_TOKEN_URL` | IP Australia External Token API | OAuth2 token endpoint, if the portal gives a different one |
 | `IPA_BASE_URL` | production Trade Mark Search API | Use the test base URL while developing |
+| `TMGNS_SEARCH_BASE` | production TMGnS search API | Picklist API base URL |
+| `ANTHROPIC_API_KEY` | | Turns on explanations |
+| `TM_LLM_MODEL` | `claude-opus-5-5` | Model used for explanations |
+| `TM_MANUAL_INDEX` | `data/manual/manual.sqlite` | Manual search index |
 
 ## Getting real data
 
 1. **Register access**: register on the IP Australia API portal and request access to the *Australian Trade Mark
-   Search API* (manual approval). Access uses OAuth2 client credentials.
-2. **Picklist**: request access to the *Trade Mark Goods and Services (TMGnS) API* and save the full picklist as
-   `data/picklist.json` in the same shape as `data/picklist_sample.json`.
+   Search API* (manual approval). Access uses OAuth2 client credentials. Then set `IPA_CLIENT_ID`,
+   `IPA_CLIENT_SECRET` and `TM_REGISTER=ipaustralia` (add `IPA_BASE_URL` with the test address while you only have
+   test access). The client follows the published specification in `docs/api/api.json`: it uses the advanced
+   search (exact, fuzzy, sound-alike and part-word matches, pending and registered marks only) and falls back to
+   quick search if the advanced search isn't enabled for your account.
+2. **Picklist**: the full list (60,000+ terms) comes from IP Australia's TMGnS search API, the same API its own
+   classification search website uses. It needs your own API access: once you have a client ID and secret from the
+   API portal, set `IPA_CLIENT_ID` and `IPA_CLIENT_SECRET` and the server downloads and refreshes it by itself
+   (or run `python -m tm_advisor.picklist_api` now). Until then the page uses the sample list.
+   (The public classification search website is a JavaScript app with no terms in its pages, so
+   `picklist_site` can't read it; `python -m tm_advisor.picklist_site probe` shows why.)
+3. **Manual**: `python -m tm_advisor.manual crawl` (above).
+
+## Keeping the data up to date (automatic)
+
+IP Australia updates the Manual and the picklist from time to time. **The server keeps them current by itself:**
+while it runs, it checks every 6 hours and refreshes anything more than 7 days old in the background. You don't
+need to run or schedule anything. On a fresh install it also downloads anything missing (the Manual takes about
+10 minutes the first time).
+
+- Each part keeps its current copy if the new download looks incomplete (for example far fewer picklist terms or
+  Manual pages than before), so a site outage or redesign can't wipe your data. A failed attempt is retried a day
+  later.
+- What changed (picklist terms added and removed; Manual pages new, removed, changed) is written to
+  `data/refresh.log`. The server uses new data straight away.
+- The page footer shows when each part was last updated and when the next check is due. Explanations show each
+  Manual page's "Date Published" next to its link.
+- Change how often with `TM_AUTO_REFRESH_DAYS` (e.g. `set TM_AUTO_REFRESH_DAYS=14`); `0` turns it off.
+
+To refresh by hand at any time: `py -m tm_advisor.refresh` (it waits if the server is already updating).
+
+Optional: if the server isn't always running and you still want weekly updates, schedule the same command in
+Windows. Open **PowerShell** and paste as one line:
+
+```powershell
+Register-ScheduledTask -TaskName "BizImprint refresh" -Action (New-ScheduledTaskAction -Execute "py" -Argument "-m tm_advisor.refresh") -Trigger (New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At 3am) -Settings (New-ScheduledTaskSettingsSet -StartWhenAvailable)
+```
 
 ## Layout
 
@@ -66,7 +127,15 @@ tm_advisor/
   goods_similarity.py  overlap between goods/services (same class, broad headings, related classes)
   distinctiveness.py   section 41 screen
   picklist.py          picklist match, suggestions, search
+  picklist_sync.py     full picklist download from the TMGnS API
+  picklist_api.py      full picklist from the TMGnS search API (own API access)
+  picklist_site.py     probe of IP Australia's public classification search website
   register/            fixture and IP Australia register clients
+  ipa_auth.py          IP Australia OAuth tokens
   analysis.py          runs every check and builds the report
+  manual/              Trade Marks Manual download, parsing, chunking, keyword search
+  explain.py           plain-English explanations with Claude, grounded in Manual passages
+  refresh.py           refresh the picklist and the Manual safely, with a change report
+  autorefresh.py       background updates while the server runs
   api.py, static/      FastAPI app and the page
 ```

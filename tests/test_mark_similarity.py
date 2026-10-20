@@ -29,8 +29,9 @@ def test_containment_at_start():
 
 def test_shared_word():
     result = compare("Bondi Brew", "Bondi Bakery")
-    assert result.score >= 0.7
-    assert any("BONDI" in r for r in result.reasons)
+    assert 0.5 <= result.score < 0.7  # BONDI is a place name: a weak thing to share
+    assert any("BONDI" in r and "common word" in r for r in result.reasons)
+    assert compare("Zorblax Brew", "Zorblax Bakery").score >= 0.7  # an invented word shared is serious
 
 
 def test_weak_shared_word_does_not_count():
@@ -39,3 +40,31 @@ def test_weak_shared_word_does_not_count():
 
 def test_unrelated_marks_score_low():
     assert compare("EcoKnit", "Thunderbolt").score < 0.5
+
+
+def test_distinctive_word_inside_other_mark_despite_extra_words():
+    result = compare("Best EcoKnit", "ECO KNITWEAR")
+    assert result.score >= 0.75
+    assert any("ECOKNIT" in r for r in result.reasons)
+
+
+def test_differences_in_two_places_are_not_similar():
+    result = compare("NAMELIGHT", "GAMEFIGHT")
+    assert result.score == 0 and not result.reasons
+
+
+def test_one_changed_part_still_very_similar():
+    assert compare("NAMELIGHT", "FARELIGHT").score >= 0.75
+    assert compare("COLGATE", "KOLGATE").score >= 0.85
+
+
+def test_camel_case_name_compared_by_its_parts():
+    assert compare("BizImprint", "IMPRINTS").score >= 0.7
+    assert compare("BizImprint", "MY IMPRINT").score >= 0.7
+    assert compare("BizImprint", "BIZY").same_start_only
+
+
+def test_same_start_found_after_an_initial():
+    for other in ("B BIZPAY", "BI BIZINVOICER"):
+        assert compare("BizImprint", other).same_start_only, other
+    assert compare("BizImprint", "FITBIZ").score < 0.5

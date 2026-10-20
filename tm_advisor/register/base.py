@@ -7,3 +7,5 @@ class RegisterClient(Protocol):
     def search(self, mark: str, classes: list[int]) -> list[RegisterMark]:
         """Marks on the register that may conflict with `mark`. Callers score and filter the results."""
         ...
+
+    # Optional: goods_terms(query, limit) -> list[RegisterTerm], accepted wording from registered marks.

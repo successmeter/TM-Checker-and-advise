@@ -1,6 +1,321 @@
 {
- "_note": "Hand-written SAMPLE for development only. Replace with the full picklist from IP Australia's TMGnS API (see README).",
+ "_note": "Hand-written SAMPLE for development only, not IP Australia's picklist. Replace with the full picklist (60,000+ terms) using `python -m tm_advisor.picklist_sync` once you have TMGnS API access.",
  "items": [
+  {
+   "id": "sample-1-1",
+   "class_number": 1,
+   "description": "Fertilisers"
+  },
+  {
+   "id": "sample-1-2",
+   "class_number": 1,
+   "description": "Chemicals for use in industry"
+  },
+  {
+   "id": "sample-1-3",
+   "class_number": 1,
+   "description": "Adhesives for industrial purposes"
+  },
+  {
+   "id": "sample-1-4",
+   "class_number": 1,
+   "description": "Compost"
+  },
+  {
+   "id": "sample-1-5",
+   "class_number": 1,
+   "description": "Potting soil"
+  },
+  {
+   "id": "sample-2-1",
+   "class_number": 2,
+   "description": "Paints"
+  },
+  {
+   "id": "sample-2-2",
+   "class_number": 2,
+   "description": "Varnishes"
+  },
+  {
+   "id": "sample-2-3",
+   "class_number": 2,
+   "description": "Lacquers"
+  },
+  {
+   "id": "sample-2-4",
+   "class_number": 2,
+   "description": "Wood stains"
+  },
+  {
+   "id": "sample-2-5",
+   "class_number": 2,
+   "description": "Printing ink"
+  },
+  {
+   "id": "sample-3-1",
+   "class_number": 3,
+   "description": "Cosmetics"
+  },
+  {
+   "id": "sample-3-2",
+   "class_number": 3,
+   "description": "Skin care preparations"
+  },
+  {
+   "id": "sample-3-3",
+   "class_number": 3,
+   "description": "Soaps"
+  },
+  {
+   "id": "sample-3-4",
+   "class_number": 3,
+   "description": "Shampoos"
+  },
+  {
+   "id": "sample-3-5",
+   "class_number": 3,
+   "description": "Hair conditioners"
+  },
+  {
+   "id": "sample-3-6",
+   "class_number": 3,
+   "description": "Perfumes"
+  },
+  {
+   "id": "sample-3-7",
+   "class_number": 3,
+   "description": "Essential oils"
+  },
+  {
+   "id": "sample-3-8",
+   "class_number": 3,
+   "description": "Non-medicated skin care preparations"
+  },
+  {
+   "id": "sample-3-9",
+   "class_number": 3,
+   "description": "Make-up"
+  },
+  {
+   "id": "sample-3-10",
+   "class_number": 3,
+   "description": "Lipsticks"
+  },
+  {
+   "id": "sample-3-11",
+   "class_number": 3,
+   "description": "Nail polish"
+  },
+  {
+   "id": "sample-3-12",
+   "class_number": 3,
+   "description": "Deodorants for personal use"
+  },
+  {
+   "id": "sample-3-13",
+   "class_number": 3,
+   "description": "Laundry detergents"
+  },
+  {
+   "id": "sample-3-14",
+   "class_number": 3,
+   "description": "Cleaning preparations"
+  },
+  {
+   "id": "sample-3-15",
+   "class_number": 3,
+   "description": "Beard oil"
+  },
+  {
+   "id": "sample-3-16",
+   "class_number": 3,
+   "description": "Body lotions"
+  },
+  {
+   "id": "sample-3-17",
+   "class_number": 3,
+   "description": "Sunscreen preparations"
+  },
+  {
+   "id": "sample-3-18",
+   "class_number": 3,
+   "description": "Toothpaste"
+  },
+  {
+   "id": "sample-4-1",
+   "class_number": 4,
+   "description": "Candles"
+  },
+  {
+   "id": "sample-4-2",
+   "class_number": 4,
+   "description": "Lubricants"
+  },
+  {
+   "id": "sample-4-3",
+   "class_number": 4,
+   "description": "Fuels"
+  },
+  {
+   "id": "sample-4-4",
+   "class_number": 4,
+   "description": "Firelighters"
+  },
+  {
+   "id": "sample-4-5",
+   "class_number": 4,
+   "description": "Scented candles"
+  },
+  {
+   "id": "sample-5-1",
+   "class_number": 5,
+   "description": "Pharmaceutical preparations"
+  },
+  {
+   "id": "sample-5-2",
+   "class_number": 5,
+   "description": "Vitamin supplements"
+  },
+  {
+   "id": "sample-5-3",
+   "class_number": 5,
+   "description": "Dietary supplements"
+  },
+  {
+   "id": "sample-5-4",
+   "class_number": 5,
+   "description": "Protein supplements"
+  },
+  {
+   "id": "sample-5-5",
+   "class_number": 5,
+   "description": "Medicated skin care preparations"
+  },
+  {
+   "id": "sample-5-6",
+   "class_number": 5,
+   "description": "Herbal medicines"
+  },
+  {
+   "id": "sample-5-7",
+   "class_number": 5,
+   "description": "Disinfectants"
+  },
+  {
+   "id": "sample-5-8",
+   "class_number": 5,
+   "description": "Veterinary preparations"
+  },
+  {
+   "id": "sample-5-9",
+   "class_number": 5,
+   "description": "Nutritional supplements"
+  },
+  {
+   "id": "sample-5-10",
+   "class_number": 5,
+   "description": "Sanitary pads"
+  },
+  {
+   "id": "sample-5-11",
+   "class_number": 5,
+   "description": "First aid kits"
+  },
+  {
+   "id": "sample-5-12",
+   "class_number": 5,
+   "description": "Baby food"
+  },
+  {
+   "id": "sample-6-1",
+   "class_number": 6,
+   "description": "Metal hardware"
+  },
+  {
+   "id": "sample-6-2",
+   "class_number": 6,
+   "description": "Metal fasteners"
+  },
+  {
+   "id": "sample-6-3",
+   "class_number": 6,
+   "description": "Metal boxes"
+  },
+  {
+   "id": "sample-6-4",
+   "class_number": 6,
+   "description": "Keys"
+  },
+  {
+   "id": "sample-6-5",
+   "class_number": 6,
+   "description": "Metal signs"
+  },
+  {
+   "id": "sample-7-1",
+   "class_number": 7,
+   "description": "Coffee grinders, other than hand-operated"
+  },
+  {
+   "id": "sample-7-2",
+   "class_number": 7,
+   "description": "Food processors, electric"
+  },
+  {
+   "id": "sample-7-3",
+   "class_number": 7,
+   "description": "Washing machines"
+  },
+  {
+   "id": "sample-7-4",
+   "class_number": 7,
+   "description": "Spraying machines"
+  },
+  {
+   "id": "sample-7-5",
+   "class_number": 7,
+   "description": "Agricultural machines"
+  },
+  {
+   "id": "sample-7-6",
+   "class_number": 7,
+   "description": "3D printers"
+  },
+  {
+   "id": "sample-7-7",
+   "class_number": 7,
+   "description": "Vacuum cleaners"
+  },
+  {
+   "id": "sample-8-1",
+   "class_number": 8,
+   "description": "Hand tools"
+  },
+  {
+   "id": "sample-8-2",
+   "class_number": 8,
+   "description": "Cutlery"
+  },
+  {
+   "id": "sample-8-3",
+   "class_number": 8,
+   "description": "Knives"
+  },
+  {
+   "id": "sample-8-4",
+   "class_number": 8,
+   "description": "Razors"
+  },
+  {
+   "id": "sample-8-5",
+   "class_number": 8,
+   "description": "Gardening tools, hand-operated"
+  },
+  {
+   "id": "sample-8-6",
+   "class_number": 8,
+   "description": "Manicure sets"
+  },
   {
    "id": "sample-9-1",
    "class_number": 9,
@@ -35,6 +350,566 @@
    "id": "sample-9-7",
    "class_number": 9,
    "description": "Computer hardware"
+  },
+  {
+   "id": "sample-9-8",
+   "class_number": 9,
+   "description": "Downloadable software for accounting"
+  },
+  {
+   "id": "sample-9-9",
+   "class_number": 9,
+   "description": "Computer game software"
+  },
+  {
+   "id": "sample-9-10",
+   "class_number": 9,
+   "description": "Downloadable e-books"
+  },
+  {
+   "id": "sample-9-11",
+   "class_number": 9,
+   "description": "Downloadable podcasts"
+  },
+  {
+   "id": "sample-9-12",
+   "class_number": 9,
+   "description": "Mobile phone cases"
+  },
+  {
+   "id": "sample-9-13",
+   "class_number": 9,
+   "description": "Sunglasses"
+  },
+  {
+   "id": "sample-9-14",
+   "class_number": 9,
+   "description": "Spectacles"
+  },
+  {
+   "id": "sample-9-15",
+   "class_number": 9,
+   "description": "Chargers for electric batteries"
+  },
+  {
+   "id": "sample-9-16",
+   "class_number": 9,
+   "description": "Cameras"
+  },
+  {
+   "id": "sample-9-17",
+   "class_number": 9,
+   "description": "Drones"
+  },
+  {
+   "id": "sample-9-18",
+   "class_number": 9,
+   "description": "Downloadable music files"
+  },
+  {
+   "id": "sample-9-19",
+   "class_number": 9,
+   "description": "Computer software platforms"
+  },
+  {
+   "id": "sample-9-20",
+   "class_number": 9,
+   "description": "Smart glasses"
+  },
+  {
+   "id": "sample-9-21",
+   "class_number": 9,
+   "description": "Protective helmets"
+  },
+  {
+   "id": "sample-10-1",
+   "class_number": 10,
+   "description": "Medical apparatus and instruments"
+  },
+  {
+   "id": "sample-10-2",
+   "class_number": 10,
+   "description": "Massage apparatus"
+  },
+  {
+   "id": "sample-10-3",
+   "class_number": 10,
+   "description": "Orthopaedic supports"
+  },
+  {
+   "id": "sample-10-4",
+   "class_number": 10,
+   "description": "Hearing aids"
+  },
+  {
+   "id": "sample-10-5",
+   "class_number": 10,
+   "description": "Breast pumps"
+  },
+  {
+   "id": "sample-11-1",
+   "class_number": 11,
+   "description": "Lamps"
+  },
+  {
+   "id": "sample-11-2",
+   "class_number": 11,
+   "description": "Lighting fixtures"
+  },
+  {
+   "id": "sample-11-3",
+   "class_number": 11,
+   "description": "Coffee machines, electric"
+  },
+  {
+   "id": "sample-11-4",
+   "class_number": 11,
+   "description": "Kettles, electric"
+  },
+  {
+   "id": "sample-11-5",
+   "class_number": 11,
+   "description": "Air purifiers"
+  },
+  {
+   "id": "sample-11-6",
+   "class_number": 11,
+   "description": "Refrigerators"
+  },
+  {
+   "id": "sample-11-7",
+   "class_number": 11,
+   "description": "Barbecues"
+  },
+  {
+   "id": "sample-11-8",
+   "class_number": 11,
+   "description": "Heaters"
+  },
+  {
+   "id": "sample-12-1",
+   "class_number": 12,
+   "description": "Bicycles"
+  },
+  {
+   "id": "sample-12-2",
+   "class_number": 12,
+   "description": "Electric bicycles"
+  },
+  {
+   "id": "sample-12-3",
+   "class_number": 12,
+   "description": "Cars"
+  },
+  {
+   "id": "sample-12-4",
+   "class_number": 12,
+   "description": "Scooters"
+  },
+  {
+   "id": "sample-12-5",
+   "class_number": 12,
+   "description": "Prams"
+  },
+  {
+   "id": "sample-12-6",
+   "class_number": 12,
+   "description": "Baby strollers"
+  },
+  {
+   "id": "sample-12-7",
+   "class_number": 12,
+   "description": "Vehicle parts and accessories"
+  },
+  {
+   "id": "sample-13-1",
+   "class_number": 13,
+   "description": "Fireworks"
+  },
+  {
+   "id": "sample-13-2",
+   "class_number": 13,
+   "description": "Firearms"
+  },
+  {
+   "id": "sample-14-1",
+   "class_number": 14,
+   "description": "Jewellery"
+  },
+  {
+   "id": "sample-14-2",
+   "class_number": 14,
+   "description": "Watches"
+  },
+  {
+   "id": "sample-14-3",
+   "class_number": 14,
+   "description": "Rings (jewellery)"
+  },
+  {
+   "id": "sample-14-4",
+   "class_number": 14,
+   "description": "Necklaces (jewellery)"
+  },
+  {
+   "id": "sample-14-5",
+   "class_number": 14,
+   "description": "Earrings"
+  },
+  {
+   "id": "sample-14-6",
+   "class_number": 14,
+   "description": "Bracelets (jewellery)"
+  },
+  {
+   "id": "sample-14-7",
+   "class_number": 14,
+   "description": "Precious stones"
+  },
+  {
+   "id": "sample-14-8",
+   "class_number": 14,
+   "description": "Key rings"
+  },
+  {
+   "id": "sample-15-1",
+   "class_number": 15,
+   "description": "Musical instruments"
+  },
+  {
+   "id": "sample-15-2",
+   "class_number": 15,
+   "description": "Guitars"
+  },
+  {
+   "id": "sample-15-3",
+   "class_number": 15,
+   "description": "Drums (musical instruments)"
+  },
+  {
+   "id": "sample-16-1",
+   "class_number": 16,
+   "description": "Stationery"
+  },
+  {
+   "id": "sample-16-2",
+   "class_number": 16,
+   "description": "Printed matter"
+  },
+  {
+   "id": "sample-16-3",
+   "class_number": 16,
+   "description": "Books"
+  },
+  {
+   "id": "sample-16-4",
+   "class_number": 16,
+   "description": "Magazines"
+  },
+  {
+   "id": "sample-16-5",
+   "class_number": 16,
+   "description": "Notebooks"
+  },
+  {
+   "id": "sample-16-6",
+   "class_number": 16,
+   "description": "Greeting cards"
+  },
+  {
+   "id": "sample-16-7",
+   "class_number": 16,
+   "description": "Posters"
+  },
+  {
+   "id": "sample-16-8",
+   "class_number": 16,
+   "description": "Calendars"
+  },
+  {
+   "id": "sample-16-9",
+   "class_number": 16,
+   "description": "Packaging made of paper"
+  },
+  {
+   "id": "sample-16-10",
+   "class_number": 16,
+   "description": "Stickers"
+  },
+  {
+   "id": "sample-16-11",
+   "class_number": 16,
+   "description": "Paper bags"
+  },
+  {
+   "id": "sample-16-12",
+   "class_number": 16,
+   "description": "Educational materials (printed)"
+  },
+  {
+   "id": "sample-17-1",
+   "class_number": 17,
+   "description": "Plastic film, other than for wrapping"
+  },
+  {
+   "id": "sample-17-2",
+   "class_number": 17,
+   "description": "Insulating materials"
+  },
+  {
+   "id": "sample-17-3",
+   "class_number": 17,
+   "description": "Rubber hoses"
+  },
+  {
+   "id": "sample-17-4",
+   "class_number": 17,
+   "description": "Garden hoses"
+  },
+  {
+   "id": "sample-18-1",
+   "class_number": 18,
+   "description": "Bags"
+  },
+  {
+   "id": "sample-18-2",
+   "class_number": 18,
+   "description": "Handbags"
+  },
+  {
+   "id": "sample-18-3",
+   "class_number": 18,
+   "description": "Backpacks"
+  },
+  {
+   "id": "sample-18-4",
+   "class_number": 18,
+   "description": "Wallets"
+  },
+  {
+   "id": "sample-18-5",
+   "class_number": 18,
+   "description": "Leather goods"
+  },
+  {
+   "id": "sample-18-6",
+   "class_number": 18,
+   "description": "Umbrellas"
+  },
+  {
+   "id": "sample-18-7",
+   "class_number": 18,
+   "description": "Travel bags"
+  },
+  {
+   "id": "sample-18-8",
+   "class_number": 18,
+   "description": "Tote bags"
+  },
+  {
+   "id": "sample-18-9",
+   "class_number": 18,
+   "description": "Pet collars"
+  },
+  {
+   "id": "sample-18-10",
+   "class_number": 18,
+   "description": "Dog leads"
+  },
+  {
+   "id": "sample-18-11",
+   "class_number": 18,
+   "description": "Luggage"
+  },
+  {
+   "id": "sample-19-1",
+   "class_number": 19,
+   "description": "Building materials, not of metal"
+  },
+  {
+   "id": "sample-19-2",
+   "class_number": 19,
+   "description": "Timber"
+  },
+  {
+   "id": "sample-19-3",
+   "class_number": 19,
+   "description": "Tiles, not of metal"
+  },
+  {
+   "id": "sample-19-4",
+   "class_number": 19,
+   "description": "Concrete"
+  },
+  {
+   "id": "sample-20-1",
+   "class_number": 20,
+   "description": "Furniture"
+  },
+  {
+   "id": "sample-20-2",
+   "class_number": 20,
+   "description": "Mirrors"
+  },
+  {
+   "id": "sample-20-3",
+   "class_number": 20,
+   "description": "Pillows"
+  },
+  {
+   "id": "sample-20-4",
+   "class_number": 20,
+   "description": "Cushions"
+  },
+  {
+   "id": "sample-20-5",
+   "class_number": 20,
+   "description": "Mattresses"
+  },
+  {
+   "id": "sample-20-6",
+   "class_number": 20,
+   "description": "Picture frames"
+  },
+  {
+   "id": "sample-20-7",
+   "class_number": 20,
+   "description": "Office furniture"
+  },
+  {
+   "id": "sample-20-8",
+   "class_number": 20,
+   "description": "Pet beds"
+  },
+  {
+   "id": "sample-21-1",
+   "class_number": 21,
+   "description": "Kitchen utensils"
+  },
+  {
+   "id": "sample-21-2",
+   "class_number": 21,
+   "description": "Cookware"
+  },
+  {
+   "id": "sample-21-3",
+   "class_number": 21,
+   "description": "Drinking bottles"
+  },
+  {
+   "id": "sample-21-4",
+   "class_number": 21,
+   "description": "Reusable coffee cups"
+  },
+  {
+   "id": "sample-21-5",
+   "class_number": 21,
+   "description": "Mugs"
+  },
+  {
+   "id": "sample-21-6",
+   "class_number": 21,
+   "description": "Glassware"
+  },
+  {
+   "id": "sample-21-7",
+   "class_number": 21,
+   "description": "Crockery"
+  },
+  {
+   "id": "sample-21-8",
+   "class_number": 21,
+   "description": "Lunch boxes"
+  },
+  {
+   "id": "sample-21-9",
+   "class_number": 21,
+   "description": "Water bottles"
+  },
+  {
+   "id": "sample-21-10",
+   "class_number": 21,
+   "description": "Coffee plungers, non-electric"
+  },
+  {
+   "id": "sample-21-11",
+   "class_number": 21,
+   "description": "Hair brushes"
+  },
+  {
+   "id": "sample-21-12",
+   "class_number": 21,
+   "description": "Toothbrushes"
+  },
+  {
+   "id": "sample-22-1",
+   "class_number": 22,
+   "description": "Tents"
+  },
+  {
+   "id": "sample-22-2",
+   "class_number": 22,
+   "description": "Ropes"
+  },
+  {
+   "id": "sample-22-3",
+   "class_number": 22,
+   "description": "Hammocks"
+  },
+  {
+   "id": "sample-22-4",
+   "class_number": 22,
+   "description": "Textile bags for packaging"
+  },
+  {
+   "id": "sample-23-1",
+   "class_number": 23,
+   "description": "Yarns"
+  },
+  {
+   "id": "sample-23-2",
+   "class_number": 23,
+   "description": "Threads"
+  },
+  {
+   "id": "sample-23-3",
+   "class_number": 23,
+   "description": "Wool yarn"
+  },
+  {
+   "id": "sample-24-1",
+   "class_number": 24,
+   "description": "Textiles"
+  },
+  {
+   "id": "sample-24-2",
+   "class_number": 24,
+   "description": "Bed linen"
+  },
+  {
+   "id": "sample-24-3",
+   "class_number": 24,
+   "description": "Towels"
+  },
+  {
+   "id": "sample-24-4",
+   "class_number": 24,
+   "description": "Blankets"
+  },
+  {
+   "id": "sample-24-5",
+   "class_number": 24,
+   "description": "Curtains"
+  },
+  {
+   "id": "sample-24-6",
+   "class_number": 24,
+   "description": "Table linen"
+  },
+  {
+   "id": "sample-24-7",
+   "class_number": 24,
+   "description": "Quilts"
   },
   {
    "id": "sample-25-1",
@@ -122,6 +997,276 @@
    "description": "Scarves"
   },
   {
+   "id": "sample-25-18",
+   "class_number": 25,
+   "description": "Swimwear"
+  },
+  {
+   "id": "sample-25-19",
+   "class_number": 25,
+   "description": "Activewear"
+  },
+  {
+   "id": "sample-25-20",
+   "class_number": 25,
+   "description": "Children's clothing"
+  },
+  {
+   "id": "sample-25-21",
+   "class_number": 25,
+   "description": "Baby clothing"
+  },
+  {
+   "id": "sample-25-22",
+   "class_number": 25,
+   "description": "Underwear"
+  },
+  {
+   "id": "sample-25-23",
+   "class_number": 25,
+   "description": "Dresses"
+  },
+  {
+   "id": "sample-25-24",
+   "class_number": 25,
+   "description": "Jeans"
+  },
+  {
+   "id": "sample-25-25",
+   "class_number": 25,
+   "description": "Shoes"
+  },
+  {
+   "id": "sample-25-26",
+   "class_number": 25,
+   "description": "Sneakers"
+  },
+  {
+   "id": "sample-25-27",
+   "class_number": 25,
+   "description": "Boots"
+  },
+  {
+   "id": "sample-25-28",
+   "class_number": 25,
+   "description": "Uniforms"
+  },
+  {
+   "id": "sample-25-29",
+   "class_number": 25,
+   "description": "Hoodies"
+  },
+  {
+   "id": "sample-25-30",
+   "class_number": 25,
+   "description": "Leggings"
+  },
+  {
+   "id": "sample-25-31",
+   "class_number": 25,
+   "description": "Sleepwear"
+  },
+  {
+   "id": "sample-25-32",
+   "class_number": 25,
+   "description": "Workwear"
+  },
+  {
+   "id": "sample-25-33",
+   "class_number": 25,
+   "description": "Belts (clothing)"
+  },
+  {
+   "id": "sample-25-34",
+   "class_number": 25,
+   "description": "Gloves (clothing)"
+  },
+  {
+   "id": "sample-26-1",
+   "class_number": 26,
+   "description": "Buttons"
+  },
+  {
+   "id": "sample-26-2",
+   "class_number": 26,
+   "description": "Ribbons"
+  },
+  {
+   "id": "sample-26-3",
+   "class_number": 26,
+   "description": "Hair accessories"
+  },
+  {
+   "id": "sample-26-4",
+   "class_number": 26,
+   "description": "Artificial flowers"
+  },
+  {
+   "id": "sample-26-5",
+   "class_number": 26,
+   "description": "Embroidered patches for clothing"
+  },
+  {
+   "id": "sample-27-1",
+   "class_number": 27,
+   "description": "Carpets"
+  },
+  {
+   "id": "sample-27-2",
+   "class_number": 27,
+   "description": "Rugs"
+  },
+  {
+   "id": "sample-27-3",
+   "class_number": 27,
+   "description": "Mats"
+  },
+  {
+   "id": "sample-27-4",
+   "class_number": 27,
+   "description": "Yoga mats"
+  },
+  {
+   "id": "sample-27-5",
+   "class_number": 27,
+   "description": "Wallpaper"
+  },
+  {
+   "id": "sample-28-1",
+   "class_number": 28,
+   "description": "Toys"
+  },
+  {
+   "id": "sample-28-2",
+   "class_number": 28,
+   "description": "Games"
+  },
+  {
+   "id": "sample-28-3",
+   "class_number": 28,
+   "description": "Board games"
+  },
+  {
+   "id": "sample-28-4",
+   "class_number": 28,
+   "description": "Sporting goods"
+  },
+  {
+   "id": "sample-28-5",
+   "class_number": 28,
+   "description": "Fitness equipment"
+  },
+  {
+   "id": "sample-28-6",
+   "class_number": 28,
+   "description": "Exercise equipment"
+  },
+  {
+   "id": "sample-28-7",
+   "class_number": 28,
+   "description": "Surfboards"
+  },
+  {
+   "id": "sample-28-8",
+   "class_number": 28,
+   "description": "Golf clubs"
+  },
+  {
+   "id": "sample-28-9",
+   "class_number": 28,
+   "description": "Puzzles"
+  },
+  {
+   "id": "sample-28-10",
+   "class_number": 28,
+   "description": "Dolls"
+  },
+  {
+   "id": "sample-28-11",
+   "class_number": 28,
+   "description": "Fishing tackle"
+  },
+  {
+   "id": "sample-28-12",
+   "class_number": 28,
+   "description": "Skateboards"
+  },
+  {
+   "id": "sample-28-13",
+   "class_number": 28,
+   "description": "Christmas tree decorations"
+  },
+  {
+   "id": "sample-29-1",
+   "class_number": 29,
+   "description": "Meat"
+  },
+  {
+   "id": "sample-29-2",
+   "class_number": 29,
+   "description": "Dairy products"
+  },
+  {
+   "id": "sample-29-3",
+   "class_number": 29,
+   "description": "Cheese"
+  },
+  {
+   "id": "sample-29-4",
+   "class_number": 29,
+   "description": "Milk"
+  },
+  {
+   "id": "sample-29-5",
+   "class_number": 29,
+   "description": "Yoghurt"
+  },
+  {
+   "id": "sample-29-6",
+   "class_number": 29,
+   "description": "Eggs"
+  },
+  {
+   "id": "sample-29-7",
+   "class_number": 29,
+   "description": "Jams"
+  },
+  {
+   "id": "sample-29-8",
+   "class_number": 29,
+   "description": "Nut butters"
+  },
+  {
+   "id": "sample-29-9",
+   "class_number": 29,
+   "description": "Preserved fruits"
+  },
+  {
+   "id": "sample-29-10",
+   "class_number": 29,
+   "description": "Processed vegetables"
+  },
+  {
+   "id": "sample-29-11",
+   "class_number": 29,
+   "description": "Plant-based milk substitutes"
+  },
+  {
+   "id": "sample-29-12",
+   "class_number": 29,
+   "description": "Soups"
+  },
+  {
+   "id": "sample-29-13",
+   "class_number": 29,
+   "description": "Snack foods based on nuts"
+  },
+  {
+   "id": "sample-29-14",
+   "class_number": 29,
+   "description": "Edible oils"
+  },
+  {
    "id": "sample-30-1",
    "class_number": 30,
    "description": "Coffee"
@@ -150,6 +1295,236 @@
    "id": "sample-30-6",
    "class_number": 30,
    "description": "Chocolate"
+  },
+  {
+   "id": "sample-30-7",
+   "class_number": 30,
+   "description": "Cakes"
+  },
+  {
+   "id": "sample-30-8",
+   "class_number": 30,
+   "description": "Biscuits"
+  },
+  {
+   "id": "sample-30-9",
+   "class_number": 30,
+   "description": "Confectionery"
+  },
+  {
+   "id": "sample-30-10",
+   "class_number": 30,
+   "description": "Ice cream"
+  },
+  {
+   "id": "sample-30-11",
+   "class_number": 30,
+   "description": "Honey"
+  },
+  {
+   "id": "sample-30-12",
+   "class_number": 30,
+   "description": "Sauces (condiments)"
+  },
+  {
+   "id": "sample-30-13",
+   "class_number": 30,
+   "description": "Spices"
+  },
+  {
+   "id": "sample-30-14",
+   "class_number": 30,
+   "description": "Pasta"
+  },
+  {
+   "id": "sample-30-15",
+   "class_number": 30,
+   "description": "Rice"
+  },
+  {
+   "id": "sample-30-16",
+   "class_number": 30,
+   "description": "Cereal bars"
+  },
+  {
+   "id": "sample-30-17",
+   "class_number": 30,
+   "description": "Muesli"
+  },
+  {
+   "id": "sample-30-18",
+   "class_number": 30,
+   "description": "Pizza"
+  },
+  {
+   "id": "sample-30-19",
+   "class_number": 30,
+   "description": "Sandwiches"
+  },
+  {
+   "id": "sample-30-20",
+   "class_number": 30,
+   "description": "Coffee beans"
+  },
+  {
+   "id": "sample-30-21",
+   "class_number": 30,
+   "description": "Coffee capsules"
+  },
+  {
+   "id": "sample-30-22",
+   "class_number": 30,
+   "description": "Kombucha tea"
+  },
+  {
+   "id": "sample-30-23",
+   "class_number": 30,
+   "description": "Granola"
+  },
+  {
+   "id": "sample-31-1",
+   "class_number": 31,
+   "description": "Fresh fruit"
+  },
+  {
+   "id": "sample-31-2",
+   "class_number": 31,
+   "description": "Fresh vegetables"
+  },
+  {
+   "id": "sample-31-3",
+   "class_number": 31,
+   "description": "Live plants"
+  },
+  {
+   "id": "sample-31-4",
+   "class_number": 31,
+   "description": "Flowers, natural"
+  },
+  {
+   "id": "sample-31-5",
+   "class_number": 31,
+   "description": "Pet food"
+  },
+  {
+   "id": "sample-31-6",
+   "class_number": 31,
+   "description": "Animal feed"
+  },
+  {
+   "id": "sample-31-7",
+   "class_number": 31,
+   "description": "Seeds for planting"
+  },
+  {
+   "id": "sample-32-1",
+   "class_number": 32,
+   "description": "Beer"
+  },
+  {
+   "id": "sample-32-2",
+   "class_number": 32,
+   "description": "Craft beer"
+  },
+  {
+   "id": "sample-32-3",
+   "class_number": 32,
+   "description": "Non-alcoholic beverages"
+  },
+  {
+   "id": "sample-32-4",
+   "class_number": 32,
+   "description": "Soft drinks"
+  },
+  {
+   "id": "sample-32-5",
+   "class_number": 32,
+   "description": "Mineral water"
+  },
+  {
+   "id": "sample-32-6",
+   "class_number": 32,
+   "description": "Fruit juices"
+  },
+  {
+   "id": "sample-32-7",
+   "class_number": 32,
+   "description": "Energy drinks"
+  },
+  {
+   "id": "sample-32-8",
+   "class_number": 32,
+   "description": "Sports drinks"
+  },
+  {
+   "id": "sample-32-9",
+   "class_number": 32,
+   "description": "Smoothies"
+  },
+  {
+   "id": "sample-32-10",
+   "class_number": 32,
+   "description": "Cold brew coffee beverages, non-alcoholic"
+  },
+  {
+   "id": "sample-33-1",
+   "class_number": 33,
+   "description": "Wine"
+  },
+  {
+   "id": "sample-33-2",
+   "class_number": 33,
+   "description": "Spirits"
+  },
+  {
+   "id": "sample-33-3",
+   "class_number": 33,
+   "description": "Gin"
+  },
+  {
+   "id": "sample-33-4",
+   "class_number": 33,
+   "description": "Vodka"
+  },
+  {
+   "id": "sample-33-5",
+   "class_number": 33,
+   "description": "Whisky"
+  },
+  {
+   "id": "sample-33-6",
+   "class_number": 33,
+   "description": "Cider"
+  },
+  {
+   "id": "sample-33-7",
+   "class_number": 33,
+   "description": "Alcoholic beverages, except beers"
+  },
+  {
+   "id": "sample-33-8",
+   "class_number": 33,
+   "description": "Pre-mixed alcoholic beverages"
+  },
+  {
+   "id": "sample-34-1",
+   "class_number": 34,
+   "description": "Tobacco"
+  },
+  {
+   "id": "sample-34-2",
+   "class_number": 34,
+   "description": "Cigarettes"
+  },
+  {
+   "id": "sample-34-3",
+   "class_number": 34,
+   "description": "Electronic cigarettes"
+  },
+  {
+   "id": "sample-34-4",
+   "class_number": 34,
+   "description": "Lighters for smokers"
   },
   {
    "id": "sample-35-1",
@@ -182,6 +1557,336 @@
    "description": "Online retail store services featuring clothing"
   },
   {
+   "id": "sample-35-7",
+   "class_number": 35,
+   "description": "Marketing services"
+  },
+  {
+   "id": "sample-35-8",
+   "class_number": 35,
+   "description": "Social media marketing"
+  },
+  {
+   "id": "sample-35-9",
+   "class_number": 35,
+   "description": "Online retail services in relation to cosmetics"
+  },
+  {
+   "id": "sample-35-10",
+   "class_number": 35,
+   "description": "Retail services in relation to coffee"
+  },
+  {
+   "id": "sample-35-11",
+   "class_number": 35,
+   "description": "Online retail services in relation to food"
+  },
+  {
+   "id": "sample-35-12",
+   "class_number": 35,
+   "description": "Wholesale services in relation to clothing"
+  },
+  {
+   "id": "sample-35-13",
+   "class_number": 35,
+   "description": "Business consultancy"
+  },
+  {
+   "id": "sample-35-14",
+   "class_number": 35,
+   "description": "Bookkeeping"
+  },
+  {
+   "id": "sample-35-15",
+   "class_number": 35,
+   "description": "Accounting services"
+  },
+  {
+   "id": "sample-35-16",
+   "class_number": 35,
+   "description": "Recruitment services"
+  },
+  {
+   "id": "sample-35-17",
+   "class_number": 35,
+   "description": "Franchising services"
+  },
+  {
+   "id": "sample-35-18",
+   "class_number": 35,
+   "description": "Online marketplace services"
+  },
+  {
+   "id": "sample-35-19",
+   "class_number": 35,
+   "description": "Digital marketing services"
+  },
+  {
+   "id": "sample-35-20",
+   "class_number": 35,
+   "description": "Promotional services"
+  },
+  {
+   "id": "sample-35-21",
+   "class_number": 35,
+   "description": "Market research"
+  },
+  {
+   "id": "sample-35-22",
+   "class_number": 35,
+   "description": "Retail services in relation to jewellery"
+  },
+  {
+   "id": "sample-35-23",
+   "class_number": 35,
+   "description": "Retail services in relation to toys"
+  },
+  {
+   "id": "sample-35-24",
+   "class_number": 35,
+   "description": "Retail services in relation to furniture"
+  },
+  {
+   "id": "sample-35-25",
+   "class_number": 35,
+   "description": "Retail services in relation to pet products"
+  },
+  {
+   "id": "sample-35-26",
+   "class_number": 35,
+   "description": "Administrative services"
+  },
+  {
+   "id": "sample-35-27",
+   "class_number": 35,
+   "description": "Event management services (business)"
+  },
+  {
+   "id": "sample-36-1",
+   "class_number": 36,
+   "description": "Financial services"
+  },
+  {
+   "id": "sample-36-2",
+   "class_number": 36,
+   "description": "Insurance services"
+  },
+  {
+   "id": "sample-36-3",
+   "class_number": 36,
+   "description": "Real estate services"
+  },
+  {
+   "id": "sample-36-4",
+   "class_number": 36,
+   "description": "Real estate agency services"
+  },
+  {
+   "id": "sample-36-5",
+   "class_number": 36,
+   "description": "Financial advisory services"
+  },
+  {
+   "id": "sample-36-6",
+   "class_number": 36,
+   "description": "Investment services"
+  },
+  {
+   "id": "sample-36-7",
+   "class_number": 36,
+   "description": "Loans (financing)"
+  },
+  {
+   "id": "sample-36-8",
+   "class_number": 36,
+   "description": "Payment processing services"
+  },
+  {
+   "id": "sample-36-9",
+   "class_number": 36,
+   "description": "Crowdfunding services"
+  },
+  {
+   "id": "sample-36-10",
+   "class_number": 36,
+   "description": "Superannuation services"
+  },
+  {
+   "id": "sample-36-11",
+   "class_number": 36,
+   "description": "Mortgage broking services"
+  },
+  {
+   "id": "sample-36-12",
+   "class_number": 36,
+   "description": "Property management"
+  },
+  {
+   "id": "sample-37-1",
+   "class_number": 37,
+   "description": "Building construction"
+  },
+  {
+   "id": "sample-37-2",
+   "class_number": 37,
+   "description": "Plumbing services"
+  },
+  {
+   "id": "sample-37-3",
+   "class_number": 37,
+   "description": "Electrical installation services"
+  },
+  {
+   "id": "sample-37-4",
+   "class_number": 37,
+   "description": "Painting services"
+  },
+  {
+   "id": "sample-37-5",
+   "class_number": 37,
+   "description": "Cleaning services"
+  },
+  {
+   "id": "sample-37-6",
+   "class_number": 37,
+   "description": "Car repair services"
+  },
+  {
+   "id": "sample-37-7",
+   "class_number": 37,
+   "description": "Repair of clothing"
+  },
+  {
+   "id": "sample-37-8",
+   "class_number": 37,
+   "description": "Renovation of buildings"
+  },
+  {
+   "id": "sample-37-9",
+   "class_number": 37,
+   "description": "Installation of solar panels"
+  },
+  {
+   "id": "sample-37-10",
+   "class_number": 37,
+   "description": "Landscaping construction"
+  },
+  {
+   "id": "sample-38-1",
+   "class_number": 38,
+   "description": "Telecommunications services"
+  },
+  {
+   "id": "sample-38-2",
+   "class_number": 38,
+   "description": "Internet service provider services"
+  },
+  {
+   "id": "sample-38-3",
+   "class_number": 38,
+   "description": "Streaming of audio and video material"
+  },
+  {
+   "id": "sample-38-4",
+   "class_number": 38,
+   "description": "Podcasting services"
+  },
+  {
+   "id": "sample-38-5",
+   "class_number": 38,
+   "description": "Providing online forums"
+  },
+  {
+   "id": "sample-38-6",
+   "class_number": 38,
+   "description": "Email services"
+  },
+  {
+   "id": "sample-39-1",
+   "class_number": 39,
+   "description": "Transport services"
+  },
+  {
+   "id": "sample-39-2",
+   "class_number": 39,
+   "description": "Delivery of goods"
+  },
+  {
+   "id": "sample-39-3",
+   "class_number": 39,
+   "description": "Courier services"
+  },
+  {
+   "id": "sample-39-4",
+   "class_number": 39,
+   "description": "Travel agency services"
+  },
+  {
+   "id": "sample-39-5",
+   "class_number": 39,
+   "description": "Storage of goods"
+  },
+  {
+   "id": "sample-39-6",
+   "class_number": 39,
+   "description": "Logistics services"
+  },
+  {
+   "id": "sample-39-7",
+   "class_number": 39,
+   "description": "Car rental"
+  },
+  {
+   "id": "sample-39-8",
+   "class_number": 39,
+   "description": "Tour guide services"
+  },
+  {
+   "id": "sample-39-9",
+   "class_number": 39,
+   "description": "Food delivery services"
+  },
+  {
+   "id": "sample-39-10",
+   "class_number": 39,
+   "description": "Removal services"
+  },
+  {
+   "id": "sample-40-1",
+   "class_number": 40,
+   "description": "Printing services"
+  },
+  {
+   "id": "sample-40-2",
+   "class_number": 40,
+   "description": "Custom manufacturing"
+  },
+  {
+   "id": "sample-40-3",
+   "class_number": 40,
+   "description": "Embroidery services"
+  },
+  {
+   "id": "sample-40-4",
+   "class_number": 40,
+   "description": "Recycling services"
+  },
+  {
+   "id": "sample-40-5",
+   "class_number": 40,
+   "description": "Brewing of beer for others"
+  },
+  {
+   "id": "sample-40-6",
+   "class_number": 40,
+   "description": "3D printing for others"
+  },
+  {
+   "id": "sample-40-7",
+   "class_number": 40,
+   "description": "Tailoring services"
+  },
+  {
    "id": "sample-41-1",
    "class_number": 41,
    "description": "Education services"
@@ -200,6 +1905,91 @@
    "id": "sample-41-4",
    "class_number": 41,
    "description": "Yoga instruction"
+  },
+  {
+   "id": "sample-41-5",
+   "class_number": 41,
+   "description": "Personal training"
+  },
+  {
+   "id": "sample-41-6",
+   "class_number": 41,
+   "description": "Gym services"
+  },
+  {
+   "id": "sample-41-7",
+   "class_number": 41,
+   "description": "Coaching (training)"
+  },
+  {
+   "id": "sample-41-8",
+   "class_number": 41,
+   "description": "Online education services"
+  },
+  {
+   "id": "sample-41-9",
+   "class_number": 41,
+   "description": "Tutoring"
+  },
+  {
+   "id": "sample-41-10",
+   "class_number": 41,
+   "description": "Entertainment services"
+  },
+  {
+   "id": "sample-41-11",
+   "class_number": 41,
+   "description": "Event organisation (entertainment)"
+  },
+  {
+   "id": "sample-41-12",
+   "class_number": 41,
+   "description": "Music production services"
+  },
+  {
+   "id": "sample-41-13",
+   "class_number": 41,
+   "description": "Publishing of books"
+  },
+  {
+   "id": "sample-41-14",
+   "class_number": 41,
+   "description": "Photography services"
+  },
+  {
+   "id": "sample-41-15",
+   "class_number": 41,
+   "description": "Providing online videos, not downloadable"
+  },
+  {
+   "id": "sample-41-16",
+   "class_number": 41,
+   "description": "Childcare services (education)"
+  },
+  {
+   "id": "sample-41-17",
+   "class_number": 41,
+   "description": "Pilates instruction"
+  },
+  {
+   "id": "sample-41-18",
+   "class_number": 41,
+   "description": "Dance instruction"
+  },
+  {
+   "id": "sample-41-19",
+   "class_number": 41,
+   "description": "Sports coaching"
+  },
+  {
+   "id": "sample-41-20",
+   "class_number": 41,
+   "description": "Organising sporting events"
+  },
+  {
+   "id": "sample-41-21",
+   "class_number": 41,
+   "description": "Podcast production"
   },
   {
    "id": "sample-42-1",
@@ -227,6 +2017,76 @@
    "description": "Development of computer software"
   },
   {
+   "id": "sample-42-6",
+   "class_number": 42,
+   "description": "Website design"
+  },
+  {
+   "id": "sample-42-7",
+   "class_number": 42,
+   "description": "Web hosting"
+  },
+  {
+   "id": "sample-42-8",
+   "class_number": 42,
+   "description": "IT consultancy"
+  },
+  {
+   "id": "sample-42-9",
+   "class_number": 42,
+   "description": "Graphic design"
+  },
+  {
+   "id": "sample-42-10",
+   "class_number": 42,
+   "description": "Cloud computing services"
+  },
+  {
+   "id": "sample-42-11",
+   "class_number": 42,
+   "description": "Mobile application development"
+  },
+  {
+   "id": "sample-42-12",
+   "class_number": 42,
+   "description": "Cybersecurity services"
+  },
+  {
+   "id": "sample-42-13",
+   "class_number": 42,
+   "description": "Data analytics services"
+  },
+  {
+   "id": "sample-42-14",
+   "class_number": 42,
+   "description": "Interior design"
+  },
+  {
+   "id": "sample-42-15",
+   "class_number": 42,
+   "description": "Architectural services"
+  },
+  {
+   "id": "sample-42-16",
+   "class_number": 42,
+   "description": "Engineering services"
+  },
+  {
+   "id": "sample-42-17",
+   "class_number": 42,
+   "description": "Scientific research"
+  },
+  {
+   "id": "sample-42-18",
+   "class_number": 42,
+   "description": "Artificial intelligence consultancy"
+  },
+  {
+   "id": "sample-42-19",
+   "class_number": 42,
+   "description": "Providing temporary use of online non-downloadable software"
+  },
+  {
    "id": "sample-43-1",
    "class_number": 43,
    "description": "Cafe services"
@@ -245,6 +2105,181 @@
    "id": "sample-43-4",
    "class_number": 43,
    "description": "Coffee shop services"
+  },
+  {
+   "id": "sample-43-5",
+   "class_number": 43,
+   "description": "Bar services"
+  },
+  {
+   "id": "sample-43-6",
+   "class_number": 43,
+   "description": "Takeaway food services"
+  },
+  {
+   "id": "sample-43-7",
+   "class_number": 43,
+   "description": "Hotel services"
+  },
+  {
+   "id": "sample-43-8",
+   "class_number": 43,
+   "description": "Accommodation booking services"
+  },
+  {
+   "id": "sample-43-9",
+   "class_number": 43,
+   "description": "Food truck services"
+  },
+  {
+   "id": "sample-43-10",
+   "class_number": 43,
+   "description": "Bakery cafe services"
+  },
+  {
+   "id": "sample-43-11",
+   "class_number": 43,
+   "description": "Providing food and drink"
+  },
+  {
+   "id": "sample-43-12",
+   "class_number": 43,
+   "description": "Pet boarding"
+  },
+  {
+   "id": "sample-44-1",
+   "class_number": 44,
+   "description": "Hairdressing services"
+  },
+  {
+   "id": "sample-44-2",
+   "class_number": 44,
+   "description": "Beauty salon services"
+  },
+  {
+   "id": "sample-44-3",
+   "class_number": 44,
+   "description": "Massage services"
+  },
+  {
+   "id": "sample-44-4",
+   "class_number": 44,
+   "description": "Medical services"
+  },
+  {
+   "id": "sample-44-5",
+   "class_number": 44,
+   "description": "Dental services"
+  },
+  {
+   "id": "sample-44-6",
+   "class_number": 44,
+   "description": "Physiotherapy services"
+  },
+  {
+   "id": "sample-44-7",
+   "class_number": 44,
+   "description": "Psychology services"
+  },
+  {
+   "id": "sample-44-8",
+   "class_number": 44,
+   "description": "Veterinary services"
+  },
+  {
+   "id": "sample-44-9",
+   "class_number": 44,
+   "description": "Nutrition advice"
+  },
+  {
+   "id": "sample-44-10",
+   "class_number": 44,
+   "description": "Skin care services"
+  },
+  {
+   "id": "sample-44-11",
+   "class_number": 44,
+   "description": "Pet grooming"
+  },
+  {
+   "id": "sample-44-12",
+   "class_number": 44,
+   "description": "Health spa services"
+  },
+  {
+   "id": "sample-44-13",
+   "class_number": 44,
+   "description": "Naturopathy services"
+  },
+  {
+   "id": "sample-44-14",
+   "class_number": 44,
+   "description": "Gardening services"
+  },
+  {
+   "id": "sample-44-15",
+   "class_number": 44,
+   "description": "Tattooing services"
+  },
+  {
+   "id": "sample-44-16",
+   "class_number": 44,
+   "description": "Counselling services (health)"
+  },
+  {
+   "id": "sample-45-1",
+   "class_number": 45,
+   "description": "Legal services"
+  },
+  {
+   "id": "sample-45-2",
+   "class_number": 45,
+   "description": "Security services"
+  },
+  {
+   "id": "sample-45-3",
+   "class_number": 45,
+   "description": "Dating services"
+  },
+  {
+   "id": "sample-45-4",
+   "class_number": 45,
+   "description": "Wedding planning services"
+  },
+  {
+   "id": "sample-45-5",
+   "class_number": 45,
+   "description": "Funeral services"
+  },
+  {
+   "id": "sample-45-6",
+   "class_number": 45,
+   "description": "Personal styling services"
+  },
+  {
+   "id": "sample-45-7",
+   "class_number": 45,
+   "description": "Pet sitting"
+  },
+  {
+   "id": "sample-45-8",
+   "class_number": 45,
+   "description": "Babysitting"
+  },
+  {
+   "id": "sample-45-9",
+   "class_number": 45,
+   "description": "Licensing of intellectual property"
+  },
+  {
+   "id": "sample-45-10",
+   "class_number": 45,
+   "description": "Social networking services"
+  },
+  {
+   "id": "sample-45-11",
+   "class_number": 45,
+   "description": "Astrology services"
   }
  ]
 }

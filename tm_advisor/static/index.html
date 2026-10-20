@@ -3,167 +3,987 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TM Advisor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<title>BizImprint · Trademark Conflict Intelligence for Australian businesses</title>
 <style>
   :root {
-    --bg: #f7f7f5; --card: #ffffff; --text: #1d1d1b; --muted: #5f5f5a; --line: #deded8;
-    --accent: #2f5bd3; --high: #b42318; --high-bg: #fdecea; --med: #8a5a00; --med-bg: #fff4dc;
-    --low: #1e6b3a; --low-bg: #e6f4ea;
+    --bg: #edeef5; --card: #ffffff; --text: #17243c; --ink: #060d19; --muted: #5b6475; --line: #dde0ea; --soft: #f3f4f9;
+    --brand: #4338ca; --brand-ink: #ffffff; --brand-soft: #e7e8fb; --focus: #6366f1; --accent: #5b5cf0;
+    --navy: #0b1030; --navy-2: #151a4a;
+    --high: #b42318; --high-bg: #fdecea; --med: #8a5a00; --med-bg: #fff1d6; --low: #1e6b3a; --low-bg: #e4f3e8;
+    --warn: #f08c3c;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #161615; --card: #1f1f1d; --text: #ececea; --muted: #a3a39d; --line: #34342f;
-      --accent: #7c9cf5; --high: #ff8a80; --high-bg: #3a1c1a; --med: #f5c26b; --med-bg: #362a12;
-      --low: #81c995; --low-bg: #16301f;
+      --bg: #0b0e1c; --card: #151a2e; --text: #e6e8f2; --ink: #f4f5fb; --muted: #a3a9bd; --line: #2a3048; --soft: #1c2238;
+      --brand: #8b8ff8; --brand-ink: #0b0e1c; --brand-soft: #23284a; --focus: #a5a8fb; --accent: #8b8ff8;
+      --high: #ff8a80; --high-bg: #3a1c1a; --med: #f5c26b; --med-bg: #362a12; --low: #81c995; --low-bg: #16301f;
     }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
-  main { max-width: 820px; margin: 0 auto; padding: 24px 16px 64px; }
-  h1 { font-size: 1.6rem; margin: 0 0 4px; }
-  h2 { font-size: 1.15rem; margin: 28px 0 8px; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 500 16px/1.55 Urbanist, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  a { color: var(--brand); }
+  header.top { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px);
+                border-bottom: 1px solid var(--line); }
+  header.top .in { max-width: 1240px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; gap: 24px; }
+  header.top .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
+  header.top .logo b { font-size: 1.2rem; font-weight: 800; letter-spacing: -.01em; }
+  header.top .logo i { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; font-style: normal; font-weight: 800;
+                       color: #fff; background: linear-gradient(135deg, #6366f1, #312e81); }
+  header.top .tag { color: var(--muted); font-size: .85rem; }
+  header.top nav { margin-left: auto; display: flex; gap: 22px; align-items: center; }
+  header.top nav a { color: var(--ink); text-decoration: none; font-weight: 600; font-size: .95rem; }
+  header.top nav a.navcta { border: 1px solid var(--ink); border-radius: 12px; padding: 8px 16px; }
+  @media (max-width: 860px) { header.top .tag, header.top nav a:not(.navcta) { display: none; } }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 24px 16px 64px; display: grid; grid-template-columns: 220px 1fr; gap: 28px; }
+  @media (max-width: 860px) { .wrap { grid-template-columns: minmax(0, 1fr); } }
+  .wrap > nav { min-width: 0; }
+
+  .steps { list-style: none; margin: 0; padding: 0; }
+  .steps li { position: relative; padding: 0 0 22px 30px; color: var(--muted); }
+  .steps li::before { content: ""; position: absolute; left: 9px; top: 22px; bottom: 0; border-left: 2px solid var(--line); }
+  .steps li:last-child::before { display: none; }
+  .steps .dot { position: absolute; left: 0; top: 2px; width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line); background: var(--card); }
+  .steps li.done .dot { background: var(--brand); border-color: var(--brand); }
+  .steps li.current { color: var(--brand); font-weight: 700; }
+  .steps li.current .dot { border-color: var(--brand); box-shadow: inset 0 0 0 4px var(--card); background: var(--brand); }
+  .steplink { font: inherit; color: inherit; background: none; border: 0; padding: 0; text-align: left; cursor: pointer; }
+  .steplink:hover, .steplink:focus-visible { text-decoration: underline; }
+  .backtop { font: inherit; font-size: .95rem; color: var(--brand); background: none; border: 0; padding: 0; margin-bottom: 14px; cursor: pointer; }
+  .backtop:hover, .backtop:focus-visible { text-decoration: underline; }
+  .steps .sub { display: block; font-size: .85rem; font-weight: 400; margin-top: 6px; color: var(--muted); }
+  .steps .sub.on { color: var(--brand); font-weight: 600; }
+  @media (max-width: 860px) {
+    .steps { display: flex; gap: 12px; overflow-x: auto; }
+    .steps li { padding: 0 0 0 26px; white-space: nowrap; }
+    .steps li::before, .steps .sub { display: none; }
+  }
+
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 28px; min-width: 0; }
+  h1 { font-size: 1.9rem; margin: 0 0 8px; color: var(--ink); font-weight: 700; letter-spacing: -.01em; }
+  h2 { font-size: 1.2rem; margin: 24px 0 8px; }
   p.lead { color: var(--muted); margin: 0 0 20px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 12px; }
-  label { display: block; font-weight: 600; margin: 12px 0 4px; }
-  input[type=text], select, textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text); font: inherit; }
-  textarea { min-height: 96px; }
-  .class-row { border-top: 1px dashed var(--line); padding-top: 8px; margin-top: 12px; }
-  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  button { font: inherit; padding: 8px 14px; border-radius: 6px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
-  button.secondary { background: transparent; color: var(--accent); }
-  button:disabled { opacity: .5; cursor: not-allowed; }
-  .consent { display: flex; gap: 8px; align-items: flex-start; font-weight: 400; margin: 16px 0; }
-  .consent input { margin-top: 5px; }
+  label.field { display: block; font-weight: 600; margin: 16px 0 6px; }
+  input[type=text], input[type=email], textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--soft); color: var(--text); font: inherit; }
+  input:focus-visible, textarea:focus-visible, button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
   .hint { color: var(--muted); font-size: .875rem; }
-  .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-weight: 700; font-size: .875rem; }
-  .High { color: var(--high); background: var(--high-bg); }
-  .Medium { color: var(--med); background: var(--med-bg); }
-  .Low { color: var(--low); background: var(--low-bg); }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  button { font: inherit; padding: 10px 20px; border-radius: 12px; border: 1px solid var(--brand); background: var(--brand); color: var(--brand-ink); cursor: pointer; font-weight: 600; }
+  button.secondary { background: transparent; color: var(--brand); }
+  button.link { border: 0; background: none; color: var(--brand); padding: 0; text-decoration: underline; font-weight: 500; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; gap: 12px; flex-wrap: wrap; }
+  .nav .right { display: flex; gap: 12px; }
+
+  .kinds { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 12px; }
+  @media (max-width: 600px) { .kinds { grid-template-columns: 1fr; } }
+  .kind { border: 2px solid var(--line); border-radius: 10px; background: var(--soft); padding: 20px; text-align: center; color: var(--text); font-weight: 400; }
+  .kind.on { border-color: var(--brand); background: var(--brand-soft); }
+  .kind .icon { width: 52px; height: 52px; margin: 0 auto 10px; border-radius: 50%; background: var(--card); display: grid; place-items: center; font-weight: 700; color: var(--brand); }
+  .kind strong { display: block; font-size: 1.1rem; }
+  .logo-preview { max-height: 120px; max-width: 100%; margin-top: 10px; border: 1px solid var(--line); border-radius: 6px; }
+
+  .search { display: flex; gap: 8px; }
+  .search input { flex: 1; min-width: 0; font-size: 1.05rem; padding: 12px 14px; }
+  .options { display: flex; gap: 18px; flex-wrap: wrap; margin: 10px 0 14px; align-items: center; }
+  .options label { display: inline-flex; gap: 6px; align-items: center; }
+  .info { border-left: 4px solid var(--brand); background: var(--brand-soft); padding: 12px 14px; border-radius: 6px; margin: 12px 0; }
+  .info.sample { border-color: var(--warn); background: var(--med-bg); }
+  .gs { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 860px) { .gs { grid-template-columns: 1fr; } }
+  .box { border: 1px solid var(--line); border-radius: 10px; background: var(--card); min-width: 0; }
+  .box > .head { padding: 12px 16px; border-bottom: 1px solid var(--line); font-weight: 700; }
+  .results { max-height: 560px; overflow: auto; padding: 12px; }
+  .cls { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
+  .badge { display: inline-block; background: var(--brand-soft); color: var(--brand); font-weight: 700; font-size: .85rem; padding: 2px 8px; border-radius: 4px; }
+  .cls h3 { margin: 6px 0 8px; font-size: 1.05rem; }
+  .detail-btn { margin-left: 6px; font: inherit; font-size: .8rem; font-weight: 600; padding: 2px 8px; border-radius: 4px;
+    border: 1px solid var(--brand); background: transparent; color: var(--brand); cursor: pointer; }
+  .detail-btn:hover, .detail-btn:focus-visible { background: var(--brand); color: var(--brand-ink); }
+  dialog.side { margin: 0 0 0 auto; height: 100%; max-height: 100dvh; width: min(560px, 100vw); max-width: 100vw;
+    border: 0; border-left: 6px solid var(--brand); padding: 24px 24px 40px; background: var(--card); color: var(--text); }
+  dialog.side::backdrop { background: rgba(0, 0, 0, .45); }
+  dialog.side .close { float: right; font-size: 1.6rem; line-height: 1; border: 0; background: var(--soft); color: var(--text);
+    width: 40px; height: 40px; border-radius: 6px; cursor: pointer; }
+  dialog.side .heading { color: var(--brand); font-size: 1.15rem; font-weight: 600; margin: 16px 0; padding-bottom: 16px;
+    border-bottom: 1px solid var(--line); }
+  dialog.side h4 { margin: 0 0 8px; font-size: 1.05rem; }
+  dialog.side p { margin: 0 0 14px; }
+  .cls label { display: flex; gap: 8px; align-items: flex-start; padding: 3px 0; }
+  input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--brand); flex: none; }
+  .cls input[type=checkbox] { margin-top: 3px; }
+  .selected { padding: 12px 16px; }
+  .chip { display: flex; justify-content: space-between; gap: 8px; border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; margin: 6px 0; }
+  .chip button { border: 0; background: none; color: var(--text); padding: 0 4px; font-size: 1.1rem; line-height: 1; }
+  .empty { color: var(--muted); padding: 8px 0; }
+
+  .acc { border: 1px solid var(--line); border-radius: 10px; margin: 12px 0; overflow: hidden; }
+  .acc > button { width: 100%; display: flex; align-items: center; gap: 14px; background: var(--soft); color: var(--text); border: 0; border-radius: 0; padding: 14px 16px; text-align: left; font-size: 1.15rem; }
+  .acc > button .chev { margin-left: auto; }
+  .acc .body { padding: 14px 18px; }
+  .pill { border-radius: 999px; padding: 3px 12px; font-size: .85rem; font-weight: 600; white-space: nowrap; }
+  .pill.warn { background: var(--warn); color: #3b1d00; }
+  .pill.ok { background: var(--low-bg); color: var(--low); }
+  .low-marks { margin-top: 14px; }
+  .working { display: flex; gap: 14px; align-items: center; padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--brand-soft); margin-top: 12px; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -2px; }
+  .spinner.big { width: 28px; height: 28px; border-width: 3px; color: var(--brand); flex: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.5s; } }
+  .low-marks summary { cursor: pointer; font-weight: 600; padding: 6px 0; }
+  .marks { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 10px; }
+  .mark { border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
+  .mark .pic { display: block; max-width: 100%; max-height: 120px; margin: 0 auto 10px; background: #fff; border-radius: 4px; }
+  .mark .mkind { font-size: .8rem; color: var(--muted); margin-left: 4px; }
+  .mark .words { display: inline-block; border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; font-weight: 700; margin-bottom: 8px; }
+  .route { border: 2px solid var(--brand); border-radius: 8px; padding: 12px 16px; margin: 12px 0; background: var(--brand-soft); }
+  .route h3 { margin: 2px 0 6px; } .route ul { margin: 0; padding-left: 20px; }
+  .route.new_name { border-color: var(--high); } .route.composite { border-color: var(--med); }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 12px 0 18px; }
+  @media (max-width: 700px) { .tiles { grid-template-columns: 1fr; } }
+  .tile { border: 1px solid var(--line); border-left-width: 5px; border-radius: 8px; padding: 10px 12px; }
+  .tile.bad { border-left-color: var(--warn); } .tile.ok { border-left-color: var(--low); }
+  .offer { border: 2px solid var(--brand); border-radius: 10px; padding: 16px 18px; background: var(--brand-soft); }
+  .offer h2 { margin-top: 0; }
+  .offer input[type=email] { width: 100%; }
+  .warnbox { border-left: 4px solid var(--warn); background: var(--med-bg); padding: 10px 14px; border-radius: 6px; margin: 10px 0; }
+  .ai { border-left: 4px solid var(--line); padding: 2px 0 2px 12px; margin: 10px 0; }
+  .ai.likely { border-color: var(--high); } .ai.possible { border-color: var(--med); } .ai.unlikely { border-color: var(--low); }
+  .risk { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: .8rem; font-weight: 700; }
+  .risk.High { color: var(--high); background: var(--high-bg); }
+  .risk.Medium { color: var(--med); background: var(--med-bg); }
+  .risk.Low { color: var(--low); background: var(--low-bg); }
   .note { border-left: 3px solid var(--line); padding-left: 10px; color: var(--muted); font-size: .9rem; }
-  .escalate { border-color: var(--high); }
-  ul { margin: 6px 0; padding-left: 20px; }
-  footer { color: var(--muted); font-size: .85rem; margin-top: 32px; }
+  .escalate { border: 2px solid var(--high); border-radius: 10px; padding: 12px 16px; margin: 12px 0; }
+  .consent { display: flex; gap: 10px; align-items: flex-start; margin: 16px 0; }
+  .consent input { margin-top: 4px; }
+  .cites { font-size: .85rem; color: var(--muted); }
+  table.sum { width: 100%; border-collapse: collapse; }
+  table.sum td, table.sum th { text-align: left; border-bottom: 1px solid var(--line); padding: 8px 6px; vertical-align: top; }
   .error { color: var(--high); }
+  footer { color: #b7bdd0; font-size: .85rem; background: #060d19; border-radius: 28px 28px 0 0; margin-top: 24px; }
+  footer .in { max-width: 1240px; margin: 0 auto; padding: 48px 16px 40px; }
+  footer .flogo { color: #fff; font-weight: 800; font-size: 1.2rem; margin-bottom: 14px; }
+  [hidden] { display: none !important; }
+
+  /* landing (layout language: rounded panels, navy feature bands, eyebrow labels) */
+  .landing { max-width: 1240px; margin: 0 auto; padding: 0 16px; }
+  .eyebrow { display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+             border: 1px solid currentColor; border-radius: 8px; padding: 3px 10px; color: var(--ink); }
+  .dark .eyebrow { color: #c7cbe6; }
+  .hl { color: var(--accent); }
+  .grad { background: linear-gradient(90deg, #a5b4fc, #6366f1); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .panelx { background: var(--card); border-radius: 28px; padding: 64px 48px; margin-top: 12px; }
+  .dark { background: radial-gradient(120% 80% at 50% 0%, #2a2f8f 0%, var(--navy-2) 35%, var(--navy) 75%); color: #e5e7f5; }
+  .dark h1, .dark h2, .dark h3 { color: #fff; }
+  @media (max-width: 860px) { .panelx { padding: 40px 20px; border-radius: 22px; } }
+  .hero { border-radius: 0 0 36px 36px; margin: 0 -16px; padding: 72px 16px 0; text-align: center; position: relative; overflow: hidden; }
+  .hero .ghost-word { position: absolute; inset: 70px 0 auto; font-size: clamp(6rem, 22vw, 20rem); font-weight: 800; line-height: 1;
+                      color: rgba(255,255,255,.035); white-space: nowrap; pointer-events: none; letter-spacing: -.03em; }
+  .hero > * { position: relative; }
+  .hero h1 { font-size: clamp(2.2rem, 5.4vw, 4.25rem); line-height: 1.1; margin: 18px auto 18px; max-width: 980px; font-weight: 600; letter-spacing: -.01em; }
+  .hero p.lead { font-size: 1.15rem; color: #d8dfe8; max-width: 720px; margin: 0 auto 30px; }
+  .ctas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .cta { display: inline-flex; align-items: center; gap: 14px; text-decoration: none; font-weight: 600; border-radius: 12px; }
+  .cta.light { background: #fff; color: #060d19; padding: 3px 3px 3px 22px; }
+  .cta.light span { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: #060d19; color: #fff; }
+  .cta.line { border: 1px solid #fff; color: #fff; padding: 11px 22px; }
+  .mock { max-width: 780px; margin: 56px auto 0; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14);
+          border-bottom: 0; border-radius: 18px 18px 0 0; padding: 14px 18px 0; text-align: left; }
+  .mock .dots { display: flex; gap: 6px; margin-bottom: 12px; } .mock .dots i { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,.3); }
+  .mock .bar { display: flex; align-items: center; gap: 14px; background: rgba(255,255,255,.08); border-radius: 12px; padding: 12px 16px; color: #fff; }
+  .mock .meter { flex: 1; height: 8px; border-radius: 99px; background: rgba(255,255,255,.18); overflow: hidden; }
+  .mock .meter b { display: block; height: 100%; width: 70%; background: linear-gradient(90deg, #22d3ee, #a5f3fc); }
+  .mock .badge { background: #22d3ee; color: #062a33; border-radius: 99px; padding: 4px 14px; font-weight: 700; font-size: .9rem; }
+  .mock .grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 12px; margin: 12px 0; }
+  @media (max-width: 640px) { .mock .grid { grid-template-columns: minmax(0, 1fr); } .mock .bar strong { display: none; } }
+  .mock .yours { display: grid; place-items: center; min-height: 150px; border-radius: 12px; background: rgba(255,255,255,.1);
+                 font-size: 1.7rem; font-weight: 800; color: #67e8f9; letter-spacing: .02em; }
+  .mock .row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; background: rgba(255,255,255,.07); margin-bottom: 8px; color: #fff; }
+  .mock .row b { font-size: 1rem; } .mock .row small { margin-left: auto; color: #c7cbe6; }
+  .mock .row em { font-style: normal; font-size: .75rem; font-weight: 700; padding: 2px 9px; border-radius: 99px; }
+  .mock .row em.m { background: #fde68a; color: #6b4400; } .mock .row em.l { background: #bbf7d0; color: #14532d; }
+  .scans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; max-width: 780px; margin: 0 auto; }
+  @media (max-width: 640px) { .scans { display: none; } .mock { padding-bottom: 6px; } }
+  .scans div { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); border-bottom: 0; border-radius: 14px 14px 0 0;
+               padding: 14px 16px 18px; text-align: left; color: #fff; }
+  .scans svg { width: 30px; height: 30px; padding: 6px; border-radius: 9px; background: rgba(255,255,255,.12); display: block; margin-bottom: 10px; }
+  .split { display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: end; margin: 18px 0 48px; }
+  @media (max-width: 860px) { .split { grid-template-columns: minmax(0, 1fr); gap: 16px; margin-bottom: 32px; } }
+  .split h2, .center h2 { font-size: clamp(2rem, 4.2vw, 3.25rem); line-height: 1.12; margin: 0; color: var(--ink); font-weight: 600; letter-spacing: -.02em; }
+  .split p { color: var(--muted); font-size: 1.08rem; margin: 0; }
+  .center { text-align: center; } .center h2 { margin: 18px auto 14px; max-width: 900px; }
+  .panelx.dark h2, .hero.dark h1 { color: #fff; }
+  .center p.sub { color: inherit; opacity: .8; max-width: 720px; margin: 0 auto 40px; font-size: 1.08rem; }
+  .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cols > div { padding: 0 28px; border-left: 1px solid var(--line); } .cols > div:first-child { padding-left: 0; border-left: 0; }
+  @media (max-width: 860px) { .cols { grid-template-columns: minmax(0, 1fr); gap: 28px; } .cols > div { padding: 0; border: 0; } }
+  .tile { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 14px; background: #dcdcfb; color: #4338ca; margin-bottom: 22px; }
+  .tile svg { width: 26px; height: 26px; }
+  .cols h3 { font-size: 1.3rem; margin: 0 0 8px; color: var(--ink); font-weight: 600; }
+  .cols .num { font-size: 2.4rem; font-weight: 700; color: var(--accent); line-height: 1; margin-bottom: 10px; letter-spacing: -.02em; }
+  .cols p { margin: 0; color: var(--muted); }
+  .src { font-size: .8rem; color: var(--muted); margin: 32px 0 0; }
+  .steps3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; text-align: left; }
+  @media (max-width: 860px) { .steps3 { grid-template-columns: minmax(0, 1fr); } }
+  .glass { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 18px; padding: 26px; }
+  .glass .n { font-size: .75rem; font-weight: 700; letter-spacing: .1em; color: #a5b4fc; text-transform: uppercase; }
+  .glass h3 { margin: 10px 0 8px; font-size: 1.35rem; font-weight: 600; }
+  .glass p { margin: 0; color: #c9cee3; }
+  .cmp-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-top: 6px; }
+  table.cmp { width: 100%; min-width: 760px; border-collapse: separate; border-spacing: 0; }
+  table.cmp th, table.cmp td { padding: 18px 14px; text-align: center; vertical-align: middle; border-bottom: 1px solid var(--line); }
+  table.cmp th:first-child, table.cmp td:first-child { text-align: left; font-weight: 600; color: var(--ink); width: 32%; }
+  table.cmp th:not(:first-child), table.cmp td:not(:first-child) { width: 17%; }
+  table.cmp thead th { font-weight: 600; font-size: 1.05rem; color: var(--ink); padding-bottom: 26px; }
+  table.cmp .us { background: #141a52; color: #fff; border-bottom-color: rgba(255,255,255,.08); }
+  table.cmp thead .us { background: radial-gradient(120% 140% at 50% 0%, #5b5cf0 0%, #1d2270 70%, #141a52 100%); border-radius: 22px 22px 0 0; padding: 18px 14px 26px; }
+  table.cmp tbody tr:last-child .us { background: linear-gradient(180deg, #141a52, #070a1c); border-radius: 0 0 22px 22px; }
+  table.cmp .us .pill { display: inline-block; padding: 12px 18px; border-radius: 12px; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.22); color: #fff; }
+  .ic { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 800; }
+  .ic.yes { background: #34d399; color: #04261a; }
+  .ic.no { background: #0b1030; color: #fff; }
+  @media (prefers-color-scheme: dark) { .ic.no { background: #3b4262; } }
+  .us .ic.no { background: rgba(255,255,255,.18); }
+  .part { font-size: .85rem; color: var(--muted); }
+  .us .part, td.us.cost { color: #e0e7ff; }
+  .cost { font-size: .9rem; font-weight: 600; }
+  .bounds { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 860px) { .bounds { grid-template-columns: minmax(0, 1fr); } }
+  .bounds > div { border: 1px solid var(--line); border-radius: 20px; padding: 26px; background: var(--soft); }
+  .bounds h3 { margin: 0 0 8px; color: var(--ink); font-size: 1.3rem; font-weight: 600; }
+  .bounds ul { margin: 0; padding-left: 20px; color: var(--muted); } .bounds li { margin-bottom: 6px; }
+  .toolhead { max-width: 1240px; margin: 12px auto 0; padding: 0 16px; }
+  .toolhead > div { background: var(--card); border-radius: 28px 28px 0 0; padding: 48px 48px 8px; }
+  @media (max-width: 860px) { .toolhead > div { padding: 32px 20px 4px; border-radius: 22px 22px 0 0; } }
+  .toolhead h2 { margin: 16px 0 6px; font-size: clamp(2rem, 4.2vw, 3rem); color: var(--ink); font-weight: 600; letter-spacing: -.02em; }
+  .toolhead p { margin: 0; color: var(--muted); font-size: 1.08rem; }
+  .toolwrap { max-width: 1240px; margin: 0 auto; padding: 0 16px; }
+  .toolwrap > .wrap { background: var(--card); border-radius: 0 0 28px 28px; max-width: none; padding: 28px 48px 48px; }
+  @media (max-width: 860px) { .toolwrap > .wrap { padding: 20px; } }
+  .toolwrap .panel { background: var(--soft); }
 </style>
 </head>
 <body>
-<main>
-  <h1>TM Advisor</h1>
-  <p class="lead">Check an Australian trade mark idea against the register, the goods &amp; services picklist and common examination problems, before you file it yourself.</p>
+<header class="top"><div class="in">
+  <a class="logo" href="/"><i>B</i><b>BizImprint</b></a><span class="tag">Trademark Conflict Intelligence for Australian businesses</span>
+  <nav><a href="#how">How it works</a><a href="#compare">Compare</a><a href="/report/sample" target="_blank" rel="noopener">Sample report</a><a class="navcta" href="#tool">Free check</a></nav>
+</div></header>
 
-  <form id="form" class="card">
-    <label for="mark">Your brand name (word mark)</label>
-    <input type="text" id="mark" required maxlength="200" placeholder="e.g. EcoKnit">
-
-    <div id="classes"></div>
-    <div class="row" style="margin-top:8px">
-      <button type="button" class="secondary" id="add-class">Add another class</button>
-      <span class="hint">Each class costs a separate filing fee.</span>
+<div class="landing">
+  <section class="hero dark">
+    <div class="ghost-word" aria-hidden="true">BizImprint</div>
+    <span class="eyebrow">Trade mark research for Australian start-ups</span>
+    <h1>You've picked a name. <span class="grad">Is it yours to use?</span></h1>
+    <p class="lead">Most founders find out after the logo is printed, when an objection or a letter arrives. BizImprint shows you what's on the Australian register, what the law says about it, and what's still uncertain, in plain English, before you commit.</p>
+    <div class="ctas"><a class="cta light" href="#tool">Start your free check <span aria-hidden="true">→</span></a><a class="cta line" href="/report/sample" target="_blank" rel="noopener">See a sample report</a></div>
+    <div class="mock" aria-hidden="true">
+      <div class="dots"><i></i><i></i><i></i></div>
+      <div class="bar"><div class="meter"><b></b></div><strong>70% letter match</strong><span class="badge">Review</span></div>
+      <div class="grid">
+        <div class="yours">YOUR NAME</div>
+        <div><div class="row"><b>EARLIER MARK</b><em class="m">Medium</em><small>same class</small></div>
+             <div class="row"><b>SIMILAR START</b><em class="l">Low</em><small>same class</small></div>
+             <div class="row"><b>SHARED WORD</b><em class="l">Low</em><small>related class</small></div></div>
+      </div>
     </div>
-
-    <label class="consent">
-      <input type="checkbox" id="consent">
-      <span>I understand TM Advisor is software that gives automated information, not legal advice, and cannot guarantee IP Australia will accept my application.</span>
-    </label>
-    <button type="submit" id="run" disabled>Run check</button>
-    <p id="error" class="error" role="alert"></p>
-  </form>
-
-  <section id="result" aria-live="polite"></section>
-
-  <footer id="disclaimers"></footer>
-</main>
-
-<template id="class-template">
-  <div class="class-row">
-    <div class="row">
-      <label style="margin:0">Class</label>
-      <select class="class-number" style="width:auto"></select>
-      <button type="button" class="secondary remove-class">Remove</button>
+    <div class="scans" aria-hidden="true">
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Comparing spelling</div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 8.5a6 6 0 1 1 12 0c0 4-4 4.5-4 8a3 3 0 0 1-6 0"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-1.5 2-1.5 3.5"/></svg>Comparing sound</div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>Comparing goods and services</div>
     </div>
-    <label>Goods or services, one per line</label>
-    <textarea class="terms" placeholder="Clothing&#10;Footwear&#10;Headwear"></textarea>
-    <p class="hint">Tip: picklist wording is cheaper to file and avoids wording objections. Search it with <a href="/docs#/default/picklist_search_api_picklist_search_get" target="_blank">the picklist search</a>.</p>
-  </div>
-</template>
+  </section>
+
+  <section class="panelx">
+    <span class="eyebrow">The problem</span>
+    <div class="split"><h2>Trade marks are written for lawyers, <span class="hl">and lawyers cost money</span></h2>
+      <p>Start-ups need to know whether a name is worth building on, but the tools and the law aren't written for them.</p></div>
+    <div class="cols">
+      <div><div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.9 0-3 .9-3 2s1 1.7 3 2 3 .9 3 2-1.1 2-3 2c-1.4 0-2.6-.6-3-1.6M12 6v2M12 16v2"/></svg></div>
+        <div class="num">A$500+</div><h3>For one professional search</h3><p>Professional searches commonly start from about A$500 + GST per search, with advice and filing charged on top. That's a lot to spend before you know if a name is worth keeping.</p></div>
+      <div><div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg></div>
+        <div class="num">Results only</div><h3>Search tools list marks, not meaning</h3><p>Free register searches show you a list of names. They don't tell you which ones matter, why, or what the law says about them.</p></div>
+      <div><div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg></div>
+        <div class="num">Form-filling</div><h3>Lodgement services file, not explain</h3><p>They lodge the application you give them. Understanding the risks of the name you chose is left to you.</p></div>
+    </div>
+    <p class="src">Example search prices: one Australian firm's published fees (The Loft, theloft.legal/fees, viewed October 2026). Prices vary between providers.</p>
+  </section>
+
+  <section class="panelx dark center" id="how">
+    <span class="eyebrow">How it works</span>
+    <h2>Research and understanding first, <span class="grad">at a founder's budget</span></h2>
+    <p class="sub">When something needs a lawyer, we tell you why.</p>
+    <div class="steps3">
+      <div class="glass"><span class="n">Step 1</span><h3>Free check</h3><p>Search the Australian register for your name in your classes, with every similar mark, how its goods and services link to yours, and a distinctiveness check.</p></div>
+      <div class="glass"><span class="n">Step 2</span><h3>Research report, A$299</h3><p>A plain-English explanation of the evidence, the relevant law with links to IP Australia's Trade Marks Manual, what's uncertain, and how each filing format relates to your findings.</p></div>
+      <div class="glass"><span class="n">Step 3</span><h3>You decide what's next</h3><p>Further research paths, how TM Headstart and applications work with the fees for your classes, and when a professional review may be useful.</p></div>
+    </div>
+  </section>
+
+  <section class="panelx center" id="compare">
+    <span class="eyebrow">Comparison table</span>
+    <h2>Built for founders, <span class="hl">honest about lawyers</span></h2>
+    <p class="sub">What each option gives a start-up checking a name. A lawyer offers things we don't, and the table says so.</p>
+    <div class="cmp-scroll">
+      <table class="cmp">
+        <thead><tr><th>Capability</th><th>Free search tools</th><th>Lodgement services</th><th>Lawyer's initial consultation</th><th class="us"><span class="pill">With BizImprint</span></th></tr></thead>
+        <tbody>
+          <tr><td>Searches the Australian register for similar names</td><td><span class="ic yes" aria-label="Yes">✓</span></td><td><span class="part">Sometimes</span></td><td><span class="ic yes" aria-label="Yes">✓</span></td><td class="us"><span class="ic yes" aria-label="Yes">✓</span></td></tr>
+          <tr><td>Compares your goods and services with theirs, term by term</td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic yes" aria-label="Yes">✓</span></td><td class="us"><span class="ic yes" aria-label="Yes">✓</span></td></tr>
+          <tr><td>Explains why each earlier mark matters, in plain English</td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic yes" aria-label="Yes">✓</span></td><td class="us"><span class="ic yes" aria-label="Yes">✓</span></td></tr>
+          <tr><td>Checks whether your name is distinctive (section 41)</td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic yes" aria-label="Yes">✓</span></td><td class="us"><span class="ic yes" aria-label="Yes">✓</span></td></tr>
+          <tr><td>Links every finding to IP Australia's own guidance</td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="part">Sometimes</span></td><td class="us"><span class="ic yes" aria-label="Yes">✓</span></td></tr>
+          <tr><td>Checks your wording against IP Australia's picklist</td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="part">Sometimes</span></td><td><span class="ic yes" aria-label="Yes">✓</span></td><td class="us"><span class="ic yes" aria-label="Yes">✓</span></td></tr>
+          <tr><td>Shows what's uncertain and what to research next</td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic yes" aria-label="Yes">✓</span></td><td class="us"><span class="ic yes" aria-label="Yes">✓</span></td></tr>
+          <tr><td>Results in minutes</td><td><span class="ic yes" aria-label="Yes">✓</span></td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic no" aria-label="No">✕</span></td><td class="us"><span class="ic yes" aria-label="Yes">✓</span></td></tr>
+          <tr><td>Personal legal advice for your situation</td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic yes" aria-label="Yes">✓</span></td><td class="us"><span class="ic no" aria-label="No">✕</span></td></tr>
+          <tr><td>Files the application for you</td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic yes" aria-label="Yes">✓</span></td><td><span class="ic yes" aria-label="Yes">✓</span></td><td class="us"><span class="ic no" aria-label="No">✕</span></td></tr>
+          <tr><td>Typical cost</td><td class="cost">Free</td><td class="cost">Service fee plus government fees</td><td class="cost">From about A$500 + GST per search; more with advice and filing</td><td class="us cost">Free check<br>A$299 report</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="src">General comparison of types of provider; individual services differ.</p>
+  </section>
+
+  <section class="panelx">
+    <span class="eyebrow">Boundaries</span>
+    <div class="split"><h2>What BizImprint is, <span class="hl">and isn't</span></h2><p>Research you can understand, with honest limits.</p></div>
+    <div class="bounds">
+      <div><h3>It is</h3><ul><li>Research software built on IP Australia's register and guidance</li><li>Evidence, law and uncertainty, explained in plain English</li><li>A way to understand your name before you spend more on it</li></ul></div>
+      <div><h3>It isn't</h3><ul><li>Legal advice, or a law firm or trade marks attorney</li><li>A decision on whether your mark will be registered: IP Australia's examiners decide</li><li>A clearance search for using the brand</li></ul></div>
+    </div>
+  </section>
+</div>
+
+<section class="toolhead" id="tool"><div>
+  <span class="eyebrow">Free check</span>
+  <h2>Start your free check</h2>
+  <p>Tell us your name and what you sell. It takes a few minutes, and the results are free.</p>
+</div></section>
+
+
+<div class="toolwrap"><div class="wrap">
+  <nav aria-label="Progress">
+    <ol class="steps" id="steps">
+      <li data-step="kind,goods"><span class="dot"></span><button type="button" class="steplink" data-go="kind">Trade mark details</button>
+        <button type="button" class="sub steplink" data-sub="kind" data-go="kind">Kind of trade mark</button>
+        <button type="button" class="sub steplink" data-sub="goods" data-go="goods">Goods and services</button></li>
+      <li data-step="check"><span class="dot"></span><button type="button" class="steplink" data-go="check">Automated check</button></li>
+      <li data-step="summary"><span class="dot"></span><button type="button" class="steplink" data-go="summary">Summary</button></li>
+    </ol>
+  </nav>
+
+  <main class="panel">
+    <button type="button" class="backtop" id="back-top" hidden></button>
+    <section data-page="kind">
+      <h1>Kind of trade mark</h1>
+      <p class="lead">What is your trade mark?</p>
+      <div class="kinds" role="radiogroup" aria-label="Kind of trade mark">
+        <button type="button" class="kind" data-kind="word" role="radio">
+          <div class="icon">abc</div><strong>Word mark</strong><span class="hint">Words only. Protects the words themselves, in any font or styling: the broadest protection for a name.</span>
+        </button>
+        <button type="button" class="kind" data-kind="logo" role="radio">
+          <div class="icon">◈</div><strong>Logo mark</strong><span class="hint">A design with no words. Protects the picture only.</span>
+        </button>
+        <button type="button" class="kind" data-kind="composite" role="radio">
+          <div class="icon">◈ abc</div><strong>Composite mark</strong><span class="hint">A design together with words. Can help when the words alone are descriptive.</span>
+        </button>
+      </div>
+      <div id="word-fields">
+        <label class="field" for="mark">Your word or phrase</label>
+        <input type="text" id="mark" maxlength="200" placeholder="e.g. EcoKnit" autocomplete="off">
+      </div>
+      <div id="logo-fields" hidden>
+        <label class="field" for="logo-file">Your logo (stays on your computer)</label>
+        <input type="file" id="logo-file" accept="image/*">
+        <img id="logo-preview" class="logo-preview" alt="Your logo" hidden>
+        <div id="composite-fields">
+          <label class="field" for="logo-words">Words in your logo</label>
+          <input type="text" id="logo-words" maxlength="200" placeholder="e.g. EcoKnit" autocomplete="off">
+          <p class="hint">We check the words against the register. A distinctive design can help descriptive words get accepted, but the registration then protects the design and words together, not the words on their own. It doesn't get around an earlier mark with similar words.</p>
+        </div>
+        <div id="logo-only-fields">
+          <label class="field" for="logo-desc">Describe your logo in a few words</label>
+          <input type="text" id="logo-desc" maxlength="200" placeholder="e.g. a stylised green leaf inside a circle" autocomplete="off">
+          <p class="hint">Pictures can't be compared automatically, so we check the goods and services and whether the design is likely to be distinctive. Search IP Australia's image search for similar logos before filing.</p>
+        </div>
+      </div>
+      <label class="field" for="applicant">Your name or company (optional)</label>
+      <input type="text" id="applicant" maxlength="200" placeholder="e.g. Success Meter Pty Ltd" autocomplete="organization">
+      <p class="hint">As it appears on IP Australia's records. Trade marks and applications you already own, such as an earlier TM Headstart request, are then left out of the similar-marks check.</p>
+    </section>
+
+    <section data-page="goods" hidden>
+      <h1>Goods and services</h1>
+      <p class="lead">List all the goods or services you will use your trade mark on. They are grouped into classes, and each class adds to the fee.</p>
+      <p>Search by keyword, or describe what your business does and press Enter.</p>
+      <div class="search">
+        <input type="text" id="query" placeholder="e.g. sweaters — or: we run a cafe and sell coffee beans online" aria-label="Search goods and services" autocomplete="off">
+        <button type="button" id="search-btn">Search</button>
+      </div>
+      <div class="options">
+        <strong>Include:</strong>
+        <label><input type="radio" name="mode" value="similar" checked> Similar matches</label>
+        <label><input type="radio" name="mode" value="exact"> Exact matches</label>
+      </div>
+      <div id="sample-note" class="info sample" hidden>This is a <strong>sample</strong> list of common terms, not IP Australia's full picklist of 60,000+ terms. For the complete official list, use the "See all terms on IP Australia" link under each class, then search here for the term you want.</div>
+      <div class="info">Trade mark protection depends on the goods and services you choose. <strong>Select all</strong> items your trade mark should cover, and only those you really intend to offer.</div>
+      <p id="search-note" class="hint"></p>
+      <p id="picklist-status" class="hint"></p>
+      <div class="gs">
+        <div class="box">
+          <div class="head row"><span>Show classes for:</span>
+            <label><input type="checkbox" id="show-goods" checked> Goods</label>
+            <label><input type="checkbox" id="show-services" checked> Services</label></div>
+          <div class="results" id="results"><p class="empty">Search above to see goods and services.</p></div>
+        </div>
+        <div class="box">
+          <div class="head">Selected goods and services</div>
+          <div class="selected" id="selected"></div>
+        </div>
+      </div>
+      <details class="own" style="margin-top:12px">
+        <summary class="hint">Can't find what you sell? Describe it in your own words</summary>
+        <p class="hint">Only if nothing on IP Australia's list fits. Your own wording costs $400 per class instead of $250, and the examiner checks it is clear and in the right class.</p>
+        <div class="row">
+          <label for="own-term" class="hint" style="font-weight:600;color:var(--text)">Your wording:</label>
+          <input type="text" id="own-term" placeholder="e.g. hand-dyed merino knitting kits" style="flex:1;min-width:200px" autocomplete="off">
+          <label class="hint" for="own-class">Class</label>
+          <input type="number" id="own-class" min="1" max="45" style="width:5em;padding:10px;border:1px solid var(--line);border-radius:6px;background:var(--soft);color:var(--text);font:inherit">
+          <button type="button" class="secondary" id="own-add">Add</button>
+        </div>
+        <p id="own-error" class="error" role="alert"></p>
+      </details>
+      <label class="field" for="industry">Your industry or customers (optional)</label>
+      <input type="text" id="industry" placeholder="e.g. for the hospitality industry; for children" autocomplete="off">
+      <p class="hint">If a similar mark comes up, limiting your goods or services to your industry is one way an examiner may accept your application (Trade Marks Manual, Part 27.3).</p>
+    </section>
+
+    <section data-page="check" hidden>
+      <h1>Automated check</h1>
+      <p class="lead">We check your trade mark for common problems before you apply. This is an automated screen, not an examiner's decision.</p>
+      <label class="consent"><input type="checkbox" id="consent">
+        <span>I understand BizImprint is software that gives automated research information, not legal advice, and can't tell me whether IP Australia will accept my application.</span></label>
+      <button type="button" id="run">Run check</button>
+      <p id="check-error" class="error" role="alert"></p>
+      <div id="check-result" aria-live="polite"></div>
+      <div id="explain-box" hidden>
+        <h2>Situation analysis</h2>
+        <button type="button" class="secondary" id="explain">Explain this in plain English</button>
+        <span class="hint">Uses AI, grounded in IP Australia's Trade Marks Manual. Takes up to a minute.</span>
+        <div id="explanation" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section data-page="summary" hidden>
+      <h1>Summary</h1>
+      <p class="lead">Check your details, then apply with IP Australia yourself. TM Headstart gets you an examiner's assessment within 5 business days, before you commit to a full application.</p>
+      <div id="summary"></div>
+    </section>
+
+    <div class="nav">
+      <button type="button" class="link" id="reset">Start again</button>
+      <div class="right">
+        <button type="button" class="secondary" id="back">Back</button>
+        <button type="button" id="next">Next</button>
+      </div>
+    </div>
+    <p id="nav-error" class="error" role="alert"></p>
+  </main>
+</div></div>
+<dialog class="side" id="class-detail" aria-labelledby="detail-title">
+  <button type="button" class="close" aria-label="Close" onclick="this.closest('dialog').close()">×</button>
+  <span class="badge" id="detail-title"></span>
+  <div id="detail-body"></div>
+</dialog>
+<footer><div class="in"><div class="flogo">BizImprint</div><p id="data-status"></p><div id="disclaimers"></div></div></footer>
 
 <script>
 const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const PAGES = ["kind", "goods", "check", "summary"];
+const TITLES = {};
+const FRESH = { page: "kind", kind: "word", mark: "", logoWords: "", logoDesc: "", applicant: "", industry: "", selected: {} };
+let lastReport = null;
+let lastGroups = [];
+let samplePicklist = true;
 
-function addClass(number) {
-  const node = $("#class-template").content.firstElementChild.cloneNode(true);
-  const select = $(".class-number", node);
-  for (let i = 1; i <= 45; i++) select.add(new Option(String(i), String(i), false, i === number));
-  $(".remove-class", node).onclick = () => { if (document.querySelectorAll(".class-row").length > 1) node.remove(); };
-  $("#classes").appendChild(node);
+function load() { try { return JSON.parse(localStorage.getItem("tm-advisor")); } catch { return null; } }
+function save() { try { localStorage.setItem("tm-advisor", JSON.stringify(state)); } catch {} }
+const state = Object.assign({}, FRESH, load() || {});
+if (state.kind === "logo" && state.logoWords && !state.logoDesc) state.kind = "composite";  // saved before composite marks existed
+function markText() { return ({ composite: state.logoWords, logo: state.logoDesc }[state.kind] ?? state.mark ?? "").trim(); }
+function classKeys() { return Object.keys(state.selected).filter(k => state.selected[k].length).sort((a, b) => a - b); }
+
+/* navigation */
+function show(page) {
+  state.page = page; save();
+  PAGES.forEach(p => $(`[data-page="${p}"]`).hidden = p !== page);
+  const i = PAGES.indexOf(page);
+  $$("#steps > li").forEach(li => {
+    const steps = li.dataset.step.split(",");
+    li.classList.toggle("current", steps.includes(page));
+    li.classList.toggle("done", Math.max(...steps.map(s => PAGES.indexOf(s))) < i);
+  });
+  $$("[data-sub]").forEach(s => s.classList.toggle("on", s.dataset.sub === page));
+  $("#back").hidden = i === 0;
+  $("#next").hidden = i === PAGES.length - 1;
+  $("#back-top").hidden = i === 0;
+  if (i > 0) $("#back-top").textContent = `← Back to ${PAGE_NAMES[PAGES[i - 1]]}`;
+  $("#nav-error").textContent = "";
+  if (page === "goods") renderSelected();
+  if (page === "summary") renderSummary();
+  if (pageShown) $("#tool").scrollIntoView({ block: "start" });  // the top of the tool, below the introduction
+  pageShown = true;
 }
-addClass(25);
-$("#add-class").onclick = () => addClass(35);
-$("#consent").onchange = (e) => { $("#run").disabled = !e.target.checked; };
+var pageShown = false;
+const PAGE_NAMES = { kind: "kind of trade mark", goods: "goods and services", check: "automated check", summary: "summary" };
+function problem(page) {  // what must be done on a page before moving past it
+  if (page === "kind" && !markText()) return { composite: "Enter the words in your logo.", logo: "Describe your logo in a few words." }[state.kind] || "Enter your word or phrase.";
+  if (page === "goods" && !classKeys().length) return "Select at least one good or service.";
+  return "";
+}
+function goTo(target) {  // back to any step freely; forward only past steps that are complete
+  const from = PAGES.indexOf(state.page), to = PAGES.indexOf(target);
+  for (let i = Math.min(from, to); i < to; i++) {
+    const p = problem(PAGES[i]);
+    if (p) { show(PAGES[i]); $("#nav-error").textContent = p; return; }
+  }
+  show(target);
+}
+$("#next").onclick = () => goTo(PAGES[PAGES.indexOf(state.page) + 1]);
+$("#back").onclick = () => show(PAGES[PAGES.indexOf(state.page) - 1]);
+$("#back-top").onclick = () => show(PAGES[PAGES.indexOf(state.page) - 1]);
+$$("[data-go]").forEach(b => b.onclick = () => goTo(b.dataset.go));
+$("#reset").onclick = () => {
+  if (!confirm("Clear everything and start again?")) return;
+  Object.assign(state, FRESH, { selected: {} });
+  lastReport = null; lastGroups = []; save(); fillInputs(); setKind("word");
+  $("#check-result").innerHTML = ""; $("#explain-box").hidden = true; $("#results").innerHTML = '<p class="empty">Search above to see goods and services.</p>';
+  show("kind");
+};
 
-fetch("/api/disclaimers").then(r => r.json()).then(list => {
-  $("#disclaimers").innerHTML = list.map(d => `<p>${esc(d)}</p>`).join("");
-});
+/* kind of trade mark */
+function setKind(kind) {
+  state.kind = kind; lastReport = null; save();
+  $$(".kind").forEach(b => { const on = b.dataset.kind === kind; b.classList.toggle("on", on); b.setAttribute("aria-checked", on); });
+  $("#word-fields").hidden = kind !== "word";
+  $("#logo-fields").hidden = kind === "word";
+  $("#composite-fields").hidden = kind !== "composite";
+  $("#logo-only-fields").hidden = kind !== "logo";
+}
+$$(".kind").forEach(b => b.onclick = () => setKind(b.dataset.kind));
+$("#mark").oninput = e => { state.mark = e.target.value; lastReport = null; save(); };
+$("#logo-words").oninput = e => { state.logoWords = e.target.value; lastReport = null; save(); };
+$("#logo-desc").oninput = e => { state.logoDesc = e.target.value; lastReport = null; save(); };
+$("#applicant").oninput = e => { state.applicant = e.target.value; lastReport = null; save(); };
+$("#industry").oninput = e => { state.industry = e.target.value; save(); };
+$("#logo-file").onchange = e => {
+  const file = e.target.files[0];
+  if (file) { const img = $("#logo-preview"); img.src = URL.createObjectURL(file); img.hidden = false; }
+};
 
-$("#form").onsubmit = async (e) => {
-  e.preventDefault();
-  $("#error").textContent = "";
-  const classes = [...document.querySelectorAll(".class-row")].map(row => ({
-    class_number: Number($(".class-number", row).value),
-    terms: $(".terms", row).value.split("\n").map(t => t.trim()).filter(Boolean),
-  }));
-  const body = { mark: $("#mark").value, classes, consent: $("#consent").checked };
-  $("#run").disabled = true;
+/* goods and services */
+async function search() {
+  const q = $("#query").value.trim();
+  if (q.length < 2) return;
+  const mode = $('input[name="mode"]:checked').value;
+  const kinds = [$("#show-goods").checked && "goods", $("#show-services").checked && "services"].filter(Boolean);
+  if (!kinds.length) { $("#results").innerHTML = '<p class="empty">Tick Goods, Services or both.</p>'; return; }
+  const sentence = q.split(/\s+/).length > 3;
+  $("#results").innerHTML = `<p class="empty">${sentence ? "Working out what your business needs…" : "Searching…"}</p>`;
+  $("#search-note").textContent = "";
   try {
-    const response = await fetch("/api/check", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body) });
+    const response = sentence
+      ? await fetch("/api/picklist/describe", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ text: q, mode, kinds }) })
+      : await fetch(`/api/picklist/find?${new URLSearchParams({ q, mode, kinds: kinds.join(",") })}`);
     const data = await response.json();
-    if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Please check the mark, classes and terms.");
-    render(data);
+    if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Search failed.");
+    $("#sample-note").hidden = !data.sample_picklist;
+    lastGroups = data.groups;
+    if (sentence) $("#search-note").textContent = (data.note ? data.note + " " : "") + `Searched for: ${data.keywords.join(", ")}.`;
+    renderResults();
   } catch (err) {
-    $("#error").textContent = err.message;
+    $("#results").innerHTML = `<p class="error">${esc(err.message)}</p>`;
+  }
+}
+$("#search-btn").onclick = search;
+$("#query").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); search(); } };
+$$('input[name="mode"]').forEach(r => r.onchange = search);
+$("#show-goods").onchange = search;
+$("#show-services").onchange = search;
+
+function ipaClassUrl(n) { return `https://tmgns.search.ipaustralia.gov.au/descriptions?class=${n}`; }
+function isSelected(cls, d) { return (state.selected[cls] || []).includes(d); }
+function toggle(cls, d, on) {
+  const list = state.selected[cls] || (state.selected[cls] = []);
+  const i = list.indexOf(d);
+  if (on && i < 0) list.push(d);
+  if (!on && i >= 0) list.splice(i, 1);
+  if (!list.length) delete state.selected[cls];
+  lastReport = null; save(); renderSelected();
+}
+$("#own-add").onclick = () => {
+  const term = $("#own-term").value.trim().replace(/\s+/g, " ");
+  const cls = Number($("#own-class").value);
+  $("#own-error").textContent = "";
+  if (!term) return $("#own-error").textContent = "Type the term to add.";
+  if (!(cls >= 1 && cls <= 45)) return $("#own-error").textContent = "Enter its class number (1 to 45).";
+  toggle(String(cls), term, true);
+  $("#own-term").value = "";
+  renderResults();
+};
+$("#own-term").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); $("#own-add").click(); } };
+
+const CLASSINFO = {};
+function detailButton(n) {
+  const c = CLASSINFO[n];
+  return c && (c.heading || c.notes.length) ? `<button type="button" class="detail-btn" data-detail="${n}">Show detail</button>` : "";
+}
+function showDetail(n) {
+  const c = CLASSINFO[n];
+  $("#detail-title").textContent = `Class ${n}`;
+  $("#detail-body").innerHTML = (c.heading ? `<p class="heading">${esc(c.heading)}</p>` : `<p class="heading">${esc(c.title)}</p>`)
+    + (c.notes.length ? `<h4>Notes</h4>${c.notes.map(t => `<p>${esc(t)}</p>`).join("")}` : "")
+    + `<p class="hint">From IP Australia's goods and services classification. <a href="${ipaClassUrl(n)}" target="_blank" rel="noopener">See class ${n} on IP Australia ↗</a></p>`;
+  $("#class-detail").showModal();
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-detail]");
+  if (b) showDetail(Number(b.dataset.detail));
+});
+$("#class-detail").addEventListener("click", e => { if (e.target === e.currentTarget) e.currentTarget.close(); });  // click outside
+function renderResults() {
+  if (!lastGroups.length) { $("#results").innerHTML = '<p class="empty">No matches. Try another word, or choose "Similar matches".</p>'; return; }
+  $("#results").innerHTML = lastGroups.map(g => `
+    <div class="cls"><span class="badge">Class ${g.class_number}</span>${detailButton(g.class_number)}
+      <h3>${esc(g.title)}</h3>
+      <p class="hint" style="margin:-4px 0 6px"><a href="${ipaClassUrl(g.class_number)}" target="_blank" rel="noopener">See all class ${g.class_number} terms on IP Australia ↗</a></p>
+      ${g.items.map(i => `<label><input type="checkbox" data-cls="${g.class_number}" data-d="${esc(i.description)}"${isSelected(g.class_number, i.description) ? " checked" : ""}><span>${esc(i.description)}${i.source === "register" ? ` <span class="hint">· used in ${i.uses} registered mark${i.uses === 1 ? "" : "s"}</span>` : ""}</span></label>`).join("")}
+    </div>`).join("");
+  $$("#results input[type=checkbox]").forEach(cb => cb.onchange = () => toggle(cb.dataset.cls, cb.dataset.d, cb.checked));
+}
+function renderSelected() {
+  const keys = classKeys();
+  $("#selected").innerHTML = keys.length ? keys.map(k => `
+    <div style="margin-bottom:10px"><span class="badge">Class ${k}</span>${detailButton(k)} <span class="hint">${esc(TITLES[k] || "")}</span>
+      ${state.selected[k].map(d => `<div class="chip"><span>${esc(d)}</span><button type="button" aria-label="Remove ${esc(d)}" data-cls="${k}" data-d="${esc(d)}">×</button></div>`).join("")}
+    </div>`).join("") + `<p class="hint">${keys.length} class${keys.length > 1 ? "es" : ""}. IP Australia charges per class.</p>`
+    : '<p class="empty">Nothing selected yet.</p>';
+  $$("#selected .chip button").forEach(b => b.onclick = () => { toggle(b.dataset.cls, b.dataset.d, false); renderResults(); });
+}
+
+/* automated check */
+function application() {
+  return { mark: markText(), mark_kind: state.kind, applicant: (state.applicant || "").trim(), consent: $("#consent").checked,
+           classes: classKeys().map(k => ({ class_number: Number(k), terms: state.selected[k] })) };
+}
+$("#run").disabled = true;
+$("#consent").onchange = e => { $("#run").disabled = !e.target.checked; };
+$("#run").onclick = async () => {
+  $("#check-error").textContent = "";
+  const run = $("#run"), label = run.textContent;
+  run.disabled = true;
+  run.innerHTML = '<span class="spinner" aria-hidden="true"></span> Checking…';
+  $("#check-result").innerHTML = `<div class="working" role="status" aria-live="polite">
+    <span class="spinner big" aria-hidden="true"></span>
+    <div><strong id="work-step">Searching the IP Australia register…</strong>
+      <div class="hint">Running for <span id="work-secs">0</span> seconds. This usually takes 10 to 40 seconds.</div></div></div>`;
+  $("#check-result").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  const steps = ["Searching the IP Australia register…", "Comparing similar names…", "Comparing goods and services…",
+                 "Checking what your words mean for your goods and services…", "Putting the results together…"];
+  const started = Date.now();
+  const timer = setInterval(() => {
+    const secs = Math.round((Date.now() - started) / 1000);
+    const secsEl = $("#work-secs"), stepEl = $("#work-step");
+    if (secsEl) secsEl.textContent = secs;
+    if (stepEl) stepEl.textContent = secs > 60 ? "Still working: the register is slow to answer right now…" : steps[Math.min(Math.floor(secs / 6), steps.length - 1)];
+  }, 1000);
+  try {
+    const response = await fetch("/api/check", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(application()) });
+    const data = await response.json().catch(() => ({ detail: `The check failed on the server (error ${response.status}). The window running the server shows the details.` }));
+    if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Please check your trade mark and goods and services.");
+    lastReport = data;
+    renderCheck(data);
+    $("#explain-box").hidden = !!data.offer;  // with an offer, the explanation is part of the paid report
+    $("#explanation").innerHTML = "";
+  } catch (err) {
+    $("#check-result").innerHTML = "";
+    $("#check-error").textContent = err.message;
   } finally {
-    $("#run").disabled = !$("#consent").checked;
+    clearInterval(timer);
+    run.textContent = label;
+    run.disabled = !$("#consent").checked;
   }
 };
 
-function render(r) {
-  const parts = [];
-  parts.push(`<h2>Result for ${esc(r.mark)} <span class="badge ${r.overall_risk}">${r.overall_risk} risk</span></h2>`);
-
-  if (r.escalate) {
-    parts.push(`<div class="card escalate"><strong>We suggest speaking to a registered trade marks attorney before filing.</strong><ul>${
-      r.escalation_reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`);
-  }
-
-  parts.push(`<h2>Similar marks on the register</h2>`);
-  if (!r.conflicts.length) parts.push(`<p>No similar marks found for your classes. This is a screen, not a full search.</p>`);
-  for (const c of r.conflicts) {
-    parts.push(`<div class="card">
-      <div class="row"><strong>${esc(c.cited_words)}</strong> <span class="hint">#${esc(c.cited_number)} · ${esc(c.cited_status)}${c.cited_owner ? " · " + esc(c.cited_owner) : ""}</span>
-      <span class="badge ${c.risk}">${c.risk}</span></div>
-      <ul>${c.mark_reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
-      ${c.overlaps.map(o => `<p>Your class ${o.user_class} vs their class ${o.cited_class}: ${esc(o.note)}${
-        o.overlapping_terms.length ? ` Your overlapping terms: <strong>${o.overlapping_terms.map(esc).join(", ")}</strong>.` : ""}</p>`).join("")}
-      <p><strong>Option:</strong> ${esc(c.option)}</p>
-      <p class="note">Based on automated matching against register data. Changing your goods/services changes what your registration protects, and the examiner decides.</p>
-    </div>`);
-  }
-
-  parts.push(`<h2>Distinctiveness (section 41)</h2>`);
-  if (!r.distinctiveness.length) parts.push(`<p>No descriptive or laudatory words found.</p>`);
-  else parts.push(`<div class="card"><ul>${r.distinctiveness.map(f => `<li><strong>${esc(f.word)}</strong>: ${esc(f.reason)}</li>`).join("")}</ul>
-    <p class="note">Distinctiveness is about the mark itself. Changing your goods list usually won't fix it; a more distinctive name or evidence of use might.</p></div>`);
-
-  parts.push(`<h2>Goods &amp; services wording</h2>`);
-  parts.push(`<div class="card"><p>${r.picklist_only
-    ? "All your terms are on IP Australia's picklist."
-    : "Some terms are not on the picklist. Picklist-only applications cost less and avoid wording objections."}</p><ul>${
-    r.picklist.map(p => `<li>Class ${p.class_number}: ${esc(p.term)} ${p.on_picklist ? "✓ on picklist" :
-      "— not on picklist" + (p.suggestions.length ? `; closest: ${p.suggestions.map(esc).join("; ")}` : "")}</li>`).join("")}</ul></div>`);
-
-  $("#result").innerHTML = parts.join("");
+function accordion(key, title, count, body, open) {
+  const pill = count ? `<span class="pill warn">${count} warning${count > 1 ? "s" : ""}</span>` : '<span class="pill ok">No issues found</span>';
+  return `<div class="acc"><button type="button" data-acc="${key}" aria-expanded="${open}" aria-controls="acc-${key}">
+    ${pill}<strong>${esc(title)}</strong><span class="chev" aria-hidden="true">${open ? "⌃" : "⌄"}</span></button>
+    <div class="body" id="acc-${key}"${open ? "" : " hidden"}>${body}</div></div>`;
 }
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-acc]");
+  if (!b) return;
+  const body = $(`#acc-${b.dataset.acc}`);
+  body.hidden = !body.hidden;
+  b.setAttribute("aria-expanded", !body.hidden);
+  $(".chev", b).textContent = body.hidden ? "⌄" : "⌃";
+});
+
+function matchText(m) {
+  const cut = t => t.length > 90 ? t.slice(0, 90).replace(/\s+\S*$/, "") + "…" : t;
+  const ours = `“${esc(cut(m.user_term))}”`, theirs = `“${esc(cut(m.cited_term))}”`;
+  if (m.basis === "identical") return `<strong>Identical wording:</strong> ${ours}.`;
+  if (m.basis === "broad_heading") return `<strong>Broad term:</strong> their ${theirs} can cover your ${ours}.`;
+  if (m.basis === "shared_words") return `<strong>Shared wording</strong> (${m.shared_words.map(w => "“" + esc(w) + "”").join(", ")}): your ${ours} and their ${theirs}. Shared words alone don't make them similar.`;
+  return `<strong>Related classes:</strong> your ${ours} and their ${theirs}.`;
+}
+function markPicture(url, words) {
+  return url ? `<img class="pic" src="${esc(url)}" alt="${esc(words || "Logo")}" loading="lazy" onerror="this.remove()">` : "";
+}
+function markLink(number, logo) {
+  return `<a href="https://search.ipaustralia.gov.au/trademarks/search/view/${encodeURIComponent(number)}" target="_blank" rel="noopener">#${esc(number)}</a><span class="mkind">${logo ? "Logo mark" : "Word mark"}</span>`;
+}
+function offerHtml(o, mark) {
+  const price = (o.price_cents / 100).toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
+  const designKind = state.kind !== "word";
+  return `<div class="offer">
+    <h2>Explanation and research report — ${price}</h2>
+    <p>Your results above are free. The report adds, for <strong>${esc(mark)}</strong> and your goods and services:</p>
+    <ul>${o.report_covers.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
+    <p><a href="/report/sample" target="_blank" rel="noopener">See a sample report ↗</a></p>
+    ${o.payments_enabled ? `
+    <label class="field" for="order-applicant">Who will own the trade mark? (your name or company)</label>
+    <input type="text" id="order-applicant" maxlength="200" autocomplete="organization" placeholder="e.g. Example Pty Ltd" value="${esc(state.applicant || "")}">
+    <p class="hint">Shown on the report. Marks you already own, such as an earlier TM Headstart request, are left out of the similar-marks check.</p>
+    <label class="field" for="order-email">Your email (we send the private link to your report here)</label>
+    <input type="email" id="order-email" autocomplete="email" placeholder="you@example.com">
+    ${designKind ? `<label class="field" for="order-logo">Your logo for the report (optional; PNG, JPG or SVG, up to 5 MB)</label>
+    <input type="file" id="order-logo" accept="image/png,image/jpeg,image/svg+xml">` : ""}
+    <label class="consent"><input type="checkbox" id="order-terms">
+      <span>I agree to the <a href="/terms" target="_blank" rel="noopener">terms and refund policy</a>, and understand the report is automated research, not legal advice or a decision on whether my mark can be registered.</span></label>
+    <button type="button" id="order">Get my explanation and report — ${price}</button>
+    <p id="order-error" class="error" role="alert"></p>
+    <p class="hint">Secure payment by Stripe. Your report opens on this site straight after payment and is emailed to you. Refund within 14 days if you haven't lodged; see the refund policy for the TM Headstart promise.</p>`
+    : `<p class="hint">Reports will be available soon.</p>`}
+  </div>`;
+}
+
+function readFile(file) {
+  return new Promise((resolve, reject) => { const fr = new FileReader(); fr.onload = () => resolve(fr.result); fr.onerror = reject; fr.readAsDataURL(file); });
+}
+async function placeOrder() {
+  const email = $("#order-email").value.trim();
+  $("#order-error").textContent = "";
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return $("#order-error").textContent = "Enter your email address.";
+  if (!$("#order-terms").checked) return $("#order-error").textContent = "Please accept the terms and refund policy.";
+  const file = ($("#order-logo") && $("#order-logo").files[0]) || ($("#logo-file") && $("#logo-file").files[0]);
+  if (file && file.size > 5 * 1024 * 1024) return $("#order-error").textContent = "The logo is larger than 5 MB.";
+  $("#order").disabled = true; $("#order").textContent = "Taking you to payment…";
+  try {
+    const app = application();
+    const body = { email, terms: true, industry: state.industry || "", logo: file ? await readFile(file) : null,
+                   application: { mark: app.mark, mark_kind: app.mark_kind, classes: app.classes,
+                                  applicant: ($("#order-applicant").value || "").trim() } };
+    const response = await fetch("/api/orders", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body) });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Please check your details and try again.");
+    window.location.href = data.url;
+  } catch (err) {
+    $("#order-error").textContent = err.message;
+    $("#order").disabled = false; $("#order").textContent = "Try again";
+  }
+}
+
+function renderCheck(r) {
+  const parts = [`<h2>Result for ${esc(r.mark)} <span class="risk ${r.overall_risk}">Review priority: ${r.overall_risk}</span></h2>`];
+  if (r.own_marks && r.own_marks.length) parts.push(`<p class="hint">Left out as your own: ${r.own_marks.map(n => markLink(n, false).split("<span")[0]).join(", ")}.</p>`);
+  if (r.register_warning) parts.push(`<div class="note warnbox"><strong>Test data.</strong> ${esc(r.register_warning)}</div>`);
+  if (r.escalate) parts.push(`<div class="escalate"><strong>We suggest speaking to a registered trade marks attorney before filing.</strong><ul>${r.escalation_reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`);
+
+  const flags = r.distinctiveness;
+  const ai = r.ai_distinctiveness;
+  const aiConcern = ai && ai.likelihood !== "unlikely";
+  const aiLabel = { likely: "Likely objection", possible: "Possible objection", unlikely: "Objection unlikely" };
+  const aiBlock = ai ? `
+    <div class="ai ${ai.likelihood}">
+      <p><span class="risk ${ai.likelihood === "likely" ? "High" : ai.likelihood === "possible" ? "Medium" : "Low"}">${aiLabel[ai.likelihood]}</span>
+        <strong> The mark as a whole (section 41)</strong></p>
+      ${ai.meaning ? `<p><strong>What “${esc(r.mark)}” means to people in this trade:</strong> ${esc(ai.meaning)}</p>` : ""}
+      <p>${esc(ai.reasoning)}</p>
+      ${aiConcern && ai.affected_terms.length ? `<p class="hint">Goods/services this applies to: ${ai.affected_terms.map(esc).join("; ")}</p>` : ""}
+      ${aiConcern && ai.options.length ? `<strong>Options</strong><ul>${ai.options.map(o => `<li>${esc(o)}</li>`).join("")}</ul>` : ""}
+      <p class="hint">Assessed by AI using the test IP Australia examiners apply: does the mark have an ordinary meaning for your goods or services that other traders would need to use? It can be wrong; the examiner decides.</p>
+    </div>` : (r.ai_distinctiveness_unavailable ? `<p class="hint">Meaning of the whole mark not checked: ${esc(r.ai_distinctiveness_unavailable)}</p>` : "");
+  const wordBlock = flags.length ? `
+    <strong>Words that describe or praise</strong>
+    <ul>${flags.map(f => `<li><strong>${esc(f.word)}</strong>: ${esc(f.reason)}</li>`).join("")}</ul>` : "";
+  const concerns = (flags.length ? 1 : 0) + (aiConcern ? 1 : 0);
+  parts.push(accordion("distinct", "Distinctiveness", concerns, concerns ? `
+    <strong>What to do</strong>
+    <p>Make sure your trade mark contains something other traders in your industry would not need to use.</p>
+    ${aiBlock}${wordBlock}
+    ${aiConcern && ai.options.length ? "" : `<p><strong>Ways forward:</strong> change or add a distinctive, invented word; file as a composite mark with a substantial, distinctive design (it then protects the design and words together); or, if you have used the mark for a while, provide evidence of use.</p>`}`
+    : `${aiBlock}<p>No descriptive, praising or place-name words found${ai ? "" : " (each word was checked on its own)"}.</p>`, concerns > 0));
+
+  const live = r.conflicts.filter(c => c.live && c.risk !== "Low");
+  const area = state.industry.trim().replace(/^for (the )?/i, "");
+  const markCard = c => `
+      <div class="mark">${markPicture(c.cited_image, c.cited_words)}<span class="words">${esc(c.cited_words || "(no words)")}</span> <span class="risk ${c.risk}">${c.risk}</span>
+        <div class="hint">${markLink(c.cited_number, c.cited_logo)} · ${esc(c.cited_status)}${c.cited_owner ? " · " + esc(c.cited_owner) : ""}</div>
+        <ul>${c.mark_reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
+        ${c.overlaps.map(o => `<p class="hint">Your class ${o.user_class} vs their class ${o.cited_class}: ${o.matches && o.matches.length ? o.matches.slice(0, 2).map(matchText).join(" ") : esc(o.note)}</p>`).join("")}
+        <p class="hint"><strong>To check:</strong> ${esc(c.option)}</p>
+      </div>`;
+  const top = r.conflicts.filter(c => c.risk !== "Low");
+  const low = r.conflicts.filter(c => c.risk === "Low");
+  parts.push(accordion("similar", "Similarity", live.length, (r.conflicts.length ? `
+    <strong>What to do</strong>
+    <p>We found ${r.conflicts.length} mark${r.conflicts.length > 1 ? "s" : ""} that may be similar to yours${top.length ? `, ${top.length} worth a closer look` : ""}. Check whether they are similar in the way they look, sound, and in their goods or services.</p>
+    ${top.length ? `<div class="marks">${top.map(markCard).join("")}</div>` : ""}
+    ${low.length ? `<details class="low-marks"${top.length ? "" : " open"}>
+      <summary>${top.length ? "Show " : ""}${low.length} lower-priority mark${low.length > 1 ? "s" : ""}</summary>
+      <p class="hint">These share only part of the name (for example the first few letters or a common word), or are no longer live. Listed so you know they exist.</p>
+      <div class="marks">${low.map(markCard).join("")}</div>
+    </details>` : ""}
+    ${area ? `<p class="note">Your industry or customers: “${esc(state.industry)}”. When the other mark's goods are for a different purpose, limiting yours (for example “…; all for use in ${esc(area)}”) may remove the overlap (Trade Marks Manual, Part 27.3). It won't help when the other mark covers the broad term itself.</p>` : ""}`
+    : "<p>No similar marks found for your classes. This is a screen, not a full search: also run IP Australia's free TM Checker.</p>"), live.length > 0));
+
+  const off = r.picklist.filter(p => !p.on_picklist);
+  parts.push(accordion("wording", "Goods and services wording", off.length, off.length ? `
+    <p>Some terms are not on the picklist. Picklist-only applications cost less and avoid wording objections.</p>
+    ${samplePicklist ? '<p class="note">We only have a sample of the picklist, so a term copied from IP Australia\'s full list, or one marked "used in registered marks", can show here as "not on picklist". Check it on IP Australia\'s class page.</p>' : ""}
+    <ul>${off.map(p => `<li>Class ${p.class_number}: ${esc(p.term)}${p.suggestions.length ? ` — closest: ${p.suggestions.map(esc).join("; ")}` : ""}</li>`).join("")}</ul>`
+    : "<p>All your terms are on the picklist.</p>", off.length > 0));
+
+  if (r.notes.length) parts.push(`<div class="note">${r.notes.map(n => `<p>${esc(n)}</p>`).join("")}</div>`);
+  if (r.offer) parts.push(offerHtml(r.offer, r.mark));
+  $("#check-result").innerHTML = parts.join("");
+  if (r.offer && r.offer.payments_enabled) $("#order").onclick = () => placeOrder();
+}
+
+$("#explain").onclick = async () => {
+  const button = $("#explain");
+  button.disabled = true;
+  $("#explanation").innerHTML = '<p class="hint">Working on it…</p>';
+  try {
+    const response = await fetch("/api/explain", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(application()) });
+    const data = await response.json();
+    if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Something went wrong.");
+    renderExplanation(data);
+  } catch (err) {
+    $("#explanation").innerHTML = `<p class="error">${esc(err.message)}</p>`;
+  } finally {
+    button.disabled = false;
+  }
+};
+function cites(list) {
+  if (!list || !list.length) return "";
+  return `<p class="cites">Manual: ${list.map(c => `<a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.title)}${c.heading && c.heading !== c.title ? " › " + esc(c.heading) : ""}</a>${c.published ? ` (published ${esc(c.published)})` : ""}`).join("; ")}</p>`;
+}
+function renderExplanation(data) {
+  if (!data.explanation) { $("#explanation").innerHTML = `<p class="error">${esc(data.unavailable_reason)}</p>`; return; }
+  const x = data.explanation;
+  const card = (inner) => `<div class="acc"><div class="body">${inner}</div></div>`;
+  const parts = [card(`<p>${esc(x.overview)}</p>`)];
+  for (const c of x.conflicts) {
+    const k = data.report.conflicts.find(m => m.cited_number === c.cited_number);
+    parts.push(card(`<strong>${esc(k ? k.cited_words : c.cited_number)}</strong><p>${esc(c.explanation)}</p>${cites(c.citations)}`));
+  }
+  if (x.distinctiveness) parts.push(card(`<strong>Distinctiveness</strong><p>${esc(x.distinctiveness.explanation)}</p>${cites(x.distinctiveness.citations)}`));
+  if (x.next_steps.length) parts.push(card(`<strong>Next steps to consider</strong><ul>${x.next_steps.map(s => `<li>${esc(s)}</li>`).join("")}</ul>`));
+  parts.push(`<p class="note">Written by AI from the findings above${data.manual_excerpts_used ? " and passages of IP Australia's Trade Marks Manual" : ""}. It can make mistakes and is not legal advice.</p>`);
+  $("#explanation").innerHTML = parts.join("");
+}
+
+/* summary */
+function renderSummary() {
+  const keys = classKeys();
+  const n = keys.length;
+  const allPicklist = lastReport ? lastReport.picklist_only : true;
+  const kindLabel = { word: "Word mark", logo: "Logo mark", composite: "Composite mark (logo with words)" }[state.kind];
+  const markLabel = { word: "Trade mark", logo: "Logo (description)", composite: "Words in your logo" }[state.kind];
+  const sheet = [`Kind of trade mark: ${kindLabel}`, `${markLabel}: ${markText()}`, "",
+                 ...keys.map(k => `Class ${k}: ${state.selected[k].join("; ")}`)].join("\n");
+  $("#summary").innerHTML = `
+    <table class="sum">
+      <tr><th>Kind of trade mark</th><td>${kindLabel}</td></tr>
+      <tr><th>${markLabel}</th><td>${esc(markText())}</td></tr>
+      ${keys.map(k => `<tr><th>Class ${k}<div class="hint">${esc(TITLES[k] || "")}</div></th><td>${state.selected[k].map(esc).join("; ")}</td></tr>`).join("")}
+      ${state.industry ? `<tr><th>Your industry or customers</th><td>${esc(state.industry)}</td></tr>` : ""}
+      <tr><th>Automated check</th><td>${lastReport ? `<span class="risk ${lastReport.overall_risk}">Review priority: ${lastReport.overall_risk}</span>${lastReport.escalate ? " — consider an attorney's view before filing" : ""}` : "Not run for these details yet"}</td></tr>
+    </table>
+
+    <h2>Estimated IP Australia fees for ${n} class${n > 1 ? "es" : ""}</h2>
+    <table class="sum">
+      <tr><th>TM Headstart</th><td>$${200 * n} now (Part 1, $200 per class), then $${130 * n} to proceed (Part 2, $130 per class): <strong>$${330 * n}</strong> in total. Amendments after the examiner's report may cost extra.</td></tr>
+      <tr><th>Standard application</th><td><strong>$${(allPicklist ? 250 : 400) * n}</strong> (${allPicklist ? "$250 per class with picklist terms" : "$400 per class, because some terms aren't on the picklist"}).</td></tr>
+    </table>
+    <p class="hint">Fees as published at the time of writing. Check <a href="https://www.ipaustralia.gov.au/trade-marks/timeframes-and-fees" target="_blank" rel="noopener">current fees</a>.</p>
+
+    <h2>Copy into your application</h2>
+    <textarea id="sheet" rows="${Math.min(12, n + 4)}" readonly>${esc(sheet)}</textarea>
+    <div class="row" style="margin-top:8px"><button type="button" class="secondary" id="copy">Copy</button><span id="copied" class="hint" role="status"></span></div>
+
+    <h2>Next steps</h2>
+    <ol>
+      <li>Run IP Australia's free <a href="https://www.ipaustralia.gov.au/trade-marks/search-existing-trade-marks/tm-checker" target="_blank" rel="noopener">TM Checker</a> with the same details.</li>
+      <li>Apply with <a href="https://www.ipaustralia.gov.au/trade-marks/how-to-apply-for-a-trade-mark/pre-application-service-tm-headstart" target="_blank" rel="noopener">TM Headstart</a>. An examiner's report arrives within 5 business days.</li>
+      <li>If the report raises issues, you have 5 business days to amend: narrow your goods or services, limit them to your industry, or change the mark. If an objection remains, that's the time to see a registered trade marks attorney.</li>
+    </ol>`;
+  $("#copy").onclick = async () => {
+    try { await navigator.clipboard.writeText(sheet); $("#copied").textContent = "Copied."; }
+    catch { $("#sheet").select(); $("#copied").textContent = "Press Ctrl+C to copy."; }
+  };
+}
+
+/* data freshness */
+function niceDate(iso) {
+  if (!iso) return "";
+  const d = new Date(iso + "T00:00:00");
+  return isNaN(d) ? iso : d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
+}
+function loadDataStatus() {
+  fetch("/api/data-status").then(r => r.json()).then(s => {
+    const p = s.picklist;
+    samplePicklist = p.sample;
+    const pick = p.sample
+      ? `Goods & services: sample list of ${p.terms.toLocaleString()} terms (not IP Australia's full picklist).`
+      : `Goods & services: IP Australia picklist, ${p.terms.toLocaleString()} terms${p.updated ? `, updated ${niceDate(p.updated)}` : ""}.`;
+    const man = s.manual
+      ? `Trade Marks Manual: ${s.manual.pages.toLocaleString()} pages${s.manual.updated ? `, updated ${niceDate(s.manual.updated)}` : ""}.`
+      : "Trade Marks Manual: not downloaded yet.";
+    const words = s.wording
+      ? ` Wording from ${s.wording.marks.toLocaleString()} registered marks: ${s.wording.terms.toLocaleString()} accepted wordings across all classes${s.wording.updated ? `, updated ${niceDate(s.wording.updated)}` : ""}.`
+      : "";
+    $("#picklist-status").textContent = pick + words;
+    const auto = s.auto_update_days
+      ? ` Updates automatically every ${s.auto_update_days} days${s.next_auto_update ? ` (next check due ${niceDate(s.next_auto_update)})` : ""}.`
+      : "";
+    $("#data-status").textContent = `Data: ${pick}${words} ${man}${auto}`;
+    $("#sample-note").hidden = !p.sample;
+  }).catch(() => {});
+}
+
+/* start */
+if (new URLSearchParams(location.search).get("cancelled")) {
+  setTimeout(() => { const e = $("#nav-error"); if (e) e.textContent = "Payment cancelled. Nothing was charged; your details are still here."; }, 0);
+}
+loadDataStatus();
+function fillInputs() { $("#mark").value = state.mark; $("#logo-words").value = state.logoWords; $("#logo-desc").value = state.logoDesc || ""; $("#applicant").value = state.applicant || ""; $("#industry").value = state.industry; }
+fetch("/api/classes").then(r => r.json()).then(list => {
+  list.forEach(c => { TITLES[c.class_number] = c.title; CLASSINFO[c.class_number] = c; });
+  renderSelected();
+  if (lastGroups.length) renderResults();
+});
+fetch("/api/disclaimers").then(r => r.json()).then(list => { $("#disclaimers").innerHTML = list.map(d => `<p>${esc(d)}</p>`).join(""); });
+fillInputs();
+setKind(state.kind);
+show(PAGES.includes(state.page) ? state.page : "kind");
 </script>
 </body>
 </html>

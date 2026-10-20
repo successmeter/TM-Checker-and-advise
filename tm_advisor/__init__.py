@@ -1,1 +1,1 @@
-"""TM Advisor: a brand filing check for Australian trade mark applicants."""
+"""BizImprint: a brand filing check for Australian trade mark applicants."""

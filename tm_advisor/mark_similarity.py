@@ -5,16 +5,32 @@ This is a screen, not the examiner's test: it finds marks worth a human look and
 
 from dataclasses import dataclass, field
 
-from .text import edit_similarity, phonetic_key, squash, words
+from .distinctiveness import COMMON_WORDS
+from .text import edit_similarity, parts, phonetic_key, squash, stem, words
 
 # Words that add little to a mark's identity, so containment of only these does not count.
 _WEAK_WORDS = {"the", "a", "an", "and", "of", "co", "pty", "ltd", "group", "australia", "au", "company"}
+
+
+# A shared word that is only a small part of one of the marks (RETAIL METER, IMETER or QLD ACCOUNTING GROUP ...
+# FINANCIALLY SUCCESSFUL BUSINESS vs SUCCESS METER): examiners compare the marks as a whole, and an ordinary shared
+# word with everything else different is a weak resemblance (Low risk).
+MINOR = 0.55
+
+
+def _minor_part(shared_letters: int, ours: str, theirs: str) -> bool:
+    return shared_letters < 0.5 * len(ours) or shared_letters < 0.4 * len(theirs)
 
 
 @dataclass
 class MarkSimilarity:
     score: float
     reasons: list[str] = field(default_factory=list)
+    same_start_only: bool = False  # only the first letters match: listed when the class is the same
+
+
+# The score for marks whose only resemblance is the same first three or more letters (BIZY / BIZIMPRINT).
+SAME_START = 0.5
 
 
 def compare(user_mark: str, cited_mark: str) -> MarkSimilarity:
@@ -31,9 +47,21 @@ def compare(user_mark: str, cited_mark: str) -> MarkSimilarity:
     reasons: list[str] = []
 
     looks = edit_similarity(a, b)
-    if looks >= 0.75:
+    if looks >= 0.6 and _scattered(a, b):
+        # Differences in more than one place (NAME-LIGHT / GAME-FIGHT) make different names, even with the same
+        # share of letters in common: the letter match alone doesn't count.
+        looks = 0.0
+    elif looks >= 0.75:
         score = max(score, looks)
         reasons.append(f"Spelled very similarly ({round(looks * 100)}% letter match).")
+    elif looks >= 0.6 and min(len(a), len(b)) >= 4:
+        score = max(score, round(looks, 2))
+        reasons.append(f"Spelled somewhat similarly ({round(looks * 100)}% letter match).")
+
+    prefix = _common_prefix(a, b)
+    if looks < 0.75 and len(prefix) >= 3 and len(prefix) * 2 >= min(len(a), len(b)) and abs(len(a) - len(b)) <= 3:
+        score = max(score, 0.6)
+        reasons.append(f"Begins with the same letters ('{prefix.upper()}'), which people tend to notice and remember.")
 
     key_a, key_b = phonetic_key(a), phonetic_key(b)
     if len(key_a) >= 2 and key_a == key_b and abs(len(a) - len(b)) <= 3:
@@ -41,15 +69,110 @@ def compare(user_mark: str, cited_mark: str) -> MarkSimilarity:
         reasons.append("Likely to sound alike when spoken.")
 
     shorter, longer = sorted((a, b), key=len)
-    if len(shorter) >= 4 and shorter in longer:
+    whole_contained = len(shorter) >= 4 and shorter in longer
+    if whole_contained and shorter in COMMON_WORDS:
+        score = max(score, 0.7)
+        reasons.append(f"'{shorter.upper()}' appears inside '{longer.upper()}', but it is a common word that examiners "
+                       "give little weight to on its own.")
+    elif whole_contained:
         contained = 0.85 if longer.startswith(shorter) else 0.75
         score = max(score, contained)
         reasons.append(f"'{shorter.upper()}' appears inside '{longer.upper()}'.")
 
-    shared = (set(words(user_mark)) & set(words(cited_mark))) - _WEAK_WORDS
+    ours, theirs = _words_and_parts(user_mark), _words_and_parts(cited_mark)
+    common_words = {w for w in ours if stem(w) in {stem(x) for x in theirs}}
+    elements = [(w, b, cited_mark, True) for w in ours] + [(w, a, user_mark, False) for w in theirs]
+    for word, other, other_text, _ in [] if whole_contained else elements:
+        if len(word) >= 4 and word not in _WEAK_WORDS and word not in common_words and _word_inside(word, other_text):
+            if word in COMMON_WORDS:
+                score = max(score, MINOR)
+                reasons.append(f"The word '{word.upper()}' appears inside '{other_text.upper()}', but it is a common "
+                               "word that examiners give little weight to.")
+            elif _minor_part(len(word), a, b) and len(word) < 0.9 * len(b) and len(word) < 0.9 * len(a):
+                score = max(score, MINOR)
+                reasons.append(f"The word '{word.upper()}' appears inside '{other_text.upper()}', but the rest of "
+                               "the marks is different.")
+            else:
+                score = max(score, 0.75)
+                reasons.append(f"The word '{word.upper()}' appears inside '{other_text.upper()}'.")
+            break
+
+    shared = common_words - _WEAK_WORDS
     shared = {w for w in shared if len(w) >= 3}
     if shared:
-        score = max(score, 0.7)
-        reasons.append("Shares the word(s): " + ", ".join(sorted(w.upper() for w in shared)) + ".")
+        if shared <= COMMON_WORDS:
+            score = max(score, MINOR)
+            reasons.append("Shares only the common word(s) " + ", ".join(sorted(w.upper() for w in shared))
+                           + ", which examiners give little weight to; the rest of the marks is different.")
+        elif _minor_part(sum(len(w) for w in shared), a, b):
+            score = max(score, MINOR)
+            reasons.append("Shares the word(s) " + ", ".join(sorted(w.upper() for w in shared))
+                           + ", but the rest of the marks is different.")
+        else:
+            score = max(score, 0.7)
+            reasons.append("Shares the word(s): " + ", ".join(sorted(w.upper() for w in shared)) + ".")
 
+    lead = next((w for w in words(cited_mark) if len(w) > 2), "")  # B BIZPAY: the first word after initials
+    start = max(prefix, _common_prefix(a, lead), key=len)
+    if not reasons and len(start) >= 3:
+        return MarkSimilarity(SAME_START, [f"Starts with the same letters ('{start.upper()}'), but the rest of the "
+                                           "marks is different."], same_start_only=True)
     return MarkSimilarity(round(score, 2), reasons)
+
+
+def _scattered(a: str, b: str) -> bool:
+    """Whether the letters that differ fall in more than one place, starting at the beginning.
+
+    When the marks start differently and their unchanged ending covers less than half the longer mark, the changes
+    reach into both halves (NAME-LIGHT / GAME-FIGHT), not just the first part (REV-MAX / NEO-MAX).
+    """
+    if a[0] == b[0]:
+        return False
+    suffix = len(_common_prefix(a[::-1], b[::-1]))
+    return suffix < 0.5 * max(len(a), len(b))
+
+
+def _words_and_parts(mark: str) -> list[str]:
+    """The mark's words, then the parts of any written in camel case (EcoKnit, then ECO and KNIT)."""
+    whole = words(mark)
+    return whole + [p for p in parts(mark) if p not in whole]
+
+
+def _common_prefix(a: str, b: str) -> str:
+    n = 0
+    while n < min(len(a), len(b)) and a[n] == b[n]:
+        n += 1
+    return a[:n]
+
+
+def _word_inside(word: str, text: str) -> bool:
+    """WORD at the start of one of the other mark's words (METER in METERMATE, ECOKNIT in ECO KNITWEAR), or with a
+    letter or two before it at the end of a word (IMETER); not buried inside an unrelated word (METER in PERIMETER,
+    CEMETERY or THERMOMETER)."""
+    tokens = parts(text)
+    if word in tokens:
+        return False  # a shared whole word is handled separately
+    squashed = "".join(tokens)
+    starts, ends, pos = [], [], 0
+    for token in tokens:
+        starts.append(pos)
+        pos += len(token)
+        ends.append(pos)
+    at = squashed.find(word)
+    while at != -1:
+        if at in starts and not _derived(squashed[at + len(word):]):
+            return True
+        end = at + len(word)
+        if end in ends and at - starts[ends.index(end)] <= 2:
+            return True
+        at = squashed.find(word, at + 1)
+    return False
+
+
+_DERIVED = ("ion", "ful", "ive", "ity", "ness", "ment", "ance", "ence", "ism", "ist", "ize", "ise")
+
+
+def _derived(rest: str) -> bool:
+    """SUCCESS + ION is SUCCESSION, a different word, not SUCCESS with something added."""
+    letters = "".join(ch for ch in rest[:6] if ch.isalpha())
+    return letters.startswith(_DERIVED)

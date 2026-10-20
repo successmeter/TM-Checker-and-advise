@@ -3,6 +3,7 @@ from pathlib import Path
 
 from ..mark_similarity import compare
 from ..models import RegisterMark
+from .terms import RegisterTerm, terms_from_marks
 
 
 class FixtureRegisterClient:
@@ -18,3 +19,6 @@ class FixtureRegisterClient:
 
     def search(self, mark: str, classes: list[int]) -> list[RegisterMark]:
         return [m for m in self.marks if compare(mark, m.words).score >= 0.5]
+
+    def goods_terms(self, query: str, limit: int = 60) -> list[RegisterTerm]:
+        return terms_from_marks(self.marks, query, limit)

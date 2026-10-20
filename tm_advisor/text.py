@@ -19,6 +19,14 @@ def words(text: str) -> list[str]:
     return normalise(text).split()
 
 
+_CAMEL = re.compile(r"(?<=[a-z])(?=[A-Z])")
+
+
+def parts(text: str) -> list[str]:
+    """Words, also splitting names written in camel case: BizImprint -> biz, imprint."""
+    return words(_CAMEL.sub(" ", text))
+
+
 def stem(word: str) -> str:
     """Strip common English plurals: sweaters -> sweater, dresses -> dress, accessories -> accessory."""
     if len(word) > 4 and word.endswith("ies"):
