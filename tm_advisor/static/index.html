@@ -153,10 +153,140 @@
   .error { color: var(--high); }
   footer { color: var(--muted); font-size: .85rem; max-width: 1180px; margin: 0 auto; padding: 0 16px 40px; }
   [hidden] { display: none !important; }
+
+  /* landing */
+  .landing { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+  .hero { padding: 56px 0 40px; display: grid; grid-template-columns: 1.3fr 1fr; gap: 40px; align-items: center; }
+  @media (max-width: 860px) { .hero { grid-template-columns: minmax(0, 1fr); padding-top: 32px; } }
+  .hero h1 { font-size: clamp(1.9rem, 4vw, 2.8rem); line-height: 1.15; margin: 0 0 16px; letter-spacing: -.01em; }
+  .hero p.lead { font-size: 1.15rem; color: var(--muted); margin: 0 0 24px; }
+  .cta { display: inline-block; background: var(--brand); color: var(--brand-ink); padding: 14px 22px; border-radius: 10px;
+         font-weight: 700; text-decoration: none; margin: 0 10px 10px 0; }
+  .cta.ghost { background: transparent; color: var(--brand); border: 2px solid var(--brand); }
+  .hero-card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; box-shadow: 0 10px 30px rgba(40,20,60,.08); }
+  .hero-card .q { font-weight: 700; margin: 0 0 12px; }
+  .hero-card ul { margin: 0; padding-left: 20px; color: var(--muted); }
+  .hero-card li { margin-bottom: 8px; }
+  .band { padding: 44px 0; border-top: 1px solid var(--line); }
+  .band h2 { font-size: clamp(1.4rem, 3vw, 1.9rem); margin: 0 0 10px; }
+  .band > p.sub { color: var(--muted); max-width: 760px; margin: 0 0 24px; }
+  .cards3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  @media (max-width: 860px) { .cards3 { grid-template-columns: minmax(0, 1fr); } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
+  .card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+  .card p { margin: 0; color: var(--muted); }
+  .card .num { font-size: 1.6rem; font-weight: 800; color: var(--brand); margin-bottom: 4px; }
+  .flow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; counter-reset: step; }
+  @media (max-width: 860px) { .flow { grid-template-columns: minmax(0, 1fr); } }
+  .flow .card::before { counter-increment: step; content: "Step " counter(step); display: block; font-size: .8rem; font-weight: 700;
+                        letter-spacing: .06em; text-transform: uppercase; color: var(--brand); margin-bottom: 6px; }
+  .src { font-size: .8rem; color: var(--muted); margin-top: 12px; }
+  .cmp-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.cmp { width: 100%; min-width: 720px; border-collapse: separate; border-spacing: 0; }
+  table.cmp th, table.cmp td { padding: 14px 12px; border-bottom: 1px solid var(--line); text-align: center; vertical-align: middle; }
+  table.cmp th:first-child, table.cmp td:first-child { text-align: left; font-weight: 600; width: 34%; }
+  table.cmp thead th { font-weight: 600; color: var(--text); border-bottom: 0; padding-bottom: 18px; }
+  table.cmp .us { background: #1b1847; color: #fff; border-bottom-color: rgba(255,255,255,.08); }
+  table.cmp thead .us { background: linear-gradient(180deg, #4f46e5 0%, #1b1847 100%); }
+  table.cmp tbody tr:last-child .us { background: linear-gradient(180deg, #1b1847 0%, #0f0d24 100%); }
+  table.cmp th:not(:first-child), table.cmp td:not(:first-child) { width: 16.5%; }
+  table.cmp thead .us { border-radius: 18px 18px 0 0; font-size: 1.05rem; }
+  table.cmp tbody tr:last-child .us { border-radius: 0 0 18px 18px; }
+  table.cmp .us .pill { display: inline-block; padding: 8px 14px; border-radius: 10px; background: rgba(255,255,255,.14); }
+  .ic { display: inline-flex; width: 26px; height: 26px; border-radius: 50%; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; }
+  .ic.yes { background: #22c55e; color: #fff; }
+  .ic.no { background: #1c1b2e; color: #fff; }
+  .us .ic.no { background: rgba(255,255,255,.18); }
+  .part { font-size: .85rem; color: var(--muted); }
+  .us .part, .us .cost { color: #e0e7ff; }
+  .cost { font-size: .9rem; font-weight: 600; }
+  .bounds { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 860px) { .bounds { grid-template-columns: minmax(0, 1fr); } }
+  .bounds ul { margin: 6px 0 0; padding-left: 20px; color: var(--muted); }
+  .toolhead { max-width: 1180px; margin: 0 auto; padding: 44px 16px 0; border-top: 1px solid var(--line); }
+  .toolhead h2 { margin: 0 0 6px; font-size: clamp(1.4rem, 3vw, 1.9rem); }
+  .toolhead p { margin: 0; color: var(--muted); }
 </style>
 </head>
 <body>
 <header class="top"><strong>BizImprint</strong><span>Trademark Conflict Intelligence for Australian businesses</span></header>
+
+<div class="landing">
+  <section class="hero">
+    <div>
+      <h1>You've picked a name. Is it yours to use?</h1>
+      <p class="lead">Most founders find out after the logo is printed, when an objection or a letter arrives. BizImprint shows you what's on the Australian register, what the law says about it, and what's still uncertain, in plain English, before you commit.</p>
+      <a class="cta" href="#tool">Start your free check</a><a class="cta ghost" href="/report/sample" target="_blank" rel="noopener">See a sample report</a>
+    </div>
+    <div class="hero-card">
+      <p class="q">Questions founders usually can't answer on their own:</p>
+      <ul>
+        <li>Is there an earlier mark close enough to cause a problem?</li>
+        <li>Do their goods and services actually overlap with mine?</li>
+        <li>Is my name too descriptive to register?</li>
+        <li>Word mark, logo or both, and what does each protect?</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="band">
+    <h2>The problem: trade marks are written for lawyers, and lawyers cost money</h2>
+    <p class="sub">Start-ups need to know whether a name is worth building on, but the tools and the law aren't written for them.</p>
+    <div class="cards3">
+      <div class="card"><div class="num">A$500+</div><h3>For one professional search</h3><p>Professional searches commonly start from about A$500 + GST per search, with advice and filing charged on top. That's a lot to spend before you know if a name is worth keeping.</p></div>
+      <div class="card"><div class="num">Results only</div><h3>Search tools list marks, not meaning</h3><p>Free register searches show you a list of names. They don't tell you which ones matter, why, or what the law says about them.</p></div>
+      <div class="card"><div class="num">Form-filling</div><h3>Lodgement services file, not explain</h3><p>They lodge the application you give them. Understanding the risks of the name you chose is left to you.</p></div>
+    </div>
+    <p class="src">Example search prices: one Australian firm's published fees (The Loft, theloft.legal/fees, viewed October 2026). Prices vary between providers.</p>
+  </section>
+
+  <section class="band">
+    <h2>How BizImprint helps</h2>
+    <p class="sub">Research and understanding first, at a founder's budget. When something needs a lawyer, we tell you why.</p>
+    <div class="flow">
+      <div class="card"><h3>Free check</h3><p>Search the Australian register for your name in your classes, with every similar mark, how its goods and services link to yours, and a distinctiveness check.</p></div>
+      <div class="card"><h3>Research report, A$299</h3><p>A plain-English explanation of the evidence, the relevant law with links to IP Australia's Trade Marks Manual, what's uncertain, and how each filing format relates to your findings.</p></div>
+      <div class="card"><h3>You decide what's next</h3><p>Further research paths, how TM Headstart and applications work with the fees for your classes, and when a professional review may be useful.</p></div>
+    </div>
+  </section>
+
+  <section class="band">
+    <h2>How BizImprint compares</h2>
+    <p class="sub">What each option gives a start-up checking a name. A lawyer offers things we don't, and the table says so.</p>
+    <div class="cmp-scroll">
+      <table class="cmp">
+        <thead><tr><th>Capability</th><th>Free search tools</th><th>Lodgement services</th><th>Lawyer's initial consultation</th><th class="us"><span class="pill">With BizImprint</span></th></tr></thead>
+        <tbody>
+          <tr><td>Searches the Australian register for similar names</td><td><span class="ic yes" aria-label="Yes">✓</span></td><td><span class="part">Sometimes</span></td><td><span class="ic yes" aria-label="Yes">✓</span></td><td class="us"><span class="ic yes" aria-label="Yes">✓</span></td></tr>
+          <tr><td>Compares your goods and services with theirs, term by term</td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic yes" aria-label="Yes">✓</span></td><td class="us"><span class="ic yes" aria-label="Yes">✓</span></td></tr>
+          <tr><td>Explains why each earlier mark matters, in plain English</td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic yes" aria-label="Yes">✓</span></td><td class="us"><span class="ic yes" aria-label="Yes">✓</span></td></tr>
+          <tr><td>Checks whether your name is distinctive (section 41)</td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic yes" aria-label="Yes">✓</span></td><td class="us"><span class="ic yes" aria-label="Yes">✓</span></td></tr>
+          <tr><td>Links every finding to IP Australia's own guidance</td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="part">Sometimes</span></td><td class="us"><span class="ic yes" aria-label="Yes">✓</span></td></tr>
+          <tr><td>Checks your wording against IP Australia's picklist</td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="part">Sometimes</span></td><td><span class="ic yes" aria-label="Yes">✓</span></td><td class="us"><span class="ic yes" aria-label="Yes">✓</span></td></tr>
+          <tr><td>Shows what's uncertain and what to research next</td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic yes" aria-label="Yes">✓</span></td><td class="us"><span class="ic yes" aria-label="Yes">✓</span></td></tr>
+          <tr><td>Results in minutes</td><td><span class="ic yes" aria-label="Yes">✓</span></td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic no" aria-label="No">✕</span></td><td class="us"><span class="ic yes" aria-label="Yes">✓</span></td></tr>
+          <tr><td>Personal legal advice for your situation</td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic yes" aria-label="Yes">✓</span></td><td class="us"><span class="ic no" aria-label="No">✕</span></td></tr>
+          <tr><td>Files the application for you</td><td><span class="ic no" aria-label="No">✕</span></td><td><span class="ic yes" aria-label="Yes">✓</span></td><td><span class="ic yes" aria-label="Yes">✓</span></td><td class="us"><span class="ic no" aria-label="No">✕</span></td></tr>
+          <tr><td>Typical cost</td><td class="cost">Free</td><td class="cost">Service fee plus government fees</td><td class="cost">From about A$500 + GST per search; more with advice and filing</td><td class="us cost">Free check<br>A$299 report</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="src">General comparison of types of provider; individual services differ.</p>
+  </section>
+
+  <section class="band">
+    <h2>What BizImprint is, and isn't</h2>
+    <div class="bounds">
+      <div class="card"><h3>It is</h3><ul><li>Research software built on IP Australia's register and guidance</li><li>Evidence, law and uncertainty, explained in plain English</li><li>A way to understand your name before you spend more on it</li></ul></div>
+      <div class="card"><h3>It isn't</h3><ul><li>Legal advice, or a law firm or trade marks attorney</li><li>A decision on whether your mark will be registered: IP Australia's examiners decide</li><li>A clearance search for using the brand</li></ul></div>
+    </div>
+  </section>
+</div>
+
+<section class="toolhead" id="tool">
+  <h2>Start your free check</h2>
+  <p>Tell us your name and what you sell. It takes a few minutes, and the results are free.</p>
+</section>
 
 <div class="wrap">
   <nav aria-label="Progress">
@@ -330,8 +460,10 @@ function show(page) {
   $("#nav-error").textContent = "";
   if (page === "goods") renderSelected();
   if (page === "summary") renderSummary();
-  window.scrollTo(0, 0);
+  if (pageShown) $("#tool").scrollIntoView({ block: "start" });  // the top of the tool, below the introduction
+  pageShown = true;
 }
+var pageShown = false;
 const PAGE_NAMES = { kind: "kind of trade mark", goods: "goods and services", check: "automated check", summary: "summary" };
 function problem(page) {  // what must be done on a page before moving past it
   if (page === "kind" && !markText()) return { composite: "Enter the words in your logo.", logo: "Describe your logo in a few words." }[state.kind] || "Enter your word or phrase.";
