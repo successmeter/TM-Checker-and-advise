@@ -3,28 +3,39 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <title>BizImprint · Trademark Conflict Intelligence for Australian businesses</title>
 <style>
   :root {
-    --bg: #f3f1f5; --card: #ffffff; --text: #1c1b1f; --muted: #5d5a63; --line: #dcd8e0; --soft: #efecf2;
-    --brand: #4b2a6b; --brand-ink: #ffffff; --brand-soft: #e9e1f0; --focus: #7b4fa3;
+    --bg: #edeef5; --card: #ffffff; --text: #17243c; --ink: #060d19; --muted: #5b6475; --line: #dde0ea; --soft: #f3f4f9;
+    --brand: #4338ca; --brand-ink: #ffffff; --brand-soft: #e7e8fb; --focus: #6366f1; --accent: #5b5cf0;
+    --navy: #0b1030; --navy-2: #151a4a;
     --high: #b42318; --high-bg: #fdecea; --med: #8a5a00; --med-bg: #fff1d6; --low: #1e6b3a; --low-bg: #e4f3e8;
     --warn: #f08c3c;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #151318; --card: #1f1c23; --text: #ece9f0; --muted: #a7a2ad; --line: #36313c; --soft: #29252e;
-      --brand: #b896d8; --brand-ink: #1a1320; --brand-soft: #33283d; --focus: #c9a8e8;
+      --bg: #0b0e1c; --card: #151a2e; --text: #e6e8f2; --ink: #f4f5fb; --muted: #a3a9bd; --line: #2a3048; --soft: #1c2238;
+      --brand: #8b8ff8; --brand-ink: #0b0e1c; --brand-soft: #23284a; --focus: #a5a8fb; --accent: #8b8ff8;
       --high: #ff8a80; --high-bg: #3a1c1a; --med: #f5c26b; --med-bg: #362a12; --low: #81c995; --low-bg: #16301f;
     }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 500 16px/1.55 Urbanist, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
   a { color: var(--brand); }
-  header.top { background: var(--brand); color: var(--brand-ink); padding: 12px 16px; }
-  header.top strong { font-size: 1.1rem; }
-  header.top span { opacity: .85; margin-left: 8px; font-size: .9rem; }
-  @media (max-width: 600px) { header.top span { display: block; margin-left: 0; } }
+  header.top { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px);
+                border-bottom: 1px solid var(--line); }
+  header.top .in { max-width: 1240px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; gap: 24px; }
+  header.top .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
+  header.top .logo b { font-size: 1.2rem; font-weight: 800; letter-spacing: -.01em; }
+  header.top .logo i { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; font-style: normal; font-weight: 800;
+                       color: #fff; background: linear-gradient(135deg, #6366f1, #312e81); }
+  header.top .tag { color: var(--muted); font-size: .85rem; }
+  header.top nav { margin-left: auto; display: flex; gap: 22px; align-items: center; }
+  header.top nav a { color: var(--ink); text-decoration: none; font-weight: 600; font-size: .95rem; }
+  header.top nav a.navcta { border: 1px solid var(--ink); border-radius: 12px; padding: 8px 16px; }
+  @media (max-width: 860px) { header.top .tag, header.top nav a:not(.navcta) { display: none; } }
   .wrap { max-width: 1180px; margin: 0 auto; padding: 24px 16px 64px; display: grid; grid-template-columns: 220px 1fr; gap: 28px; }
   @media (max-width: 860px) { .wrap { grid-template-columns: minmax(0, 1fr); } }
   .wrap > nav { min-width: 0; }
@@ -49,16 +60,16 @@
     .steps li::before, .steps .sub { display: none; }
   }
 
-  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 24px; min-width: 0; }
-  h1 { font-size: 1.7rem; margin: 0 0 8px; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 28px; min-width: 0; }
+  h1 { font-size: 1.9rem; margin: 0 0 8px; color: var(--ink); font-weight: 700; letter-spacing: -.01em; }
   h2 { font-size: 1.2rem; margin: 24px 0 8px; }
   p.lead { color: var(--muted); margin: 0 0 20px; }
   label.field { display: block; font-weight: 600; margin: 16px 0 6px; }
-  input[type=text], input[type=email], textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--soft); color: var(--text); font: inherit; }
+  input[type=text], input[type=email], textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--soft); color: var(--text); font: inherit; }
   input:focus-visible, textarea:focus-visible, button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
   .hint { color: var(--muted); font-size: .875rem; }
   .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  button { font: inherit; padding: 10px 18px; border-radius: 6px; border: 1px solid var(--brand); background: var(--brand); color: var(--brand-ink); cursor: pointer; font-weight: 600; }
+  button { font: inherit; padding: 10px 20px; border-radius: 12px; border: 1px solid var(--brand); background: var(--brand); color: var(--brand-ink); cursor: pointer; font-weight: 600; }
   button.secondary { background: transparent; color: var(--brand); }
   button.link { border: 0; background: none; color: var(--brand); padding: 0; text-decoration: underline; font-weight: 500; }
   button:disabled { opacity: .5; cursor: not-allowed; }
@@ -151,107 +162,168 @@
   table.sum { width: 100%; border-collapse: collapse; }
   table.sum td, table.sum th { text-align: left; border-bottom: 1px solid var(--line); padding: 8px 6px; vertical-align: top; }
   .error { color: var(--high); }
-  footer { color: var(--muted); font-size: .85rem; max-width: 1180px; margin: 0 auto; padding: 0 16px 40px; }
+  footer { color: #b7bdd0; font-size: .85rem; background: #060d19; border-radius: 28px 28px 0 0; margin-top: 24px; }
+  footer .in { max-width: 1240px; margin: 0 auto; padding: 48px 16px 40px; }
+  footer .flogo { color: #fff; font-weight: 800; font-size: 1.2rem; margin-bottom: 14px; }
   [hidden] { display: none !important; }
 
-  /* landing */
-  .landing { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
-  .hero { padding: 56px 0 40px; display: grid; grid-template-columns: 1.3fr 1fr; gap: 40px; align-items: center; }
-  @media (max-width: 860px) { .hero { grid-template-columns: minmax(0, 1fr); padding-top: 32px; } }
-  .hero h1 { font-size: clamp(1.9rem, 4vw, 2.8rem); line-height: 1.15; margin: 0 0 16px; letter-spacing: -.01em; }
-  .hero p.lead { font-size: 1.15rem; color: var(--muted); margin: 0 0 24px; }
-  .cta { display: inline-block; background: var(--brand); color: var(--brand-ink); padding: 14px 22px; border-radius: 10px;
-         font-weight: 700; text-decoration: none; margin: 0 10px 10px 0; }
-  .cta.ghost { background: transparent; color: var(--brand); border: 2px solid var(--brand); }
-  .hero-card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; box-shadow: 0 10px 30px rgba(40,20,60,.08); }
-  .hero-card .q { font-weight: 700; margin: 0 0 12px; }
-  .hero-card ul { margin: 0; padding-left: 20px; color: var(--muted); }
-  .hero-card li { margin-bottom: 8px; }
-  .band { padding: 44px 0; border-top: 1px solid var(--line); }
-  .band h2 { font-size: clamp(1.4rem, 3vw, 1.9rem); margin: 0 0 10px; }
-  .band > p.sub { color: var(--muted); max-width: 760px; margin: 0 0 24px; }
-  .cards3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-  @media (max-width: 860px) { .cards3 { grid-template-columns: minmax(0, 1fr); } }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
-  .card h3 { margin: 0 0 6px; font-size: 1.05rem; }
-  .card p { margin: 0; color: var(--muted); }
-  .card .num { font-size: 1.6rem; font-weight: 800; color: var(--brand); margin-bottom: 4px; }
-  .flow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; counter-reset: step; }
-  @media (max-width: 860px) { .flow { grid-template-columns: minmax(0, 1fr); } }
-  .flow .card::before { counter-increment: step; content: "Step " counter(step); display: block; font-size: .8rem; font-weight: 700;
-                        letter-spacing: .06em; text-transform: uppercase; color: var(--brand); margin-bottom: 6px; }
-  .src { font-size: .8rem; color: var(--muted); margin-top: 12px; }
-  .cmp-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  table.cmp { width: 100%; min-width: 720px; border-collapse: separate; border-spacing: 0; }
-  table.cmp th, table.cmp td { padding: 14px 12px; border-bottom: 1px solid var(--line); text-align: center; vertical-align: middle; }
-  table.cmp th:first-child, table.cmp td:first-child { text-align: left; font-weight: 600; width: 34%; }
-  table.cmp thead th { font-weight: 600; color: var(--text); border-bottom: 0; padding-bottom: 18px; }
-  table.cmp .us { background: #1b1847; color: #fff; border-bottom-color: rgba(255,255,255,.08); }
-  table.cmp thead .us { background: linear-gradient(180deg, #4f46e5 0%, #1b1847 100%); }
-  table.cmp tbody tr:last-child .us { background: linear-gradient(180deg, #1b1847 0%, #0f0d24 100%); }
-  table.cmp th:not(:first-child), table.cmp td:not(:first-child) { width: 16.5%; }
-  table.cmp thead .us { border-radius: 18px 18px 0 0; font-size: 1.05rem; }
-  table.cmp tbody tr:last-child .us { border-radius: 0 0 18px 18px; }
-  table.cmp .us .pill { display: inline-block; padding: 8px 14px; border-radius: 10px; background: rgba(255,255,255,.14); }
-  .ic { display: inline-flex; width: 26px; height: 26px; border-radius: 50%; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; }
-  .ic.yes { background: #22c55e; color: #fff; }
-  .ic.no { background: #1c1b2e; color: #fff; }
+  /* landing (layout language: rounded panels, navy feature bands, eyebrow labels) */
+  .landing { max-width: 1240px; margin: 0 auto; padding: 0 16px; }
+  .eyebrow { display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+             border: 1px solid currentColor; border-radius: 8px; padding: 3px 10px; color: var(--ink); }
+  .dark .eyebrow { color: #c7cbe6; }
+  .hl { color: var(--accent); }
+  .grad { background: linear-gradient(90deg, #a5b4fc, #6366f1); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .panelx { background: var(--card); border-radius: 28px; padding: 64px 48px; margin-top: 12px; }
+  .dark { background: radial-gradient(120% 80% at 50% 0%, #2a2f8f 0%, var(--navy-2) 35%, var(--navy) 75%); color: #e5e7f5; }
+  .dark h1, .dark h2, .dark h3 { color: #fff; }
+  @media (max-width: 860px) { .panelx { padding: 40px 20px; border-radius: 22px; } }
+  .hero { border-radius: 0 0 36px 36px; margin: 0 -16px; padding: 72px 16px 0; text-align: center; position: relative; overflow: hidden; }
+  .hero .ghost-word { position: absolute; inset: 70px 0 auto; font-size: clamp(6rem, 22vw, 20rem); font-weight: 800; line-height: 1;
+                      color: rgba(255,255,255,.035); white-space: nowrap; pointer-events: none; letter-spacing: -.03em; }
+  .hero > * { position: relative; }
+  .hero h1 { font-size: clamp(2.2rem, 5.4vw, 4.25rem); line-height: 1.1; margin: 18px auto 18px; max-width: 980px; font-weight: 600; letter-spacing: -.01em; }
+  .hero p.lead { font-size: 1.15rem; color: #d8dfe8; max-width: 720px; margin: 0 auto 30px; }
+  .ctas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .cta { display: inline-flex; align-items: center; gap: 14px; text-decoration: none; font-weight: 600; border-radius: 12px; }
+  .cta.light { background: #fff; color: #060d19; padding: 3px 3px 3px 22px; }
+  .cta.light span { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: #060d19; color: #fff; }
+  .cta.line { border: 1px solid #fff; color: #fff; padding: 11px 22px; }
+  .mock { max-width: 780px; margin: 56px auto 0; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14);
+          border-bottom: 0; border-radius: 18px 18px 0 0; padding: 14px 18px 0; text-align: left; }
+  .mock .dots { display: flex; gap: 6px; margin-bottom: 12px; } .mock .dots i { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,.3); }
+  .mock .bar { display: flex; align-items: center; gap: 14px; background: rgba(255,255,255,.08); border-radius: 12px; padding: 12px 16px; color: #fff; }
+  .mock .meter { flex: 1; height: 8px; border-radius: 99px; background: rgba(255,255,255,.18); overflow: hidden; }
+  .mock .meter b { display: block; height: 100%; width: 70%; background: linear-gradient(90deg, #22d3ee, #a5f3fc); }
+  .mock .badge { background: #22d3ee; color: #062a33; border-radius: 99px; padding: 4px 14px; font-weight: 700; font-size: .9rem; }
+  .mock .grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 12px; margin: 12px 0; }
+  @media (max-width: 640px) { .mock .grid { grid-template-columns: minmax(0, 1fr); } .mock .bar strong { display: none; } }
+  .mock .yours { display: grid; place-items: center; min-height: 150px; border-radius: 12px; background: rgba(255,255,255,.1);
+                 font-size: 1.7rem; font-weight: 800; color: #67e8f9; letter-spacing: .02em; }
+  .mock .row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; background: rgba(255,255,255,.07); margin-bottom: 8px; color: #fff; }
+  .mock .row b { font-size: 1rem; } .mock .row small { margin-left: auto; color: #c7cbe6; }
+  .mock .row em { font-style: normal; font-size: .75rem; font-weight: 700; padding: 2px 9px; border-radius: 99px; }
+  .mock .row em.m { background: #fde68a; color: #6b4400; } .mock .row em.l { background: #bbf7d0; color: #14532d; }
+  .scans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; max-width: 780px; margin: 0 auto; }
+  @media (max-width: 640px) { .scans { display: none; } .mock { padding-bottom: 6px; } }
+  .scans div { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); border-bottom: 0; border-radius: 14px 14px 0 0;
+               padding: 14px 16px 18px; text-align: left; color: #fff; }
+  .scans svg { width: 30px; height: 30px; padding: 6px; border-radius: 9px; background: rgba(255,255,255,.12); display: block; margin-bottom: 10px; }
+  .split { display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: end; margin: 18px 0 48px; }
+  @media (max-width: 860px) { .split { grid-template-columns: minmax(0, 1fr); gap: 16px; margin-bottom: 32px; } }
+  .split h2, .center h2 { font-size: clamp(2rem, 4.2vw, 3.25rem); line-height: 1.12; margin: 0; color: var(--ink); font-weight: 600; letter-spacing: -.02em; }
+  .split p { color: var(--muted); font-size: 1.08rem; margin: 0; }
+  .center { text-align: center; } .center h2 { margin: 18px auto 14px; max-width: 900px; }
+  .panelx.dark h2, .hero.dark h1 { color: #fff; }
+  .center p.sub { color: inherit; opacity: .8; max-width: 720px; margin: 0 auto 40px; font-size: 1.08rem; }
+  .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cols > div { padding: 0 28px; border-left: 1px solid var(--line); } .cols > div:first-child { padding-left: 0; border-left: 0; }
+  @media (max-width: 860px) { .cols { grid-template-columns: minmax(0, 1fr); gap: 28px; } .cols > div { padding: 0; border: 0; } }
+  .tile { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 14px; background: #dcdcfb; color: #4338ca; margin-bottom: 22px; }
+  .tile svg { width: 26px; height: 26px; }
+  .cols h3 { font-size: 1.3rem; margin: 0 0 8px; color: var(--ink); font-weight: 600; }
+  .cols .num { font-size: 2.4rem; font-weight: 700; color: var(--accent); line-height: 1; margin-bottom: 10px; letter-spacing: -.02em; }
+  .cols p { margin: 0; color: var(--muted); }
+  .src { font-size: .8rem; color: var(--muted); margin: 32px 0 0; }
+  .steps3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; text-align: left; }
+  @media (max-width: 860px) { .steps3 { grid-template-columns: minmax(0, 1fr); } }
+  .glass { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 18px; padding: 26px; }
+  .glass .n { font-size: .75rem; font-weight: 700; letter-spacing: .1em; color: #a5b4fc; text-transform: uppercase; }
+  .glass h3 { margin: 10px 0 8px; font-size: 1.35rem; font-weight: 600; }
+  .glass p { margin: 0; color: #c9cee3; }
+  .cmp-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-top: 6px; }
+  table.cmp { width: 100%; min-width: 760px; border-collapse: separate; border-spacing: 0; }
+  table.cmp th, table.cmp td { padding: 18px 14px; text-align: center; vertical-align: middle; border-bottom: 1px solid var(--line); }
+  table.cmp th:first-child, table.cmp td:first-child { text-align: left; font-weight: 600; color: var(--ink); width: 32%; }
+  table.cmp th:not(:first-child), table.cmp td:not(:first-child) { width: 17%; }
+  table.cmp thead th { font-weight: 600; font-size: 1.05rem; color: var(--ink); padding-bottom: 26px; }
+  table.cmp .us { background: #141a52; color: #fff; border-bottom-color: rgba(255,255,255,.08); }
+  table.cmp thead .us { background: radial-gradient(120% 140% at 50% 0%, #5b5cf0 0%, #1d2270 70%, #141a52 100%); border-radius: 22px 22px 0 0; padding: 18px 14px 26px; }
+  table.cmp tbody tr:last-child .us { background: linear-gradient(180deg, #141a52, #070a1c); border-radius: 0 0 22px 22px; }
+  table.cmp .us .pill { display: inline-block; padding: 12px 18px; border-radius: 12px; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.22); color: #fff; }
+  .ic { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 800; }
+  .ic.yes { background: #34d399; color: #04261a; }
+  .ic.no { background: #0b1030; color: #fff; }
+  @media (prefers-color-scheme: dark) { .ic.no { background: #3b4262; } }
   .us .ic.no { background: rgba(255,255,255,.18); }
   .part { font-size: .85rem; color: var(--muted); }
-  .us .part, .us .cost { color: #e0e7ff; }
+  .us .part, td.us.cost { color: #e0e7ff; }
   .cost { font-size: .9rem; font-weight: 600; }
   .bounds { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   @media (max-width: 860px) { .bounds { grid-template-columns: minmax(0, 1fr); } }
-  .bounds ul { margin: 6px 0 0; padding-left: 20px; color: var(--muted); }
-  .toolhead { max-width: 1180px; margin: 0 auto; padding: 44px 16px 0; border-top: 1px solid var(--line); }
-  .toolhead h2 { margin: 0 0 6px; font-size: clamp(1.4rem, 3vw, 1.9rem); }
-  .toolhead p { margin: 0; color: var(--muted); }
+  .bounds > div { border: 1px solid var(--line); border-radius: 20px; padding: 26px; background: var(--soft); }
+  .bounds h3 { margin: 0 0 8px; color: var(--ink); font-size: 1.3rem; font-weight: 600; }
+  .bounds ul { margin: 0; padding-left: 20px; color: var(--muted); } .bounds li { margin-bottom: 6px; }
+  .toolhead { max-width: 1240px; margin: 12px auto 0; padding: 0 16px; }
+  .toolhead > div { background: var(--card); border-radius: 28px 28px 0 0; padding: 48px 48px 8px; }
+  @media (max-width: 860px) { .toolhead > div { padding: 32px 20px 4px; border-radius: 22px 22px 0 0; } }
+  .toolhead h2 { margin: 16px 0 6px; font-size: clamp(2rem, 4.2vw, 3rem); color: var(--ink); font-weight: 600; letter-spacing: -.02em; }
+  .toolhead p { margin: 0; color: var(--muted); font-size: 1.08rem; }
+  .toolwrap { max-width: 1240px; margin: 0 auto; padding: 0 16px; }
+  .toolwrap > .wrap { background: var(--card); border-radius: 0 0 28px 28px; max-width: none; padding: 28px 48px 48px; }
+  @media (max-width: 860px) { .toolwrap > .wrap { padding: 20px; } }
+  .toolwrap .panel { background: var(--soft); }
 </style>
 </head>
 <body>
-<header class="top"><strong>BizImprint</strong><span>Trademark Conflict Intelligence for Australian businesses</span></header>
+<header class="top"><div class="in">
+  <a class="logo" href="/"><i>B</i><b>BizImprint</b></a><span class="tag">Trademark Conflict Intelligence for Australian businesses</span>
+  <nav><a href="#how">How it works</a><a href="#compare">Compare</a><a href="/report/sample" target="_blank" rel="noopener">Sample report</a><a class="navcta" href="#tool">Free check</a></nav>
+</div></header>
 
 <div class="landing">
-  <section class="hero">
-    <div>
-      <h1>You've picked a name. Is it yours to use?</h1>
-      <p class="lead">Most founders find out after the logo is printed, when an objection or a letter arrives. BizImprint shows you what's on the Australian register, what the law says about it, and what's still uncertain, in plain English, before you commit.</p>
-      <a class="cta" href="#tool">Start your free check</a><a class="cta ghost" href="/report/sample" target="_blank" rel="noopener">See a sample report</a>
+  <section class="hero dark">
+    <div class="ghost-word" aria-hidden="true">BizImprint</div>
+    <span class="eyebrow">Trade mark research for Australian start-ups</span>
+    <h1>You've picked a name. <span class="grad">Is it yours to use?</span></h1>
+    <p class="lead">Most founders find out after the logo is printed, when an objection or a letter arrives. BizImprint shows you what's on the Australian register, what the law says about it, and what's still uncertain, in plain English, before you commit.</p>
+    <div class="ctas"><a class="cta light" href="#tool">Start your free check <span aria-hidden="true">→</span></a><a class="cta line" href="/report/sample" target="_blank" rel="noopener">See a sample report</a></div>
+    <div class="mock" aria-hidden="true">
+      <div class="dots"><i></i><i></i><i></i></div>
+      <div class="bar"><div class="meter"><b></b></div><strong>70% letter match</strong><span class="badge">Review</span></div>
+      <div class="grid">
+        <div class="yours">YOUR NAME</div>
+        <div><div class="row"><b>EARLIER MARK</b><em class="m">Medium</em><small>same class</small></div>
+             <div class="row"><b>SIMILAR START</b><em class="l">Low</em><small>same class</small></div>
+             <div class="row"><b>SHARED WORD</b><em class="l">Low</em><small>related class</small></div></div>
+      </div>
     </div>
-    <div class="hero-card">
-      <p class="q">Questions founders usually can't answer on their own:</p>
-      <ul>
-        <li>Is there an earlier mark close enough to cause a problem?</li>
-        <li>Do their goods and services actually overlap with mine?</li>
-        <li>Is my name too descriptive to register?</li>
-        <li>Word mark, logo or both, and what does each protect?</li>
-      </ul>
+    <div class="scans" aria-hidden="true">
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Comparing spelling</div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 8.5a6 6 0 1 1 12 0c0 4-4 4.5-4 8a3 3 0 0 1-6 0"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-1.5 2-1.5 3.5"/></svg>Comparing sound</div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>Comparing goods and services</div>
     </div>
   </section>
 
-  <section class="band">
-    <h2>The problem: trade marks are written for lawyers, and lawyers cost money</h2>
-    <p class="sub">Start-ups need to know whether a name is worth building on, but the tools and the law aren't written for them.</p>
-    <div class="cards3">
-      <div class="card"><div class="num">A$500+</div><h3>For one professional search</h3><p>Professional searches commonly start from about A$500 + GST per search, with advice and filing charged on top. That's a lot to spend before you know if a name is worth keeping.</p></div>
-      <div class="card"><div class="num">Results only</div><h3>Search tools list marks, not meaning</h3><p>Free register searches show you a list of names. They don't tell you which ones matter, why, or what the law says about them.</p></div>
-      <div class="card"><div class="num">Form-filling</div><h3>Lodgement services file, not explain</h3><p>They lodge the application you give them. Understanding the risks of the name you chose is left to you.</p></div>
+  <section class="panelx">
+    <span class="eyebrow">The problem</span>
+    <div class="split"><h2>Trade marks are written for lawyers, <span class="hl">and lawyers cost money</span></h2>
+      <p>Start-ups need to know whether a name is worth building on, but the tools and the law aren't written for them.</p></div>
+    <div class="cols">
+      <div><div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.9 0-3 .9-3 2s1 1.7 3 2 3 .9 3 2-1.1 2-3 2c-1.4 0-2.6-.6-3-1.6M12 6v2M12 16v2"/></svg></div>
+        <div class="num">A$500+</div><h3>For one professional search</h3><p>Professional searches commonly start from about A$500 + GST per search, with advice and filing charged on top. That's a lot to spend before you know if a name is worth keeping.</p></div>
+      <div><div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg></div>
+        <div class="num">Results only</div><h3>Search tools list marks, not meaning</h3><p>Free register searches show you a list of names. They don't tell you which ones matter, why, or what the law says about them.</p></div>
+      <div><div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg></div>
+        <div class="num">Form-filling</div><h3>Lodgement services file, not explain</h3><p>They lodge the application you give them. Understanding the risks of the name you chose is left to you.</p></div>
     </div>
     <p class="src">Example search prices: one Australian firm's published fees (The Loft, theloft.legal/fees, viewed October 2026). Prices vary between providers.</p>
   </section>
 
-  <section class="band">
-    <h2>How BizImprint helps</h2>
-    <p class="sub">Research and understanding first, at a founder's budget. When something needs a lawyer, we tell you why.</p>
-    <div class="flow">
-      <div class="card"><h3>Free check</h3><p>Search the Australian register for your name in your classes, with every similar mark, how its goods and services link to yours, and a distinctiveness check.</p></div>
-      <div class="card"><h3>Research report, A$299</h3><p>A plain-English explanation of the evidence, the relevant law with links to IP Australia's Trade Marks Manual, what's uncertain, and how each filing format relates to your findings.</p></div>
-      <div class="card"><h3>You decide what's next</h3><p>Further research paths, how TM Headstart and applications work with the fees for your classes, and when a professional review may be useful.</p></div>
+  <section class="panelx dark center" id="how">
+    <span class="eyebrow">How it works</span>
+    <h2>Research and understanding first, <span class="grad">at a founder's budget</span></h2>
+    <p class="sub">When something needs a lawyer, we tell you why.</p>
+    <div class="steps3">
+      <div class="glass"><span class="n">Step 1</span><h3>Free check</h3><p>Search the Australian register for your name in your classes, with every similar mark, how its goods and services link to yours, and a distinctiveness check.</p></div>
+      <div class="glass"><span class="n">Step 2</span><h3>Research report, A$299</h3><p>A plain-English explanation of the evidence, the relevant law with links to IP Australia's Trade Marks Manual, what's uncertain, and how each filing format relates to your findings.</p></div>
+      <div class="glass"><span class="n">Step 3</span><h3>You decide what's next</h3><p>Further research paths, how TM Headstart and applications work with the fees for your classes, and when a professional review may be useful.</p></div>
     </div>
   </section>
 
-  <section class="band">
-    <h2>How BizImprint compares</h2>
+  <section class="panelx center" id="compare">
+    <span class="eyebrow">Comparison table</span>
+    <h2>Built for founders, <span class="hl">honest about lawyers</span></h2>
     <p class="sub">What each option gives a start-up checking a name. A lawyer offers things we don't, and the table says so.</p>
     <div class="cmp-scroll">
       <table class="cmp">
@@ -274,21 +346,24 @@
     <p class="src">General comparison of types of provider; individual services differ.</p>
   </section>
 
-  <section class="band">
-    <h2>What BizImprint is, and isn't</h2>
+  <section class="panelx">
+    <span class="eyebrow">Boundaries</span>
+    <div class="split"><h2>What BizImprint is, <span class="hl">and isn't</span></h2><p>Research you can understand, with honest limits.</p></div>
     <div class="bounds">
-      <div class="card"><h3>It is</h3><ul><li>Research software built on IP Australia's register and guidance</li><li>Evidence, law and uncertainty, explained in plain English</li><li>A way to understand your name before you spend more on it</li></ul></div>
-      <div class="card"><h3>It isn't</h3><ul><li>Legal advice, or a law firm or trade marks attorney</li><li>A decision on whether your mark will be registered: IP Australia's examiners decide</li><li>A clearance search for using the brand</li></ul></div>
+      <div><h3>It is</h3><ul><li>Research software built on IP Australia's register and guidance</li><li>Evidence, law and uncertainty, explained in plain English</li><li>A way to understand your name before you spend more on it</li></ul></div>
+      <div><h3>It isn't</h3><ul><li>Legal advice, or a law firm or trade marks attorney</li><li>A decision on whether your mark will be registered: IP Australia's examiners decide</li><li>A clearance search for using the brand</li></ul></div>
     </div>
   </section>
 </div>
 
-<section class="toolhead" id="tool">
+<section class="toolhead" id="tool"><div>
+  <span class="eyebrow">Free check</span>
   <h2>Start your free check</h2>
   <p>Tell us your name and what you sell. It takes a few minutes, and the results are free.</p>
-</section>
+</div></section>
 
-<div class="wrap">
+
+<div class="toolwrap"><div class="wrap">
   <nav aria-label="Progress">
     <ol class="steps" id="steps">
       <li data-step="kind,goods"><span class="dot"></span><button type="button" class="steplink" data-go="kind">Trade mark details</button>
@@ -416,13 +491,13 @@
     </div>
     <p id="nav-error" class="error" role="alert"></p>
   </main>
-</div>
+</div></div>
 <dialog class="side" id="class-detail" aria-labelledby="detail-title">
   <button type="button" class="close" aria-label="Close" onclick="this.closest('dialog').close()">×</button>
   <span class="badge" id="detail-title"></span>
   <div id="detail-body"></div>
 </dialog>
-<footer><p id="data-status"></p><div id="disclaimers"></div></footer>
+<footer><div class="in"><div class="flogo">BizImprint</div><p id="data-status"></p><div id="disclaimers"></div></div></footer>
 
 <script>
 const $ = (s, el = document) => el.querySelector(s);
